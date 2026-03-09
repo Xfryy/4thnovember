@@ -64,7 +64,6 @@ export default function Calendar() {
           animation: "pin-sway 4s ease-in-out infinite",
         }}
       >
-        {/* String / tali */}
         <div style={{
           width: 1.5,
           height: 18,
@@ -73,7 +72,6 @@ export default function Calendar() {
           borderRadius: 2,
         }} />
 
-        {/* Pin SVG */}
         <div style={{ animation: "pin-glow-pulse 2.5s ease-in-out infinite" }}>
           <svg width="32" height="38" viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -95,29 +93,14 @@ export default function Calendar() {
                 <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.5)" />
               </filter>
             </defs>
-
-            {/* Pin head circle */}
             <circle cx="16" cy="14" r="13" fill="url(#pinHead)" filter="url(#pinShadow)" />
-
-            {/* Inner ring */}
             <circle cx="16" cy="14" r="10" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-
-            {/* Shine highlight */}
             <circle cx="16" cy="14" r="13" fill="url(#pinShine)" />
-
-            {/* Star/diamond di tengah pin */}
             <path
               d="M16 8 L17.2 12.8 L22 14 L17.2 15.2 L16 20 L14.8 15.2 L10 14 L14.8 12.8 Z"
               fill="rgba(255,255,255,0.9)"
             />
-
-            {/* Needle */}
-            <path
-              d="M15 26 L16 38 L17 26 Z"
-              fill="url(#pinNeedle)"
-              filter="url(#pinShadow)"
-            />
-            {/* Needle highlight */}
+            <path d="M15 26 L16 38 L17 26 Z" fill="url(#pinNeedle)" filter="url(#pinShadow)" />
             <line x1="16" y1="27" x2="16" y2="36" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
           </svg>
         </div>

@@ -1,10 +1,25 @@
-// Game Session & User Data Types
+// ── User ───────────────────────────────────────────────────────────────────────
+
 export interface GameUser {
   uid: string;
   email: string;
   characterName: string;
   createdAt: number;
   lastPlayed: number;
+}
+
+// ── Save system ────────────────────────────────────────────────────────────────
+
+export interface SaveData {
+  uid: string;
+  currentAct: number;
+  currentSceneId: string;
+  /** Choices made: { [choiceSceneId]: selectedOptionId } */
+  choices: Record<string, string>;
+  /** Affection per character: { rinn: 10 } */
+  affection: Record<string, number>;
+  playTimeSeconds: number;
+  lastSaved: number; // timestamp
 }
 
 export interface GameProgress {
@@ -16,7 +31,19 @@ export interface GameProgress {
   lastUpdated: number;
 }
 
-// Scene Structure Types
+// ── Asset manifest ─────────────────────────────────────────────────────────────
+
+export interface MinigameModule { default: unknown }
+
+export interface ActManifest {
+  actNumber: number;
+  images: string[];
+  audio: string[];
+  minigames: Array<() => Promise<MinigameModule>>;
+}
+
+// ── Scene types ────────────────────────────────────────────────────────────────
+
 export type SceneType = "dialogue" | "monologue" | "choice" | "minigame" | "transition" | "ending";
 
 export interface BaseScene {
@@ -29,7 +56,7 @@ export interface BaseScene {
 export interface DialogueScene extends BaseScene {
   type: "dialogue";
   character: string;
-  characterSprite: string; // Path ke sprite character
+  characterSprite: string;
   dialogueText: string;
   backgroundColor: string;
   nextScene?: string;
@@ -46,10 +73,7 @@ export interface ChoiceOption {
   id: string;
   text: string;
   nextScene: string;
-  affection?: {
-    character: string;
-    amount: number;
-  };
+  affection?: { character: string; amount: number };
 }
 
 export interface ChoiceScene extends BaseScene {
@@ -63,35 +87,38 @@ export interface TransitionScene extends BaseScene {
   type: "transition";
   narrationText: string;
   nextScene: string;
-  duration: number; // in milliseconds
+  duration: number;
+  backgroundColor?: string;
 }
 
 export interface EndingScene extends BaseScene {
   type: "ending";
-  endingType: "act" | "game"; // act = next act comes, game = end of all
+  endingType: "act" | "game";
   endingText: string;
   characterSprite?: string;
   nextScene?: string;
 }
 
-export type Scene = 
-  | DialogueScene 
-  | MonologueScene 
-  | ChoiceScene 
-  | TransitionScene 
+export type Scene =
+  | DialogueScene
+  | MonologueScene
+  | ChoiceScene
+  | TransitionScene
   | EndingScene;
 
-// Act Structure
+// ── Act ────────────────────────────────────────────────────────────────────────
+
 export interface Act {
   actNumber: number;
   title: string;
   scenes: Scene[];
 }
 
-// Character Data
+// ── Character ──────────────────────────────────────────────────────────────────
+
 export interface Character {
   id: string;
   name: string;
-  spritesPath: string; // e.g., "/Image/Rinn"
-  affection: number; // 0-100
+  spritesPath: string;
+  affection: number; // 0–100
 }

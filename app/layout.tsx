@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SparkleProvider from "@/components/Sparkleprovider";
+import SettingsProvider from "@/components/Settingsprovider";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -27,7 +28,15 @@ export default function RootLayout({
         <meta charSet="utf-8" />
       </head>
       <body className="bg-dark text-white">
-        {children}
+        {/*
+          SettingsProvider:
+          - Applies brightness via CSS filter
+          - Syncs volume sliders to Web Audio API (audioManager)
+          - Sets --text-speed-ms CSS variable for dialogue typewriter
+        */}
+        <SettingsProvider>
+          {children}
+        </SettingsProvider>
         <SparkleProvider />
       </body>
     </html>

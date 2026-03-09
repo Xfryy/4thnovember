@@ -37,6 +37,9 @@ yarn-error.log*
 Thumbs.db
 .DS_Store
 
+# Custom
+.kombai
+.qodo
+
 # Asset files (optional - comment out if you want to version control them)
 # /public
-#

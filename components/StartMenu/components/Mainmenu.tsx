@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { SaveData } from "@/types/game";
 import GameBackground from "./GameBackground";
 import CharacterSprite from "../components/Charactersprite";
 import MenuButtons from "../components/Menubuttons";
@@ -14,7 +15,9 @@ interface MainMenuProps {
   characterName: string;
   email: string;
   isLoading: boolean;
-  onStart: () => void;
+  saveData: SaveData | null;
+  onStartNew: () => void;
+  onContinue: () => void;
   onSaves: () => void;
   onSettings: () => void;
   onLogout: () => void;
@@ -24,7 +27,9 @@ export default function MainMenu({
   characterName,
   email,
   isLoading,
-  onStart,
+  saveData,
+  onStartNew,
+  onContinue,
   onSaves,
   onSettings,
   onLogout,
@@ -60,7 +65,7 @@ export default function MainMenu({
           <div className="w-full px-10 md:px-14">
             <MenuButtons
               characterName={characterName}
-              onStart={onStart}
+              onStart={saveData ? onContinue : onStartNew}
               onSaves={onSaves}
               onSettings={handleSettingsClick}
             />

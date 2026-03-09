@@ -32,6 +32,7 @@ export default function Home() {
     return (
       <Preloader
         actNumber={targetAct}
+        startSceneId={startSceneId}
         onReady={() => setPhase("game")}
         onCancel={() => setPhase("menu")}
       />

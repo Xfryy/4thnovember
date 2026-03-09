@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { preloadAct, LoadProgress } from "@/lib/assetLoader";
+import { preloadAssetsForScene, LoadProgress } from "@/lib/assetLoader";
 
 interface PreloaderProps {
   actNumber: number;
+  startSceneId?: string;
   onReady: () => void;   // called when all assets loaded
   onCancel?: () => void; // ← Menu button
 }
@@ -17,7 +18,9 @@ const QUOTES = [
   "Waktu tidak bisa diputar, tapi bisa dirasakan kembali.",
 ];
 
-export default function Preloader({ actNumber, onReady, onCancel }: PreloaderProps) {
+const PRELOAD_DEPTH = 10; // How many scenes ahead to preload
+
+export default function Preloader({ actNumber, startSceneId, onReady, onCancel }: PreloaderProps) {
   const [progress, setProgress] = useState<LoadProgress>({
     loaded: 0, current: "Mempersiapkan...", total: 0, done: 0,
   });
@@ -26,17 +29,25 @@ export default function Preloader({ actNumber, onReady, onCancel }: PreloaderPro
   const loadedRef = useRef(false);
 
   useEffect(() => {
-    if (loadedRef.current) return;
+    if (loadedRef.current || !startSceneId) return;
     loadedRef.current = true;
 
-    preloadAct(actNumber, setProgress).then(() => {
+    let timer1: ReturnType<typeof setTimeout>;
+    let timer2: ReturnType<typeof setTimeout>;
+
+    preloadAssetsForScene(startSceneId, PRELOAD_DEPTH, setProgress).then(() => {
       // Brief pause so the bar reaches 100% visibly before fading
-      setTimeout(() => {
+      timer1 = setTimeout(() => {
         setFadeOut(true);
-        setTimeout(onReady, 500); // match fade-out duration
+        timer2 = setTimeout(onReady, 500); // match fade-out duration
       }, 350);
     });
-  }, [actNumber, onReady]);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    }
+  }, [startSceneId, onReady]);
 
   const pct = progress.loaded;
 

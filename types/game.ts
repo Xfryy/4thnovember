@@ -1,5 +1,3 @@
-// ── User ───────────────────────────────────────────────────────────────────────
-
 export interface GameUser {
   uid: string;
   email: string;
@@ -8,18 +6,14 @@ export interface GameUser {
   lastPlayed: number;
 }
 
-// ── Save system ────────────────────────────────────────────────────────────────
-
 export interface SaveData {
   uid: string;
   currentAct: number;
   currentSceneId: string;
-  /** Choices made: { [choiceSceneId]: selectedOptionId } */
   choices: Record<string, string>;
-  /** Affection per character: { rinn: 10 } */
   affection: Record<string, number>;
   playTimeSeconds: number;
-  lastSaved: number; // timestamp
+  lastSaved: number;
 }
 
 export interface GameProgress {
@@ -31,8 +25,6 @@ export interface GameProgress {
   lastUpdated: number;
 }
 
-// ── Asset manifest ─────────────────────────────────────────────────────────────
-
 export interface MinigameModule { default: unknown }
 
 export interface ActManifest {
@@ -42,9 +34,61 @@ export interface ActManifest {
   minigames: Array<() => Promise<MinigameModule>>;
 }
 
+// ── Character config per scene ─────────────────────────────────────────────────
+
+export type CharacterPosition =
+  | "far-left" | "left" | "center-left" | "center"
+  | "center-right" | "right" | "far-right";
+
+export type CharacterSize = "small" | "medium" | "large" | "xl" | "full";
+
+export type CharacterAnimation =
+  | "enter-bottom" | "enter-left" | "enter-right" | "fade" | "none";
+
+export interface SceneCharacter {
+  id: string;
+  sprite: string;
+  position?: CharacterPosition;
+  size?: CharacterSize;
+  flip?: boolean;
+  dim?: boolean;
+  zIndex?: number;
+  animation?: CharacterAnimation;
+}
+
+// ── Background config ──────────────────────────────────────────────────────────
+
+export interface SceneBg {
+  image?: string;
+  color?: string;
+  filter?: string;
+  overlay?: string;
+  size?: string;
+  position?: string;
+}
+
+// ── Audio config ───────────────────────────────────────────────────────────────
+
+export interface SceneAudio {
+  bgm?: string;
+  bgmStop?: boolean;
+  bgmFade?: boolean;
+  sfx?: string;
+  voice?: string;
+}
+
+// ── Screen effect config ───────────────────────────────────────────────────────
+
+export interface SceneEffect {
+  shake?: boolean;
+  flash?: string;
+}
+
 // ── Scene types ────────────────────────────────────────────────────────────────
 
-export type SceneType = "dialogue" | "monologue" | "choice" | "minigame" | "transition" | "ending";
+export type SceneType =
+  | "dialogue" | "monologue" | "choice"
+  | "transition" | "cg" | "ending";
 
 export interface BaseScene {
   id: string;
@@ -55,48 +99,67 @@ export interface BaseScene {
 
 export interface DialogueScene extends BaseScene {
   type: "dialogue";
-  character: string;
-  characterSprite: string;
-  dialogueText: string;
-  backgroundColor: string;
-  nextScene?: string;
+  speaker: string;
+  speakerId?: string;
+  text: string;
+  characters?: SceneCharacter[];
+  bg?: SceneBg;
+  audio?: SceneAudio;
+  effect?: SceneEffect;
+  next?: string;
 }
 
 export interface MonologueScene extends BaseScene {
   type: "monologue";
-  dialogueText: string;
-  backgroundColor: string;
-  nextScene?: string;
+  text: string;
+  characters?: SceneCharacter[];
+  bg?: SceneBg;
+  audio?: SceneAudio;
+  effect?: SceneEffect;
+  next?: string;
 }
 
 export interface ChoiceOption {
   id: string;
   text: string;
-  nextScene: string;
+  next: string;
   affection?: { character: string; amount: number };
 }
 
 export interface ChoiceScene extends BaseScene {
   type: "choice";
-  questionText: string;
+  question?: string;
   options: ChoiceOption[];
-  backgroundColor: string;
+  characters?: SceneCharacter[];
+  bg?: SceneBg;
 }
 
 export interface TransitionScene extends BaseScene {
   type: "transition";
-  narrationText: string;
-  nextScene: string;
-  duration: number;
-  backgroundColor?: string;
+  text: string;
+  bg?: SceneBg;
+  duration?: number;
+  audio?: SceneAudio;
+  next: string;
+}
+
+export interface CgScene extends BaseScene {
+  type: "cg";
+  image: string;
+  caption?: string;
+  audio?: SceneAudio;
+  next?: string;
 }
 
 export interface EndingScene extends BaseScene {
   type: "ending";
-  endingType: "act" | "game";
-  endingText: string;
+  endingType: "act" | "good" | "bad" | "true";
+  title: string;
+  subtitle?: string;
   characterSprite?: string;
-  nextScene?: string;
+  bg?: SceneBg;
+  audio?: SceneAudio;
+  next?: string;
 }
 
 export type Scene =
@@ -104,9 +167,8 @@ export type Scene =
   | MonologueScene
   | ChoiceScene
   | TransitionScene
+  | CgScene
   | EndingScene;
-
-// ── Act ────────────────────────────────────────────────────────────────────────
 
 export interface Act {
   actNumber: number;
@@ -114,11 +176,9 @@ export interface Act {
   scenes: Scene[];
 }
 
-// ── Character ──────────────────────────────────────────────────────────────────
-
 export interface Character {
   id: string;
   name: string;
   spritesPath: string;
-  affection: number; // 0–100
+  affection: number;
 }

@@ -1,18 +1,11 @@
 /**
  * assetLoader.ts
  *
- * Preloads all assets for a given act in parallel.
+ * Preloads all assets for a given scene up to a certain depth in parallel.
  * Reports granular progress (0–100) via a callback.
- *
- * Images  → loaded into browser cache via Image()
- * Audio   → decoded into AudioManager's buffer cache
- * Minigames → dynamic-imported (webpack chunk prefetch)
- *
- * Individual failures are silently tolerated — a missing file
- * won't crash the whole load; it just logs a warning.
  */
-
-import { ACT_MANIFESTS } from "@/lib/assetManifest";
+import { getReachableScenes } from "@/lib/sceneGraph";
+import { extractAudioForScenes, extractImagesForScenes } from "@/lib/assetManifest";
 import { audioManager } from "@/lib/Audiomanager";
 
 export interface LoadProgress {
@@ -40,19 +33,25 @@ function preloadImage(src: string): Promise<void> {
 
 // ── Main loader ────────────────────────────────────────────────────────────────
 
-export async function preloadAct(
-  actNumber: number,
+export async function preloadAssetsForScene(
+  startSceneId: string,
+  preloadDepth: number,
   onProgress?: ProgressCallback
 ): Promise<void> {
-  const manifest = ACT_MANIFESTS[actNumber];
-  if (!manifest) {
-    console.warn(`[AssetLoader] No manifest for Act ${actNumber}`);
+  if (!startSceneId) {
+    console.warn("[AssetLoader] No startSceneId provided.");
     onProgress?.({ loaded: 100, current: "Done", total: 0, done: 0 });
     return;
   }
 
-  const { images, audio, minigames } = manifest;
-  const total = images.length + audio.length + minigames.length;
+  const scenesToLoad = getReachableScenes(startSceneId, preloadDepth);
+  const images = extractImagesForScenes(scenesToLoad);
+  const audio = extractAudioForScenes(scenesToLoad);
+  // TODO: Add minigame extraction if needed in the future
+  const minigames: any[] = [];
+
+  const audioToPreload = audio.filter(src => !src.endsWith('.mp3'));
+  const total = images.length + audioToPreload.length + minigames.length;
 
   if (total === 0) {
     onProgress?.({ loaded: 100, current: "Ready", total: 0, done: 0 });
@@ -81,16 +80,16 @@ export async function preloadAct(
     ),
 
     // Audio (decoded into AudioManager buffer cache)
-    ...audio.map((src) =>
+    ...audioToPreload.map((src) =>
       audioManager.fetchBuffer(src)
         .then(() => report(src.split("/").pop() ?? src))
         .catch(() => {
-          console.warn(`[AssetLoader] Audio not found: ${src}`);
+          // This is non-fatal, just report it
           report(src.split("/").pop() ?? src);
         })
     ),
 
-    // Minigame dynamic imports (webpack chunk prefetch)
+    // Minigame dynamic imports
     ...minigames.map((loader, i) =>
       loader()
         .then(() => report(`Minigame ${i + 1}`))

@@ -1,0 +1,67 @@
+/* ── Wrapper ── */
+.wrapper {
+  position: relative;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Japanese subtitle ── */
+.subtitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .subtitleRow { justify-content: flex-start; }
+}
+
+.subtitleLine {
+  height: 1px;
+  width: 36px;
+}
+
+.subtitleLineLeft {
+  background: linear-gradient(to right, transparent, rgba(167,139,250,0.7));
+}
+
+.subtitleLineRight {
+  background: linear-gradient(to left, transparent, rgba(167,139,250,0.7));
+}
+
+.subtitleText {
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: #a78bfa;
+  white-space: nowrap;
+  font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+}
+
+/* ── Letter rows ── */
+.letterRow {
+  display: flex;
+  justify-content: center;
+  line-height: 1;
+  font-size: clamp(3.5rem, 8vw, 5.5rem);
+}
+
+@media (min-width: 768px) {
+  .letterRow { justify-content: flex-start; }
+}
+
+.letterRow4th { margin-bottom: -4px; }
+
+/* ── Individual letter ── */
+.letter {
+  display: inline-block;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease;
+  paint-order: stroke fill;
+}

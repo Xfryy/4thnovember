@@ -1,9 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import StartMenu from "@/components/StartMenu";
-import Preloader from "@/components/GameEngine/Preloader";
+import Preloader from "@/components/GameEngine/components/Preloader";
 import { getActFirstScene } from "@/lib/acts";
 
 const GameEngine = dynamic(() => import("@/components/GameEngine"), { ssr: false });
@@ -15,16 +15,18 @@ export default function Home() {
   const [targetAct, setTargetAct]       = useState(1);
   const [startSceneId, setStartSceneId] = useState<string | undefined>(undefined);
 
-  /**
-   * onGameStart(act, sceneId?)
-   * - act      : which act to preload
-   * - sceneId  : specific scene to resume (from save slot); undefined = first scene of act
-   */
   const handleGameStart = (act = 1, sceneId?: string) => {
     setTargetAct(act);
     setStartSceneId(sceneId ?? getActFirstScene(act));
     setPhase("preloading");
   };
+
+  const handleBackToMenu = useCallback(() => {
+    // autoSaveSlot sudah di-update di cache oleh GameEngine (writeAutoSave)
+    // saat StartMenu mount ulang, getCachedAutoSlot akan return slot terbaru
+    // → button langsung "Continue" tanpa flash
+    setPhase("menu");
+  }, []);
 
   if (phase === "preloading") {
     return (
@@ -41,7 +43,7 @@ export default function Home() {
       <GameEngine
         actNumber={targetAct}
         startSceneId={startSceneId}
-        onBackToMenu={() => setPhase("menu")}
+        onBackToMenu={handleBackToMenu}
       />
     );
   }

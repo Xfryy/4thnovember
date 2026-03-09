@@ -15,8 +15,7 @@ export const ACT_1_ASSETS: ActManifest = {
   actNumber: 1,
   images: [
     ...extractSprites(ACT_1_SCENES),
-    // Add background images here as you create them:
-    // "/Image/BG/school_morning.jpg",
+    "/Image/GameBG/Bg-1.jpg",
   ],
   audio: [
     // "/audio/bgm/act1_theme.ogg",

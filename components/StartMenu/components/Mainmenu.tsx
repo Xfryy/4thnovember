@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SaveData } from "@/types/game";
+import type { SaveSlot } from "@/lib/saveSlots";
 import GameBackground from "./GameBackground";
 import CharacterSprite from "../components/Charactersprite";
 import MenuButtons from "../components/Menubuttons";
@@ -10,15 +11,17 @@ import ProfileCard from "../components/Profilecard";
 import AnnouncementBell from "../components/Announcementbell";
 import SupportBanner from "../components/Supportbanner";
 import SettingsModal from "../components/SettingsModal";
+import SaveSlotsModal from "../components/SaveslotsModal";
 
 interface MainMenuProps {
   characterName: string;
   email: string;
   isLoading: boolean;
   saveData: SaveData | null;
+  autoSaveSlot: SaveSlot | null;   // slot 0 — tells us if player has played before
   onStartNew: () => void;
-  onContinue: () => void;
-  onSaves: () => void;
+  onContinue: () => void;          // load from auto-save (slot 0)
+  onLoadSlot: (slot: SaveSlot) => void; // load from any slot
   onSettings: () => void;
   onLogout: () => void;
 }
@@ -28,13 +31,17 @@ export default function MainMenu({
   email,
   isLoading,
   saveData,
+  autoSaveSlot,
   onStartNew,
   onContinue,
-  onSaves,
+  onLoadSlot,
   onSettings,
   onLogout,
 }: MainMenuProps) {
   const [showSettings, setShowSettings] = useState(false);
+  const [showSaves,    setShowSaves]    = useState(false);
+
+  const hasPlayed = !!autoSaveSlot;
 
   const handleSettingsClick = () => {
     setShowSettings(true);
@@ -65,8 +72,10 @@ export default function MainMenu({
           <div className="w-full px-10 md:px-14">
             <MenuButtons
               characterName={characterName}
-              onStart={saveData ? onContinue : onStartNew}
-              onSaves={onSaves}
+              hasPlayed={hasPlayed}
+              onStart={onStartNew}
+              onContinue={onContinue}
+              onSaves={() => setShowSaves(true)}
               onSettings={handleSettingsClick}
             />
           </div>
@@ -94,9 +103,19 @@ export default function MainMenu({
       <SupportBanner />
 
       {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+
+      {/* Save Slots Modal — load-only from main menu */}
+      <SaveSlotsModal
+        isOpen={showSaves}
+        onClose={() => setShowSaves(false)}
+        onLoad={(slot) => {
+          setShowSaves(false);
+          onLoadSlot(slot);
+        }}
       />
 
     </div>

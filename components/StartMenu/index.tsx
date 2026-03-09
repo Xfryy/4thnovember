@@ -11,7 +11,8 @@ import {
 } from "@/lib/firebase";
 import { useGameStore } from "@/store/gameStore";
 import { audioManager } from "@/lib/Audiomanager";
-import { loadProgress, deleteSave } from "@/lib/saveSystem";
+import { loadProgress } from "@/lib/saveSystem";
+import { readSlot, AUTO_SAVE_SLOT, SaveSlot } from "@/lib/saveSlots";
 import type { SaveData } from "@/types/game";
 
 import LoadingScreen      from "../StartMenu/components/Loadingscreen";
@@ -20,7 +21,7 @@ import CharacterNameInput from "../StartMenu/components/Characternameinput";
 import MainMenu           from "../StartMenu/components/Mainmenu";
 
 interface StartMenuProps {
-  onGameStart?: (act?: number) => void | Promise<void>;
+  onGameStart?: (act?: number, sceneId?: string) => void | Promise<void>;
 }
 
 export default function StartMenu({ onGameStart }: StartMenuProps) {
@@ -35,7 +36,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   } = useGameStore();
 
   const [showCharacterInput, setShowCharacterInput] = useState(false);
-  const [saveData, setSaveData] = useState<SaveData | null>(null);
+  const [saveData,     setSaveData]     = useState<SaveData | null>(null);
+  const [autoSaveSlot, setAutoSaveSlot] = useState<SaveSlot | null>(null);
 
   // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -53,9 +55,13 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           setUser(userData);
           setCharacterName(userData.characterName);
 
-          // Load save data for Continue button
-          const save = await loadProgress();
+          // Load legacy save + auto-save slot in parallel
+          const [save, slot0] = await Promise.all([
+            loadProgress(),
+            readSlot(firebaseUser.uid, AUTO_SAVE_SLOT),
+          ]);
           setSaveData(save);
+          setAutoSaveSlot(slot0);
 
           if (userData.characterName) {
             setCharacterNameSet(true);
@@ -71,6 +77,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
         setCharacterNameSet(false);
         setShowCharacterInput(false);
         setSaveData(null);
+        setAutoSaveSlot(null);
       }
       setLoading(false);
     });
@@ -79,8 +86,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   }, [setUser, setCharacterName, setCharacterNameSet, setLoading]);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
   const handleLogin = async () => {
-    // Resume AudioContext on first user interaction
     audioManager.resume();
     setLoading(true);
     try {
@@ -124,28 +131,35 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     }
   };
 
+  /** Start brand-new game — always act 1, first scene */
   const handleStartNewGame = () => {
     audioManager.resume();
-    // Start from act 1 (act parameter = 1, or undefined which defaults to 1)
-    setSaveData(null);
-    onGameStart?.(1);
+    onGameStart?.(1, undefined);
   };
 
-  const handleContinueGame = () => {
+  /** Continue from auto-save (slot 0) */
+  const handleContinue = () => {
     audioManager.resume();
-    // Continue from saved act
-    if (saveData) {
-      onGameStart?.(saveData.currentAct);
+    if (autoSaveSlot) {
+      onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
+    } else if (saveData) {
+      // Fallback to legacy save
+      onGameStart?.(saveData.currentAct, saveData.currentSceneId);
     } else {
-      // No save, start new game
       handleStartNewGame();
     }
   };
 
-  const handleSaves  = () => console.log("Opening saves...");
+  /** Load from a specific manual save slot */
+  const handleLoadSlot = (slot: SaveSlot) => {
+    audioManager.resume();
+    onGameStart?.(slot.currentAct, slot.currentSceneId);
+  };
+
   const handleSettings = () => console.log("Opening settings...");
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
   if (isLoading)          return <LoadingScreen />;
   if (!user)              return <LoginScreen isLoading={isLoading} onLogin={handleLogin} />;
   if (showCharacterInput) return <CharacterNameInput isLoading={isLoading} onSubmit={handleSetCharacterName} />;
@@ -156,9 +170,10 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
       email={user.email}
       isLoading={isLoading}
       saveData={saveData}
+      autoSaveSlot={autoSaveSlot}
       onStartNew={handleStartNewGame}
-      onContinue={handleContinueGame}
-      onSaves={handleSaves}
+      onContinue={handleContinue}
+      onLoadSlot={handleLoadSlot}
       onSettings={handleSettings}
       onLogout={handleLogout}
     />

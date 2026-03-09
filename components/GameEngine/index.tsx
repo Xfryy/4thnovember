@@ -10,6 +10,8 @@ import {
   AUTOSAVE_EVERY_N_SCENES,
   GameStateSnapshot,
 } from "@/lib/saveSystem";
+import { writeSlot, AUTO_SAVE_SLOT, SaveSlot } from "@/lib/saveSlots";
+import { auth } from "@/lib/firebase";
 
 const TRANSITION_MS = 280;
 
@@ -17,6 +19,20 @@ interface GameEngineProps {
   actNumber?: number;
   startSceneId?: string;
   onBackToMenu?: () => void;
+}
+
+/** Build slot preview metadata from a scene */
+function buildSlotPreview(sceneId: string) {
+  const s = SCENE_REGISTRY[sceneId];
+  if (!s) return {};
+  let previewText = "";
+  let previewImage: string | undefined;
+  if ("dialogueText" in s)  previewText  = (s.dialogueText as string).slice(0, 80);
+  if ("narrationText" in s) previewText  = (s.narrationText as string).slice(0, 80);
+  if ("endingText" in s)    previewText  = (s.endingText as string).slice(0, 80);
+  if ("characterSprite" in s) previewImage = s.characterSprite as string;
+  const sceneLabel = `Act ${s.act} · Scene ${s.sceneNumber}`;
+  return { previewText, previewImage, sceneLabel };
 }
 
 export default function GameEngine({
@@ -50,10 +66,42 @@ export default function GameEngine({
     });
   }, []);
 
-  // beforeunload — fire-and-forget save on tab close / refresh
+  // beforeunload — fire-and-forget save
   useEffect(() => {
     const cleanup = registerUnloadSave(() => saveStateRef.current);
     return cleanup;
+  }, []);
+
+  // ── Auto-save to slot 0 ──────────────────────────────────────────────────────
+  /**
+   * Writes slot 0 (auto-save) with the NEXT scene the player will see.
+   * This means loading the auto-save always resumes 1 scene ahead —
+   * the player never re-watches the scene they just finished.
+   */
+  const writeAutoSave = useCallback(async (nextSceneId: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const playTimeSeconds =
+      saveStateRef.current.savedPlayTime +
+      (Date.now() - saveStateRef.current.sessionStartMs) / 1000;
+
+    const preview  = buildSlotPreview(nextSceneId);
+    const newAct   = getActForScene(nextSceneId);
+
+    const slot: SaveSlot = {
+      slotId: AUTO_SAVE_SLOT,
+      uid: user.uid,
+      currentAct: newAct,
+      currentSceneId: nextSceneId, // ← 1 ahead: resume here, not at current scene
+      choices: { ...saveStateRef.current.choices },
+      affection: { ...saveStateRef.current.affection },
+      playTimeSeconds: Math.floor(playTimeSeconds),
+      lastSaved: Date.now(),
+      ...preview,
+    };
+
+    await writeSlot(slot);
   }, []);
 
   // Auto-advance transition scenes
@@ -81,9 +129,13 @@ export default function GameEngine({
     saveStateRef.current = { ...saveStateRef.current, actNumber: newAct, sceneId: nextId };
 
     sceneAdvanceCountRef.current += 1;
+    // Debounced Firestore save every N scenes
     if (sceneAdvanceCountRef.current % AUTOSAVE_EVERY_N_SCENES === 0) {
       saveProgress(saveStateRef.current);
     }
+
+    // Auto-save to slot 0 — always save NEXT scene ID so resume skips current
+    writeAutoSave(nextId);
 
     setIsTransitioning(true);
     setVisible(false);
@@ -93,7 +145,7 @@ export default function GameEngine({
       setIsTransitioning(false);
     }, TRANSITION_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTransitioning]);
+  }, [isTransitioning, writeAutoSave]);
 
   const recordChoice = useCallback((choiceSceneId: string, optionId: string) => {
     saveStateRef.current = {
@@ -104,7 +156,6 @@ export default function GameEngine({
 
   const handleSceneAdvance = useCallback((nextSceneId?: string) => {
     if (scene?.type === "choice" && nextSceneId) {
-      // For choice scenes, record which option was selected
       const choiceIndex = (scene as any).options?.findIndex(
         (opt: any) => opt.nextScene === nextSceneId
       );
@@ -167,7 +218,6 @@ export default function GameEngine({
         Act {scene.act} · Scene {scene.sceneNumber}
       </div>
 
-      {/* Scene renderer */}
       <SceneRenderer
         scene={scene}
         onAdvance={handleSceneAdvance}

@@ -6,12 +6,41 @@ import styles from "../components/Css/Menubuttons.module.css";
 
 interface MenuButtonsProps {
   characterName: string;
-  onStart: () => void;
+  hasPlayed: boolean;     // ← true if auto-save slot exists
+  onStart: () => void;    // new game (always available)
+  onContinue: () => void; // load from auto-save (only shown if hasPlayed)
   onSaves: () => void;
   onSettings: () => void;
 }
 
-// ─── START button ──────────────────────────────────────────────────────────────
+// ─── CONTINUE button (primary, when hasPlayed) ─────────────────────────────────
+
+function ContinueButton({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      className={styles.startOuter}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div className={styles.startInner}>
+        {hovered && <span className={styles.startShimmer} />}
+        <div className={styles.startIconWrap}>
+          <span className={styles.startIcon}>▶</span>
+        </div>
+        <span className={styles.startTextWrap}>
+          <span className={styles.startLabel}>Continue</span>
+          <span className={styles.startSub}>Resume from last save</span>
+        </span>
+        <span className={styles.startArrow}>›</span>
+      </div>
+    </button>
+  );
+}
+
+// ─── START GAME button (primary, when !hasPlayed) ──────────────────────────────
 
 function StartButton({ onClick }: { onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
@@ -25,19 +54,13 @@ function StartButton({ onClick }: { onClick: () => void }) {
     >
       <div className={styles.startInner}>
         {hovered && <span className={styles.startShimmer} />}
-
-        {/* Play icon in circle */}
         <div className={styles.startIconWrap}>
           <span className={styles.startIcon}>▶</span>
         </div>
-
-        {/* Text */}
         <span className={styles.startTextWrap}>
           <span className={styles.startLabel}>Start Game</span>
           <span className={styles.startSub}>Begin your journey</span>
         </span>
-
-        {/* Arrow */}
         <span className={styles.startArrow}>›</span>
       </div>
     </button>
@@ -105,7 +128,9 @@ function CardButton({ icon, label, sub, accentFrom, accentTo, spinIcon, onClick 
 
 export default function MenuButtons({
   characterName,
+  hasPlayed,
   onStart,
+  onContinue,
   onSaves,
   onSettings,
 }: MenuButtonsProps) {
@@ -120,10 +145,26 @@ export default function MenuButtons({
       </p>
 
       <div className={styles.buttonStack}>
-        <StartButton onClick={onStart} />
+        {/* Primary action — Continue if played, Start if new */}
+        {hasPlayed ? (
+          <ContinueButton onClick={onContinue} />
+        ) : (
+          <StartButton onClick={onStart} />
+        )}
+
+        {/* Secondary row */}
         <div className={styles.secondaryRow}>
+          {/* If has played, show Start New Game as a card */}
+          {hasPlayed && (
+            <CardButton
+              icon="✦" label="New Game" sub="Start fresh"
+              accentFrom="#ec4899" accentTo="#f472b6"
+              onClick={onStart}
+            />
+          )}
+
           <CardButton
-            icon="◈" label="Saves" sub="Continue story"
+            icon="◈" label="Saves" sub="Manage saves"
             accentFrom="#38bdf8" accentTo="#6366f1"
             onClick={onSaves}
           />

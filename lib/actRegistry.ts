@@ -12,7 +12,6 @@ import { ACT_2_SCENES, ACT_2_ASSETS, ACT_2_META } from "./acts/act_2";
 const ALL_SCENES: Scene[] = [
   ...ACT_1_SCENES,
   ...ACT_2_SCENES,
-  // ...ACT_3_SCENES,
 ];
 
 export const ACT_MANIFESTS: Record<number, ActManifest> = {

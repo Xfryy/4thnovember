@@ -2,45 +2,120 @@
 
 import { useState, useEffect, useRef } from "react";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { auth } from "@/lib/firebase";
+import { auth, updateCharacterName } from "@/lib/firebase";
 
 interface ProfileCardProps {
   characterName: string;
   email: string;
   onLogout: () => void;
   isLoading: boolean;
+  onNameChange?: (newName: string) => void;
 }
 
 interface UserStats { totalPlays: number; totalPlayTime: number; }
 
 const DEFAULT_STATS: UserStats = { totalPlays: 0, totalPlayTime: 0 };
 
-export default function ProfileCard({ characterName, email, onLogout, isLoading }: ProfileCardProps) {
-  const [open,  setOpen]  = useState(false);
-  const [stats, setStats] = useState<UserStats>(DEFAULT_STATS);
-  // Cache so we only fetch once per session
-  const fetched = useRef(false);
+/** Format playtime in minutes to human-readable format (e.g., "2h 30m" or "45m") */
+function formatPlaytime(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+}
 
+export default function ProfileCard({ characterName, email, onLogout, isLoading, onNameChange }: ProfileCardProps) {
+  const [open,  setOpen]  = useState(false);
+  const [displayName, setDisplayName] = useState(characterName);
+  const [stats, setStats] = useState<UserStats>(DEFAULT_STATS);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState(characterName);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ── Fetch user stats from Firestore ──────────────────────────────────────
+  const fetchStats = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const snap = await getDoc(doc(getFirestore(), "users", user.uid));
+      if (!snap.exists()) return;
+      const d = snap.data();
+      setStats({
+        totalPlays:    d.totalPlays    ?? 0,
+        totalPlayTime: d.totalPlayTime ?? 0,
+      });
+    } catch (error) {
+      console.error("Error fetching profile stats:", error);
+    }
+  };
+
+  // ── Fetch on component mount and setup auto-refresh every 1 minute ────────
   useEffect(() => {
-    if (!open || fetched.current) return;
-    fetched.current = true;
+    // Fetch immediately when component mounts
+    fetchStats();
+
+    // Setup interval to refresh every 60 seconds
+    intervalRef.current = setInterval(() => {
+      fetchStats();
+    }, 60000); // 1 minute = 60000ms
+
+    // Cleanup interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // ── Additional fetch when modal opens ────────────────────────────────────
+  useEffect(() => {
+    if (open) {
+      fetchStats();
+    }
+  }, [open]);
+  // ── Update editedName and displayName when characterName changes ─────────
+  useEffect(() => {
+    setEditedName(characterName);
+    setDisplayName(characterName);
+  }, [characterName]);
+
+  // ── Save character name to Firestore ─────────────────────────────────────
+  const handleSaveName = async () => {
+    if (!editedName.trim()) {
+      setEditedName(characterName);
+      setIsEditingName(false);
+      return;
+    }
 
     const user = auth.currentUser;
     if (!user) return;
 
-    getDoc(doc(getFirestore(), "users", user.uid))
-      .then((snap) => {
-        if (!snap.exists()) return;
-        const d = snap.data();
-        setStats({
-          totalPlays:    d.totalPlays    ?? 0,
-          totalPlayTime: d.totalPlayTime ?? 0,
-        });
-      })
-      .catch(console.error);
-  }, [open]);
+    try {
+      setIsSavingName(true);
+      await updateCharacterName(user.uid, editedName.trim());
+      // Update display immediately and notify parent
+      setDisplayName(editedName.trim());
+      onNameChange?.(editedName.trim());
+      setIsEditingName(false);
+    } catch (error) {
+      console.error("Error updating character name:", error);
+      setEditedName(characterName);
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
-  const initial = characterName?.charAt(0)?.toUpperCase() || "?";
+  // ── Cancel edit and revert to original ────────────────────────────────────
+  const handleCancelEdit = () => {
+    setEditedName(characterName);
+    setIsEditingName(false);
+  };
+  const initial = displayName?.charAt(0)?.toUpperCase() || "?";
 
   return (
     <>
@@ -55,15 +130,15 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading 
           boxShadow:     "0 4px 20px rgba(236,72,153,0.15)",
         }}
       >
-        <div className="text-right hidden sm:block">
-          <p className="text-sm font-bold leading-none mb-0.5 max-w-[120px] truncate"
+        <div className="text-right hidden sm:block max-w-xs" style={{ minWidth: 0 }}>
+          <p className="text-sm font-bold leading-none mb-0.5 truncate"
             style={{
               background: "linear-gradient(135deg, #f9a8d4, #ec4899)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             }}
-          >{characterName}</p>
-          <p className="text-xs text-purple-400 leading-none">
-            ⏱ {stats.totalPlayTime}m &nbsp;·&nbsp; 🏆 {stats.totalPlays}
+          >{displayName}</p>
+          <p className="text-xs text-purple-400 leading-none whitespace-nowrap">
+            🏆 {stats.totalPlays} &nbsp;·&nbsp; ⏱ {formatPlaytime(stats.totalPlayTime)}
           </p>
         </div>
         <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-white text-base flex-shrink-0"
@@ -102,15 +177,93 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading 
             </div>
 
             <div className="px-6 py-6 flex flex-col gap-5">
+              {/* Name section with edit capability */}
               <div className="text-center">
-                <h2 className="text-white font-black text-xl leading-tight mb-1">{characterName}</h2>
-                <p className="text-purple-400 text-xs tracking-widest uppercase">Player Profile</p>
+                {isEditingName ? (
+                  <div className="flex flex-col gap-3">
+                    <input
+                      type="text"
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      placeholder="Enter your name..."
+                      autoFocus
+                      maxLength={32}
+                      className="w-full px-4 py-2 rounded-lg text-center font-black text-lg text-white"
+                      style={{
+                        background: "rgba(236,72,153,0.1)",
+                        border: "1px solid rgba(236,72,153,0.3)",
+                        outline: "none",
+                        transition: "all 0.2s ease",
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveName();
+                        if (e.key === "Escape") handleCancelEdit();
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "rgba(236,72,153,0.6)";
+                        e.currentTarget.style.background = "rgba(236,72,153,0.15)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = "rgba(236,72,153,0.3)";
+                        e.currentTarget.style.background = "rgba(236,72,153,0.1)";
+                      }}
+                    />
+                    <div className="flex gap-2 justify-center">
+                      <button
+                        onClick={handleSaveName}
+                        disabled={isSavingName}
+                        className="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
+                        style={{
+                          background: "rgba(34,197,94,0.2)",
+                          border: "1px solid rgba(34,197,94,0.5)",
+                          color: "#22c55e",
+                          cursor: isSavingName ? "not-allowed" : "pointer",
+                          opacity: isSavingName ? 0.6 : 1,
+                        }}
+                      >
+                        {isSavingName ? "Saving..." : "✓ Save"}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={isSavingName}
+                        className="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
+                        style={{
+                          background: "rgba(239,68,68,0.2)",
+                          border: "1px solid rgba(239,68,68,0.5)",
+                          color: "#f87171",
+                          cursor: isSavingName ? "not-allowed" : "pointer",
+                          opacity: isSavingName ? 0.6 : 1,
+                        }}
+                      >
+                        ✕ Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <h2 className="text-white font-black text-xl leading-tight">{displayName}</h2>
+                    <button
+                      onClick={() => setIsEditingName(true)}
+                      className="p-1.5 rounded-lg transition-all hover:scale-110 active:scale-95"
+                      style={{
+                        background: "rgba(236,72,153,0.1)",
+                        border: "1px solid rgba(236,72,153,0.25)",
+                        color: "#ec4899",
+                        cursor: "pointer",
+                      }}
+                      title="Edit name"
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
+                <p className="text-purple-400 text-xs tracking-widest uppercase mt-2">Player Profile</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon:"🏆", label:"Total Plays",     value: stats.totalPlays,    color:"rgba(236,72,153,0.08)",  border:"rgba(236,72,153,0.15)"  },
-                  { icon:"⏱", label:"Play Time (min)", value: stats.totalPlayTime, color:"rgba(99,102,241,0.08)",  border:"rgba(99,102,241,0.15)"  },
+                  { icon:"🏆", label:"Total Sessions", value: stats.totalPlays, color:"rgba(236,72,153,0.08)", border:"rgba(236,72,153,0.15)" },
+                  { icon:"⏱", label:"Total Play Time", value: formatPlaytime(stats.totalPlayTime), color:"rgba(99,102,241,0.08)", border:"rgba(99,102,241,0.15)" },
                 ].map(({ icon, label, value, color, border }) => (
                   <div key={label} className="rounded-2xl p-4 text-center"
                     style={{ background:color, border:`1px solid ${border}` }}>

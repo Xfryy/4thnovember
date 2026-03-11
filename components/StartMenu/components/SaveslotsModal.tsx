@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
-import { SaveSlot, readAllSlots, clearSlot, AUTO_SAVE_SLOT, TOTAL_SLOTS } from "@/lib/saveSlots";
+import { SaveSlot, AUTO_SAVE_SLOT, TOTAL_SLOTS } from "@/lib/saveSlots";
 import { auth } from "@/lib/firebase";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -10,9 +10,7 @@ import { auth } from "@/lib/firebase";
 interface SaveSlotsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** If provided, clicking a slot SAVES to it (in-game mode). Otherwise it LOADS. */
   onSave?: (slotId: number) => Promise<void>;
-  /** Called when player wants to LOAD from a slot */
   onLoad?: (slot: SaveSlot) => void;
 }
 
@@ -21,295 +19,401 @@ interface SaveSlotsModalProps {
 function formatDate(ts: number): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}  ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatPlayTime(sec: number): string {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  const s = Math.floor(sec % 60);
+  if (h > 0) return `${h}:${pad2(m)}:${pad2(s)}`;
+  return `${pad2(m)}:${pad2(s)}`;
 }
+function pad2(n: number) { return String(n).padStart(2, "0"); }
 
-// ── Slot Card ──────────────────────────────────────────────────────────────────
+// ── Slot Row — proper VN style ─────────────────────────────────────────────────
 
-interface SlotCardProps {
+interface SlotRowProps {
   slotId: number;
   slot: SaveSlot | null;
   isLoading: boolean;
   isSaving: boolean;
   mode: "load" | "save";
+  isActive: boolean;           // highlighted (selected / hovered)
+  onSelect: () => void;
   onLoad: () => void;
   onSave: () => void;
   onDelete: () => void;
 }
 
-function SlotCard({ slotId, slot, isLoading, isSaving, mode, onLoad, onSave, onDelete }: SlotCardProps) {
+function SlotRow({
+  slotId, slot, isLoading, isSaving, mode,
+  isActive, onSelect, onLoad, onSave, onDelete,
+}: SlotRowProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const isAuto     = slotId === AUTO_SAVE_SLOT;
-  const isEmpty    = !slot;
-  const isWorking  = isLoading || isSaving;
+  const isAuto    = slotId === AUTO_SAVE_SLOT;
+  const isEmpty   = !slot;
+  const isWorking = isLoading || isSaving;
 
-  // Auto-reset confirm state
   useEffect(() => {
     if (!confirmDelete) return;
     const t = setTimeout(() => setConfirmDelete(false), 3000);
     return () => clearTimeout(t);
   }, [confirmDelete]);
 
+  const slotLabel = isAuto ? "AUTO" : `${slotId}`;
+
   return (
     <div
+      onClick={onSelect}
       style={{
         display: "flex",
-        gap: 12,
-        borderRadius: 14,
-        border: isAuto
-          ? "1px solid rgba(236,72,153,0.45)"
-          : isEmpty
-          ? "1px dashed rgba(139,92,246,0.2)"
-          : "1px solid rgba(139,92,246,0.3)",
-        background: isAuto
-          ? "rgba(236,72,153,0.06)"
-          : isEmpty
-          ? "rgba(255,255,255,0.02)"
-          : "rgba(139,92,246,0.06)",
-        padding: "10px 12px",
-        transition: "all 0.2s ease",
-        minHeight: 88,
+        gap: 0,
+        height: 96,
+        borderRadius: 10,
+        overflow: "hidden",
+        border: isActive
+          ? isAuto
+            ? "1.5px solid rgba(236,72,153,0.8)"
+            : "1.5px solid rgba(139,92,246,0.7)"
+          : "1.5px solid rgba(255,255,255,0.06)",
+        background: isActive
+          ? "rgba(255,255,255,0.04)"
+          : "rgba(255,255,255,0.015)",
+        cursor: isEmpty && mode === "load" ? "default" : "pointer",
+        transition: "border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease",
+        boxShadow: isActive
+          ? isAuto
+            ? "0 0 20px rgba(236,72,153,0.15), inset 0 0 0 1px rgba(236,72,153,0.08)"
+            : "0 0 20px rgba(139,92,246,0.15), inset 0 0 0 1px rgba(139,92,246,0.06)"
+          : "none",
+        flexShrink: 0,
       }}
     >
-      {/* ── Preview Image ── */}
-      <div
-        style={{
-          width: 64,
-          height: 88,
-          borderRadius: 10,
-          overflow: "hidden",
-          flexShrink: 0,
-          background: isEmpty
-            ? "rgba(255,255,255,0.04)"
-            : "linear-gradient(160deg, #1a0a2e, #0a0618)",
-          border: "1px solid rgba(236,72,153,0.15)",
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      {/* ── Slot number tab (left strip) ── */}
+      <div style={{
+        width: 48,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 3,
+        background: isAuto
+          ? isActive
+            ? "linear-gradient(180deg, rgba(236,72,153,0.35), rgba(168,85,247,0.25))"
+            : "linear-gradient(180deg, rgba(236,72,153,0.15), rgba(168,85,247,0.1))"
+          : isActive
+          ? "rgba(139,92,246,0.2)"
+          : "rgba(139,92,246,0.07)",
+        borderRight: "1px solid rgba(255,255,255,0.06)",
+        transition: "background 0.15s ease",
+      }}>
+        <span style={{
+          fontSize: isAuto ? "0.45rem" : "1rem",
+          fontWeight: 900,
+          letterSpacing: isAuto ? "0.1em" : "0",
+          color: isAuto
+            ? (isActive ? "#ec4899" : "rgba(236,72,153,0.6)")
+            : (isActive ? "#c4b5fd" : "rgba(139,92,246,0.5)"),
+          lineHeight: 1,
+          transition: "color 0.15s ease",
+        }}>
+          {slotLabel}
+        </span>
+        {isAuto && (
+          <div style={{
+            width: 4, height: 4, borderRadius: "50%",
+            background: isActive ? "#ec4899" : "rgba(236,72,153,0.3)",
+            transition: "background 0.15s ease",
+          }} />
+        )}
+      </div>
+
+      {/* ── Screenshot preview ── */}
+      <div style={{
+        width: 72,
+        flexShrink: 0,
+        position: "relative",
+        overflow: "hidden",
+        background: "#06020f",
+        borderRight: "1px solid rgba(255,255,255,0.05)",
+      }}>
         {slot?.previewImage ? (
-          <Image
-            src={slot.previewImage}
-            alt="preview"
-            fill
-            sizes="64px"
-            style={{ objectFit: "cover", objectPosition: "top", opacity: 0.9 }}
-          />
+          <>
+            {slot.previewImage.startsWith('data:') ? (
+              // Data URL (screenshot) — use regular img tag
+              <img
+                src={slot.previewImage}
+                alt="save preview"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'top center',
+                  opacity: 0.85,
+                  display: 'block',
+                }}
+              />
+            ) : (
+              // URL image (sprite) — use Next.js Image component
+              <Image
+                src={slot.previewImage}
+                alt="save preview"
+                fill
+                sizes="72px"
+                style={{ objectFit: "cover", objectPosition: "top center", opacity: 0.85 }}
+              />
+            )}
+            {/* Subtle vignette */}
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "linear-gradient(to right, transparent 60%, rgba(6,2,15,0.6))",
+            }} />
+          </>
         ) : (
           <div style={{
-            fontSize: isEmpty ? 22 : 18,
-            opacity: 0.25,
+            width: "100%", height: "100%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "1.4rem",
+            color: "rgba(139,92,246,0.12)",
           }}>
             {isEmpty ? "✦" : "🎭"}
           </div>
         )}
-
-        {/* Auto badge */}
-        {isAuto && !isEmpty && (
-          <div style={{
-            position: "absolute",
-            bottom: 3, left: "50%",
-            transform: "translateX(-50%)",
-            fontSize: "0.45rem",
-            fontWeight: 900,
-            letterSpacing: "0.15em",
-            color: "#fff",
-            background: "linear-gradient(135deg, #ec4899, #a855f7)",
-            borderRadius: 4,
-            padding: "2px 5px",
-            whiteSpace: "nowrap",
-          }}>
-            AUTO
-          </div>
-        )}
       </div>
 
-      {/* ── Slot Info ── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0 }}>
-        <div>
-          {/* Slot label */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            <span style={{
-              fontSize: "0.6rem",
-              fontWeight: 900,
-              letterSpacing: "0.2em",
-              textTransform: "uppercase",
-              color: isAuto ? "#ec4899" : "rgba(196,181,253,0.5)",
-            }}>
-              {isAuto ? "✦ Auto Save" : `Slot ${slotId}`}
-            </span>
-            {!isEmpty && slot && (
-              <span style={{
-                fontSize: "0.55rem",
-                color: "rgba(107,70,193,0.7)",
-                letterSpacing: "0.08em",
-              }}>
-                {slot.sceneLabel ?? `Act ${slot.currentAct}`}
-              </span>
-            )}
-          </div>
-
-          {/* Preview text or empty state */}
-          {isEmpty ? (
+      {/* ── Main content ── */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "10px 12px",
+        minWidth: 0,
+      }}>
+        {isEmpty ? (
+          /* ── Empty state ── */
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column",
+            justifyContent: "center", gap: 6,
+          }}>
             <p style={{
               fontSize: "0.65rem",
-              color: "rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.12)",
               fontStyle: "italic",
-              letterSpacing: "0.05em",
+              letterSpacing: "0.08em",
             }}>
-              — empty —
+              — No Data —
             </p>
-          ) : (
+            {mode === "save" && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onSave(); }}
+                disabled={isWorking}
+                style={{
+                  alignSelf: "flex-start",
+                  padding: "4px 14px",
+                  borderRadius: 6,
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  cursor: isWorking ? "not-allowed" : "pointer",
+                  background: "rgba(99,102,241,0.15)",
+                  border: "1px solid rgba(99,102,241,0.35)",
+                  color: "#a5b4fc",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(99,102,241,0.3)";
+                  e.currentTarget.style.color = "#c7d2fe";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "rgba(99,102,241,0.15)";
+                  e.currentTarget.style.color = "#a5b4fc";
+                }}
+              >
+                {isSaving ? "Saving…" : "+ New Save"}
+              </button>
+            )}
+          </div>
+        ) : (
+          /* ── Filled state ── */
+          <>
+            {/* Top row: scene label + act badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+              <span style={{
+                fontSize: "0.55rem",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: isAuto ? "#ec4899" : "rgba(167,139,250,0.7)",
+                whiteSpace: "nowrap",
+              }}>
+                {slot?.sceneLabel ?? `Act ${slot?.currentAct}`}
+              </span>
+              {isAuto && (
+                <span style={{
+                  fontSize: "0.42rem", fontWeight: 900,
+                  letterSpacing: "0.12em",
+                  padding: "1px 5px",
+                  borderRadius: 3,
+                  background: "linear-gradient(135deg, #ec4899, #a855f7)",
+                  color: "#fff",
+                }}>AUTO SAVE</span>
+              )}
+            </div>
+
+            {/* Preview text */}
             <p style={{
-              fontSize: "0.7rem",
-              color: "rgba(196,181,253,0.8)",
-              lineHeight: 1.4,
+              fontSize: "0.72rem",
+              color: isActive ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.55)",
+              lineHeight: 1.5,
               letterSpacing: "0.02em",
               overflow: "hidden",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
-              marginBottom: 4,
+              margin: 0,
+              flex: 1,
+              transition: "color 0.15s ease",
             }}>
-              {slot!.previewText || "…"}
+              {slot?.previewText || "—"}
             </p>
-          )}
 
-          {/* Date + playtime */}
-          {slot && (
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ fontSize: "0.55rem", color: "rgba(107,70,193,0.7)" }}>
-                🕐 {formatDate(slot.lastSaved)}
+            {/* Bottom row: date + time */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              marginTop: 4,
+            }}>
+              <span style={{
+                fontSize: "0.52rem",
+                color: "rgba(107,70,193,0.65)",
+                letterSpacing: "0.05em",
+                fontFamily: "monospace",
+              }}>
+                {formatDate(slot!.lastSaved)}
               </span>
-              <span style={{ fontSize: "0.55rem", color: "rgba(107,70,193,0.7)" }}>
-                ⏱ {formatPlayTime(slot.playTimeSeconds)}
+              <span style={{
+                fontSize: "0.52rem",
+                color: "rgba(107,70,193,0.5)",
+                letterSpacing: "0.05em",
+                fontFamily: "monospace",
+              }}>
+                {formatPlayTime(slot!.playTimeSeconds)}
               </span>
             </div>
-          )}
-        </div>
+          </>
+        )}
+      </div>
 
-        {/* ── Action Buttons ── */}
-        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-          {/* Load / Save primary action */}
-          {mode === "load" && !isEmpty && (
-            <button
-              onClick={onLoad}
+      {/* ── Action buttons (right side) — only for filled slots ── */}
+      {!isEmpty && (
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          padding: "10px 10px 10px 0",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          {/* Primary: Load / Save */}
+          {mode === "load" ? (
+            <ActionBtn
+              onClick={(e) => { e.stopPropagation(); onLoad(); }}
               disabled={isWorking}
-              style={{
-                flex: 1,
-                padding: "5px 10px",
-                borderRadius: 8,
-                fontSize: "0.65rem",
-                fontWeight: 800,
-                letterSpacing: "0.1em",
-                cursor: isWorking ? "not-allowed" : "pointer",
-                background: "linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.3))",
-                border: "1px solid rgba(236,72,153,0.4)",
-                color: "#f9a8d4",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.5), rgba(168,85,247,0.5))";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.3))";
-              }}
-            >
-              {isLoading ? "Loading..." : "▶ Load"}
-            </button>
-          )}
-
-          {mode === "save" && (
-            <button
-              onClick={onSave}
+              color="#ec4899"
+              label={isLoading ? "…" : "LOAD"}
+              primary
+            />
+          ) : (
+            <ActionBtn
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
               disabled={isWorking}
-              style={{
-                flex: 1,
-                padding: "5px 10px",
-                borderRadius: 8,
-                fontSize: "0.65rem",
-                fontWeight: 800,
-                letterSpacing: "0.1em",
-                cursor: isWorking ? "not-allowed" : "pointer",
-                background: isEmpty
-                  ? "linear-gradient(135deg, rgba(99,102,241,0.3), rgba(168,85,247,0.3))"
-                  : "linear-gradient(135deg, rgba(236,72,153,0.3), rgba(168,85,247,0.3))",
-                border: `1px solid ${isEmpty ? "rgba(99,102,241,0.4)" : "rgba(236,72,153,0.4)"}`,
-                color: isEmpty ? "#a5b4fc" : "#f9a8d4",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {isSaving ? "Saving..." : isEmpty ? "+ New Save" : "💾 Overwrite"}
-            </button>
+              color="#a855f7"
+              label={isSaving ? "…" : "SAVE"}
+              primary
+            />
           )}
 
-          {/* Delete — only for non-auto, non-empty manual slots */}
-          {!isAuto && !isEmpty && (
+          {/* Delete (manual slots only) */}
+          {!isAuto && (
             confirmDelete ? (
-              <button
-                onClick={() => { onDelete(); setConfirmDelete(false); }}
-                style={{
-                  padding: "5px 8px",
-                  borderRadius: 8,
-                  fontSize: "0.6rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  background: "rgba(239,68,68,0.3)",
-                  border: "1px solid rgba(239,68,68,0.5)",
-                  color: "#fca5a5",
-                  animation: "pulse-red 0.4s ease",
-                }}
-              >
-                Sure?
-              </button>
+              <ActionBtn
+                onClick={(e) => { e.stopPropagation(); onDelete(); setConfirmDelete(false); }}
+                color="#ef4444"
+                label="OK?"
+                danger
+              />
             ) : (
-              <button
-                onClick={() => setConfirmDelete(true)}
-                style={{
-                  padding: "5px 8px",
-                  borderRadius: 8,
-                  fontSize: "0.6rem",
-                  cursor: "pointer",
-                  background: "rgba(239,68,68,0.08)",
-                  border: "1px solid rgba(239,68,68,0.2)",
-                  color: "rgba(252,165,165,0.5)",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(239,68,68,0.2)";
-                  e.currentTarget.style.color = "#fca5a5";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(239,68,68,0.08)";
-                  e.currentTarget.style.color = "rgba(252,165,165,0.5)";
-                }}
-              >
-                🗑
-              </button>
+              <ActionBtn
+                onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
+                color="#6b6b6b"
+                label="🗑"
+                small
+              />
             )
           )}
         </div>
-      </div>
+      )}
     </div>
+  );
+}
+
+// ── Micro action button ────────────────────────────────────────────────────────
+
+function ActionBtn({
+  onClick, disabled, color, label, primary, danger, small,
+}: {
+  onClick: (e: React.MouseEvent) => void;
+  disabled?: boolean;
+  color: string;
+  label: string;
+  primary?: boolean;
+  danger?: boolean;
+  small?: boolean;
+}) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        padding: primary ? "5px 14px" : small ? "4px 8px" : "4px 10px",
+        borderRadius: 6,
+        fontSize: primary ? "0.58rem" : "0.54rem",
+        fontWeight: 800,
+        letterSpacing: "0.14em",
+        cursor: disabled ? "not-allowed" : "pointer",
+        border: `1px solid ${hov ? color + "cc" : color + "55"}`,
+        background: hov
+          ? danger
+            ? `rgba(239,68,68,0.25)`
+            : `${color}25`
+          : "rgba(0,0,0,0.3)",
+        color: hov ? "#fff" : `${color}cc`,
+        transition: "all 0.12s ease",
+        whiteSpace: "nowrap",
+        opacity: disabled ? 0.4 : 1,
+        minWidth: primary ? 56 : 32,
+        textAlign: "center",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
 // ── Main Modal ─────────────────────────────────────────────────────────────────
 
 export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: SaveSlotsModalProps) {
-  const [slots, setSlots]               = useState<(SaveSlot | null)[]>(Array(TOTAL_SLOTS).fill(null));
-  const [fetching, setFetching]         = useState(false);
-  const [loadingSlot, setLoadingSlot]   = useState<number | null>(null);
-  const [savingSlot, setSavingSlot]     = useState<number | null>(null);
+  const [slots,       setSlots]       = useState<(SaveSlot | null)[]>(Array(TOTAL_SLOTS).fill(null));
+  const [fetching,    setFetching]    = useState(false);
+  const [loadingSlot, setLoadingSlot] = useState<number | null>(null);
+  const [savingSlot,  setSavingSlot]  = useState<number | null>(null);
+  const [activeSlot,  setActiveSlot]  = useState<number | null>(null);
 
   const mode: "load" | "save" = onSave ? "save" : "load";
 
@@ -326,9 +430,15 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
     }
   }, []);
 
+  useEffect(() => { if (isOpen) fetchSlots(); }, [isOpen, fetchSlots]);
+
+  // Close on Escape
   useEffect(() => {
-    if (isOpen) fetchSlots();
-  }, [isOpen, fetchSlots]);
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -354,166 +464,274 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
     if (!user) return;
     const { clearSlot } = await import("@/lib/saveSlots");
     await clearSlot(user.uid, slotId);
-    setSlots((prev) => {
-      const next = [...prev];
-      next[slotId] = null;
-      return next;
-    });
+    setSlots(prev => { const n = [...prev]; n[slotId] = null; return n; });
   };
 
+  // Split auto-save from manual slots
+  const autoSlot  = slots[AUTO_SAVE_SLOT];
+  const manualSlots = Array.from({ length: TOTAL_SLOTS - 1 }, (_, i) => i + 1);
+
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 200,
-        background: "rgba(0,0,0,0.75)",
-        backdropFilter: "blur(8px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 20,
-      }}
-    >
+    <>
+      {/* ── Backdrop ── */}
       <div
-        onClick={(e) => e.stopPropagation()}
+        onClick={onClose}
         style={{
-          width: "100%",
-          maxWidth: 560,
-          maxHeight: "88vh",
-          borderRadius: 24,
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          background: "rgba(10, 6, 25, 0.98)",
-          border: "1px solid rgba(236,72,153,0.25)",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.8), 0 0 60px rgba(236,72,153,0.08)",
-          animation: "modal-in 0.25s cubic-bezier(0.22,1,0.36,1) both",
+          position: "fixed", inset: 0, zIndex: 200,
+          background: "rgba(0,0,0,0.72)",
+          backdropFilter: "blur(12px)",
+          animation: "sm-bg 0.25s ease both",
+        }}
+      />
+
+      {/* ── Panel — outer div only handles centering, never animated ── */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          zIndex: 201,
+          width: "min(640px, calc(100vw - 32px))",
+          maxHeight: "min(740px, calc(100vh - 32px))",
+          /* No animation here — transform must never be overridden */
         }}
       >
-        {/* Top accent */}
-        <div style={{ height: 3, background: "linear-gradient(90deg, #ec4899, #a855f7, #6366f1)", flexShrink: 0 }} />
-
-        {/* Header */}
+      {/* inner div gets the scale/fade animation — no transform conflict */}
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          maxHeight: "min(740px, calc(100vh - 32px))",
+          display: "flex",
+          flexDirection: "column",
+          borderRadius: 16,
+          overflow: "hidden",
+          background: "rgba(8, 4, 20, 0.97)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 32px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(236,72,153,0.12)",
+          animation: "sm-in 0.28s cubic-bezier(0.22,1,0.36,1) both",
+        }}
+      >
+        {/* ── Top accent bar ── */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 12,
-          padding: "16px 20px",
-          borderBottom: "1px solid rgba(236,72,153,0.1)",
+          height: 2,
+          background: "linear-gradient(90deg, transparent 0%, #ec4899 25%, #a855f7 60%, #6366f1 85%, transparent 100%)",
           flexShrink: 0,
+        }} />
+
+        {/* ── Header ── */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          padding: "16px 20px 14px",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          flexShrink: 0,
+          gap: 12,
         }}>
+          {/* Mode icon */}
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: "rgba(236,72,153,0.12)",
-            border: "1px solid rgba(236,72,153,0.25)",
+            width: 34, height: 34, borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 18,
+            fontSize: "1.1rem",
+            background: mode === "save"
+              ? "rgba(168,85,247,0.15)"
+              : "rgba(236,72,153,0.15)",
+            border: mode === "save"
+              ? "1px solid rgba(168,85,247,0.3)"
+              : "1px solid rgba(236,72,153,0.3)",
           }}>
             {mode === "save" ? "💾" : "📂"}
           </div>
+
           <div>
-            <p style={{ color: "#fff", fontWeight: 900, fontSize: "1rem", margin: 0 }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: "1rem",
+              fontWeight: 900,
+              letterSpacing: "0.06em",
+              color: "#fff",
+            }}>
               {mode === "save" ? "Save Game" : "Load Game"}
-            </p>
-            <p style={{ color: "rgba(167,139,250,0.6)", fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", margin: 0 }}>
-              {mode === "save" ? "Choose a slot to save" : "Choose a slot to load"}
+            </h2>
+            <p style={{
+              margin: 0,
+              fontSize: "0.58rem",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "rgba(167,139,250,0.45)",
+              marginTop: 1,
+            }}>
+              {mode === "save" ? "Select slot to save" : "Select slot to load"}
             </p>
           </div>
+
+          {/* Close */}
           <button
             onClick={onClose}
             style={{
               marginLeft: "auto",
-              width: 32, height: 32, borderRadius: 8,
-              background: "rgba(255,255,255,0.06)",
+              width: 30, height: 30, borderRadius: 7,
               border: "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "0.9rem", cursor: "pointer",
-              transition: "all 0.15s ease",
+              background: "rgba(255,255,255,0.04)",
+              color: "rgba(255,255,255,0.4)",
+              fontSize: "0.85rem",
+              cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.15s ease",
+              flexShrink: 0,
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.5)"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(239,68,68,0.15)";
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.4)";
+              e.currentTarget.style.color = "#f87171";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+              e.currentTarget.style.color = "rgba(255,255,255,0.4)";
+            }}
           >
             ✕
           </button>
         </div>
 
-        {/* Slot list */}
+        {/* ── Slot list ── */}
         <div style={{
           flex: 1,
           overflowY: "auto",
           padding: "14px 16px",
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: 6,
         }}>
           {fetching ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              gap: 10, minHeight: 200,
+            }}>
               <div style={{
-                fontSize: "0.7rem",
-                color: "rgba(167,139,250,0.5)",
-                letterSpacing: "0.15em",
+                width: 28, height: 28,
+                border: "2px solid rgba(236,72,153,0.15)",
+                borderTopColor: "#ec4899",
+                borderRadius: "50%",
+                animation: "sm-spin 0.8s linear infinite",
+              }} />
+              <p style={{
+                fontSize: "0.65rem",
+                color: "rgba(167,139,250,0.4)",
+                letterSpacing: "0.2em",
                 textTransform: "uppercase",
-                animation: "pulse 1.5s ease infinite",
               }}>
-                Loading saves...
-              </div>
+                Loading saves…
+              </p>
             </div>
           ) : (
-            Array.from({ length: TOTAL_SLOTS }, (_, i) => (
-              <SlotCard
-                key={i}
-                slotId={i}
-                slot={slots[i]}
-                isLoading={loadingSlot === i}
-                isSaving={savingSlot === i}
+            <>
+              {/* ── AUTO SAVE (slot 0) ── */}
+              <SlotRow
+                slotId={AUTO_SAVE_SLOT}
+                slot={autoSlot}
+                isLoading={loadingSlot === AUTO_SAVE_SLOT}
+                isSaving={savingSlot === AUTO_SAVE_SLOT}
                 mode={mode}
-                onLoad={() => handleLoad(i)}
-                onSave={() => handleSave(i)}
-                onDelete={() => handleDelete(i)}
+                isActive={activeSlot === AUTO_SAVE_SLOT}
+                onSelect={() => setActiveSlot(AUTO_SAVE_SLOT)}
+                onLoad={() => handleLoad(AUTO_SAVE_SLOT)}
+                onSave={() => handleSave(AUTO_SAVE_SLOT)}
+                onDelete={() => handleDelete(AUTO_SAVE_SLOT)}
               />
-            ))
+
+              {/* Divider */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "4px 2px",
+              }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.05)" }} />
+                <span style={{
+                  fontSize: "0.5rem", letterSpacing: "0.25em",
+                  textTransform: "uppercase", color: "rgba(107,70,193,0.4)",
+                }}>
+                  Manual Saves
+                </span>
+                <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.05)" }} />
+              </div>
+
+              {/* ── MANUAL SLOTS ── */}
+              {manualSlots.map(i => (
+                <SlotRow
+                  key={i}
+                  slotId={i}
+                  slot={slots[i]}
+                  isLoading={loadingSlot === i}
+                  isSaving={savingSlot === i}
+                  mode={mode}
+                  isActive={activeSlot === i}
+                  onSelect={() => setActiveSlot(i)}
+                  onLoad={() => handleLoad(i)}
+                  onSave={() => handleSave(i)}
+                  onDelete={() => handleDelete(i)}
+                />
+              ))}
+            </>
           )}
         </div>
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div style={{
-          padding: "10px 20px",
-          borderTop: "1px solid rgba(236,72,153,0.08)",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "10px 16px",
+          borderTop: "1px solid rgba(255,255,255,0.04)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           flexShrink: 0,
         }}>
-          <p style={{ fontSize: "0.6rem", color: "rgba(107,70,193,0.5)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
-            Slot 0 = Auto Save &nbsp;·&nbsp; Slots 1–9 = Manual
+          <p style={{
+            fontSize: "0.52rem",
+            color: "rgba(107,70,193,0.35)",
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            margin: 0,
+          }}>
+            4th November — Save System &nbsp;·&nbsp; {TOTAL_SLOTS - 1} manual slots
           </p>
           <button
             onClick={onClose}
             style={{
-              padding: "6px 16px",
-              borderRadius: 8,
-              background: "rgba(139,92,246,0.15)",
-              border: "1px solid rgba(139,92,246,0.25)",
-              color: "#c4b5fd",
-              fontSize: "0.7rem",
+              padding: "5px 18px",
+              borderRadius: 7,
+              background: "rgba(139,92,246,0.12)",
+              border: "1px solid rgba(139,92,246,0.22)",
+              color: "rgba(196,181,253,0.7)",
+              fontSize: "0.65rem",
               fontWeight: 700,
+              letterSpacing: "0.1em",
               cursor: "pointer",
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(139,92,246,0.22)";
+              e.currentTarget.style.color = "#c4b5fd";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(139,92,246,0.12)";
+              e.currentTarget.style.color = "rgba(196,181,253,0.7)";
             }}
           >
             Close
           </button>
         </div>
-      </div>
+      </div>  {/* ← close inner animated div */}
+      </div>  {/* ← close outer positioning wrapper */}
 
       <style>{`
-        @keyframes modal-in {
-          from { opacity:0; transform:scale(0.94) translateY(12px); }
-          to   { opacity:1; transform:none; }
+        @keyframes sm-bg  { from{opacity:0} to{opacity:1} }
+        @keyframes sm-in  {
+          from { opacity:0; transform:scale(0.95) translateY(6px); }
+          to   { opacity:1; transform:scale(1)    translateY(0);   }
         }
-        @keyframes pulse {
-          0%,100% { opacity:0.5; }
-          50%      { opacity:1;   }
-        }
-        @keyframes pulse-red {
-          0%,100% { transform:scale(1); }
-          50%      { transform:scale(1.05); }
-        }
+        @keyframes sm-spin{ to{transform:rotate(360deg)} }
       `}</style>
-    </div>
+    </>
   );
 }

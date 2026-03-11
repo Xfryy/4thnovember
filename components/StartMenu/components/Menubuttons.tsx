@@ -157,19 +157,19 @@ export default function MenuButtons({
           {/* If has played, show Start New Game as a card */}
           {hasPlayed && (
             <CardButton
-              icon="✦" label="New Game" sub="Start fresh"
+              icon="✦" label="New Game" sub=""
               accentFrom="#ec4899" accentTo="#f472b6"
               onClick={onStart}
             />
           )}
 
           <CardButton
-            icon="◈" label="Saves" sub="Manage saves"
+            icon="◈" label="Saves" sub=""
             accentFrom="#38bdf8" accentTo="#6366f1"
             onClick={onSaves}
           />
           <CardButton
-            icon="⚙" label="Config" sub="Settings"
+            icon="⚙" label="Config" sub=""
             accentFrom="#a78bfa" accentTo="#ec4899"
             spinIcon onClick={onSettings}
           />
@@ -182,3 +182,4 @@ export default function MenuButtons({
     </div>
   );
 }
+

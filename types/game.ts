@@ -88,7 +88,7 @@ export interface SceneEffect {
 
 export type SceneType =
   | "dialogue" | "monologue" | "choice"
-  | "transition" | "cg" | "ending";
+  | "transition" | "cg" | "ending" | "minigame";
 
 export interface BaseScene {
   id: string;
@@ -162,13 +162,31 @@ export interface EndingScene extends BaseScene {
   next?: string;
 }
 
+/**
+ * MinigameScene — launches an in-story mini game.
+ * gameId maps to a registered mini game component in SceneRenderer.
+ * onWinNext / onLoseNext allow branching based on result.
+ * If only `next` is provided, both win and lose continue to the same scene.
+ */
+export interface MinigameScene extends BaseScene {
+  type: "minigame";
+  gameId: string;       // e.g. "card-match"
+  title?: string;
+  description?: string;
+  bg?: SceneBg;
+  audio?: SceneAudio;
+  next?: string;        // fallback / lose path
+  onWinNext?: string;   // override next on win
+}
+
 export type Scene =
   | DialogueScene
   | MonologueScene
   | ChoiceScene
   | TransitionScene
   | CgScene
-  | EndingScene;
+  | EndingScene
+  | MinigameScene;
 
 export interface Act {
   actNumber: number;

@@ -10,6 +10,40 @@ import { writeSlot, AUTO_SAVE_SLOT, SaveSlot } from "@/lib/saveSlots";
 import { auth } from "@/lib/firebase";
 import { setCachedAutoSlot } from "@/lib/Sessioncache";
 
+async function captureSceneScreenshot(): Promise<string | undefined> {
+  try {
+    const sceneEl = document.querySelector('.game-scene') as HTMLElement;
+    if (!sceneEl) return undefined;
+
+    // Try using html2canvas library (install with: npm install html2canvas)
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(sceneEl, {
+        backgroundColor: '#000',
+        scale: 0.4, // smaller scale for file size
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+      });
+      // Compress to JPEG with quality 0.5 for smaller file size
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+      
+      // Check size - limit to ~200KB to stay within Firestore limits
+      if (dataUrl.length > 262144) {
+        console.warn('Screenshot too large, using fallback');
+        return undefined;
+      }
+      return dataUrl;
+    } catch (e) {
+      console.warn('html2canvas failed, trying fallback:', e);
+      return undefined;
+    }
+  } catch (e) {
+    console.warn('Screenshot capture failed:', e);
+    return undefined;
+  }
+}
+
 function buildSlotPreview(sceneId: string): Partial<SaveSlot> {
   const s = SCENE_REGISTRY[sceneId];
   if (!s) return {};
@@ -38,6 +72,15 @@ function buildSlotPreview(sceneId: string): Partial<SaveSlot> {
   if (previewText)  result.previewText  = previewText;
   if (previewImage) result.previewImage = previewImage;
   return result;
+}
+
+async function buildSlotPreviewWithScreenshot(sceneId: string): Promise<Partial<SaveSlot>> {
+  const preview = buildSlotPreview(sceneId);
+  const screenshot = await captureSceneScreenshot();
+  if (screenshot) {
+    preview.previewImage = screenshot;
+  }
+  return preview;
 }
 
 interface UseSaveStateOptions {
@@ -80,7 +123,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     const playTimeSeconds =
       saveStateRef.current.savedPlayTime +
       (Date.now() - saveStateRef.current.sessionStartMs) / 1000;
-    const preview = buildSlotPreview(nextSceneId);
+    const preview = await buildSlotPreviewWithScreenshot(nextSceneId);
     const newAct  = getActForScene(nextSceneId);
     const slot: SaveSlot = {
       slotId:          AUTO_SAVE_SLOT,
@@ -103,7 +146,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     const playTimeSeconds =
       saveStateRef.current.savedPlayTime +
       (Date.now() - saveStateRef.current.sessionStartMs) / 1000;
-    const preview = buildSlotPreview(saveStateRef.current.sceneId);
+    const preview = await buildSlotPreviewWithScreenshot(saveStateRef.current.sceneId);
     const slot: SaveSlot = {
       slotId,
       uid:             user.uid,

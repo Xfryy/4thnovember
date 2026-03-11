@@ -30,7 +30,6 @@ export default function MainMenu({
   characterName,
   email,
   isLoading,
-  saveData,
   autoSaveSlot,
   onStartNew,
   onContinue,
@@ -40,6 +39,7 @@ export default function MainMenu({
 }: MainMenuProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showSaves,    setShowSaves]    = useState(false);
+  const [displayName,  setDisplayName]  = useState(characterName);
 
   const hasPlayed = !!autoSaveSlot;
 
@@ -61,6 +61,7 @@ export default function MainMenu({
           email={email}
           onLogout={onLogout}
           isLoading={isLoading}
+          onNameChange={setDisplayName}
         />
       </div>
 
@@ -71,7 +72,7 @@ export default function MainMenu({
         <div className="flex-none flex items-center justify-center" style={{ width: "32%" }}>
           <div className="w-full px-10 md:px-14">
             <MenuButtons
-              characterName={characterName}
+              characterName={displayName}
               hasPlayed={hasPlayed}
               onStart={onStartNew}
               onContinue={onContinue}

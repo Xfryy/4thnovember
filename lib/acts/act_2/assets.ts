@@ -2,32 +2,15 @@ import { ActManifest } from "@/lib/acts";
 import { ACT_2_SCENES } from "./scenes";
 import { Scene } from "@/types/game";
 
+/** Auto-extract all sprite paths from this act's scenes */
 function extractSprites(scenes: Scene[]): string[] {
   const paths = new Set<string>();
   scenes.forEach((s) => {
-    if ("characters" in s && Array.isArray((s as any).characters)) {
-      (s as any).characters.forEach((c: any) => { if (c.sprite) paths.add(c.sprite); });
-    }
-  });
-  return Array.from(paths);
-}
-
-function extractBgs(scenes: Scene[]): string[] {
-  const paths = new Set<string>();
-  scenes.forEach((s) => {
-    if ("bg" in s && (s as any).bg?.image) paths.add((s as any).bg.image);
-  });
-  return Array.from(paths);
-}
-
-function extractAudio(scenes: Scene[]): string[] {
-  const paths = new Set<string>();
-  scenes.forEach((s) => {
-    if ("audio" in s && (s as any).audio) {
-      const a = (s as any).audio;
-      if (a.bgm)   paths.add(a.bgm);
-      if (a.sfx)   paths.add(a.sfx);
-      if (a.voice) paths.add(a.voice);
+    if ("characterSprite" in s && s.characterSprite) paths.add(s.characterSprite);
+    if ("characters" in s && s.characters) {
+      s.characters.forEach((c) => {
+        if (c.sprite) paths.add(c.sprite);
+      });
     }
   });
   return Array.from(paths);
@@ -35,7 +18,14 @@ function extractAudio(scenes: Scene[]): string[] {
 
 export const ACT_2_ASSETS: ActManifest = {
   actNumber: 2,
-  images: [...extractSprites(ACT_2_SCENES), ...extractBgs(ACT_2_SCENES)],
-  audio:  [...extractAudio(ACT_2_SCENES)],
-  minigames: [],
+  images: [
+    ...extractSprites(ACT_2_SCENES),
+    "/Image/GameBG/Bg-1.jpg",
+  ],
+  audio: [
+    // BGM and audio files
+  ],
+  minigames: [
+    // Minigames for Act 2
+  ],
 };

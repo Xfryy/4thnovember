@@ -39,34 +39,41 @@ export const googleProvider = new GoogleAuthProvider();
 // Firebase Auth Functions
 export const signInWithGoogle = async () => {
   try {
+    // Use popup for authentication - stays on same page
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
-    
-    // Check if user document exists, if not create it
-    const userDocRef = doc(db, "users", user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    
-    if (!userDocSnap.exists()) {
-      // New user - will be prompted to set character name
-      await setDoc(userDocRef, {
-        uid: user.uid,
-        email: user.email,
-        characterName: "",
-        createdAt: Date.now(),
-        lastPlayed: Date.now(),
-      });
-    } else {
-      // Returning user - update last played
-      await updateDoc(userDocRef, {
-        lastPlayed: Date.now(),
-      });
-    }
-    
-    return user;
+    return await handleUserAfterAuth(user);
   } catch (error) {
-    console.error("Sign-in error:", error);
+    console.error("Google sign in error:", error);
     throw error;
   }
+};
+
+// Helper function to handle user setup after authentication
+const handleUserAfterAuth = async (user: any) => {
+  // Check if user document exists, if not create it
+  const userDocRef = doc(db, "users", user.uid);
+  const userDocSnap = await getDoc(userDocRef);
+  
+  if (!userDocSnap.exists()) {
+    // New user - will be prompted to set character name
+    await setDoc(userDocRef, {
+      uid: user.uid,
+      email: user.email,
+      characterName: "",
+      createdAt: Date.now(),
+      lastPlayed: Date.now(),
+      totalPlayTime: 0,        // seconds
+      totalPlays: 0,           // count of saves
+    });
+  } else {
+    // Returning user - update last played
+    await updateDoc(userDocRef, {
+      lastPlayed: Date.now(),
+    });
+  }
+  
+  return user;
 };
 
 export const signOut = async () => {
@@ -101,27 +108,64 @@ export const updateCharacterName = async (uid: string, characterName: string) =>
   });
 };
 
+export const updateUserPlaytime = async (uid: string, totalPlayTimeMinutes: number, totalPlays: number) => {
+  const userDocRef = doc(db, "users", uid);
+  await updateDoc(userDocRef, {
+    totalPlayTime: totalPlayTimeMinutes,
+    totalPlays: totalPlays,
+    lastPlayed: Date.now(),
+  });
+};
+
 export const getUserProfile = async (uid: string) => {
   const userDocRef = doc(db, "users", uid);
   const userDocSnap = await getDoc(userDocRef);
   return userDocSnap.data();
 };
 
-export const saveGameProgress = async (
-  uid: string,
-  act: number,
-  scene: number,
-  choices: Record<string, any>
-) => {
-  const progressDocRef = doc(db, "progress", uid);
-  await setDoc(progressDocRef, {
-    uid,
-    currentAct: act,
-    currentScene: scene,
-    choices,
-    lastUpdated: Date.now(),
-  });
+// ── Settings Functions (Firestore Persistence) ──────────────────────────────
+
+export interface GameSettings {
+  uid: string;
+  masterVolume: number;
+  bgmVolume: number;
+  sfxVolume: number;
+  voiceVolume: number;
+  brightness: number;
+  language: "id" | "en";
+  textSpeed: number;
+  lastModified: number;
+}
+
+export const saveSettings = async (uid: string, settings: Omit<GameSettings, "uid" | "lastModified">) => {
+  const settingsDocRef = doc(db, "settings", uid);
+  try {
+    await setDoc(settingsDocRef, {
+      uid,
+      ...settings,
+      lastModified: Date.now(),
+    });
+  } catch (error) {
+    console.error("Failed to save settings:", error);
+    throw error;
+  }
 };
+
+export const getSettings = async (uid: string): Promise<GameSettings | null> => {
+  const settingsDocRef = doc(db, "settings", uid);
+  const settingsDocSnap = await getDoc(settingsDocRef);
+  return settingsDocSnap.exists() ? (settingsDocSnap.data() as GameSettings) : null;
+};
+
+// ── Deprecated: Progress Collection ──────────────────────────────────────────
+// NOTE: Game progress is now stored in save_slots collection (slot 0 for auto-save)
+// and aggregated playtime in users collection. The old "progress" collection
+// is kept for backward compatibility but should not be used for new features.
+// 
+// To migrate existing data:
+// 1. Read from progress/{uid}
+// 2. Merge into save_slots/{uid}_s0 (auto-save)
+// 3. Delete progress/{uid}
 
 export const getGameProgress = async (uid: string) => {
   const progressDocRef = doc(db, "progress", uid);

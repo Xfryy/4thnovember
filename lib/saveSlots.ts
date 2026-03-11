@@ -90,3 +90,25 @@ export async function clearSlot(uid: string, slotId: number): Promise<void> {
     console.error("[SaveSlots] clearSlot failed:", e);
   }
 }
+
+/** Calculate total playtime in minutes from all save slots */
+export async function calculateTotalPlaytime(uid: string): Promise<{ totalMinutes: number; totalPlays: number }> {
+  try {
+    const slots = await readAllSlots(uid);
+    let totalSeconds = 0;
+    let totalPlays = 0;
+
+    slots.forEach((slot) => {
+      if (slot && !slot.cleared) {
+        totalSeconds += slot.playTimeSeconds || 0;
+        totalPlays++;
+      }
+    });
+
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    return { totalMinutes, totalPlays };
+  } catch (e) {
+    console.error("[SaveSlots] calculateTotalPlaytime failed:", e);
+    return { totalMinutes: 0, totalPlays: 0 };
+  }
+}

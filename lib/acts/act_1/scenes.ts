@@ -1,148 +1,247 @@
 import { Scene } from "@/types/game";
 
+/**
+ * Act 1: 新しい朝 — A New Morning
+ * Introduction to the protagonist and Rinn
+ * Establishes the mystery: Who is the protagonist? Why can't they remember?
+ */
+
 export const ACT_1_SCENES: Scene[] = [
+  // ── Prologue ─────────────────────────────────────────────────────
+
   {
     id: "act1_s1",
     type: "transition",
-    act: 1, sceneNumber: 1,
-    text: "4th November.\nPagi yang seperti biasa...",
+    act: 1,
+    sceneNumber: 1,
+    text: "4th November.\nA morning like any other...",
     bg: { color: "#06020f" },
     duration: 3200,
     next: "act1_s2",
-    audio: { bgm: "/audio/bgm/act_1.mp3" }, // ← BGM starts here; persists through all scenes that don't change it
   },
+
+  // ── Opening ──────────────────────────────────────────────────────
+
   {
     id: "act1_s2",
     type: "monologue",
-    act: 1, sceneNumber: 2,
-    text: "Aku membuka mata.\n\nSemuanya terasa... biasa. Seperti hari-hari lainnya.",
+    act: 1,
+    sceneNumber: 2,
+    text: "I open my eyes.\n\nEverything feels... ordinary. Like every other day.",
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s3",
-    // No audio field → AudioManager keeps playing act_1.mp3 (correct behaviour)
   },
+
   {
     id: "act1_s3",
     type: "dialogue",
-    act: 1, sceneNumber: 3,
+    act: 1,
+    sceneNumber: 3,
     speaker: "Rinn",
     speakerId: "rinn",
-    text: "Ohayo~! Kamu akhirnya bangun juga.",
-    characters: [{
-      id: "rinn",
-      sprite: "/Image/Rinn/eye-close-smile.png",
-      position: "right",
-      size: "large",
-      animation: "enter-bottom",
-    }],
+    text: "Ohayo~! Finally you're awake.",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/eye-close-smile.png",
+        position: "right",
+        size: "large",
+        animation: "enter-bottom",
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
-    next: "act1_s4",
-    // ── Voice line is now enabled ──────────────────────────────────────────
-    // Make sure the file exists at: /public/audio/voice/act_1/act1_s3.mp3
     audio: { voice: "/audio/voice/act_1/act1_s3.mp3" },
+    next: "act1_s4",
   },
+
   {
     id: "act1_s4",
     type: "monologue",
-    act: 1, sceneNumber: 4,
-    text: "Gadis itu berdiri di depanku, tersenyum seperti tidak ada yang aneh.\n\nTapi... siapa dia?",
-    characters: [{
-      id: "rinn",
-      sprite: "/Image/Rinn/eye-close-smile.png",
-      position: "right",
-      size: "large",
-      dim: true,
-    }],
+    act: 1,
+    sceneNumber: 4,
+    text: "A girl stands before me, smiling as if nothing is wrong.\n\nBut... who is she?",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/eye-close-smile.png",
+        position: "right",
+        size: "large",
+        dim: true,
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s5",
   },
+
   {
     id: "act1_s5",
     type: "dialogue",
-    act: 1, sceneNumber: 5,
+    act: 1,
+    sceneNumber: 5,
     speaker: "Rinn",
     speakerId: "rinn",
-    text: "Aku Rinn. Masa kamu lupa? Kita sudah kenal sejak lama, lho.",
-    characters: [{
-      id: "rinn",
-      sprite: "/Image/Rinn/eye-close-smile.png",
-      position: "right",
-      size: "large",
-    }],
+    text: "I'm Rinn. You haven't forgotten, have you? We've known each other for so long.",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/anoo.png",
+        position: "right",
+        size: "large",
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s6",
   },
+
+  // ── First Choice ─────────────────────────────────────────────────
+
   {
     id: "act1_s6",
     type: "choice",
-    act: 1, sceneNumber: 6,
-    question: "Bagaimana kamu merespons?",
-    characters: [{
-      id: "rinn",
-      sprite: "/Image/Rinn/eye-close-smile.png",
-      position: "right",
-      size: "large",
-    }],
+    act: 1,
+    sceneNumber: 6,
+    question: "How do you respond?",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/anoo.png",
+        position: "right",
+        size: "large",
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" },
     options: [
-      { id: "c1_opt1", text: "Maaf, aku tidak ingat kamu.",          next: "act1_s7a", affection: { character: "rinn", amount: -5 } },
-      { id: "c1_opt2", text: "Rinn... tentu aku ingat!",             next: "act1_s7b", affection: { character: "rinn", amount: 10 } },
-      { id: "c1_opt3", text: "Ceritakan lebih banyak tentang kita.", next: "act1_s7c", affection: { character: "rinn", amount: 5  } },
+      {
+        id: "c1_opt1",
+        text: "I'm sorry, I don't remember you.",
+        next: "act1_s7a",
+        affection: { character: "rinn", amount: -5 },
+      },
+      {
+        id: "c1_opt2",
+        text: "Of course I remember you, Rinn!",
+        next: "act1_s7b",
+        affection: { character: "rinn", amount: 10 },
+      },
+      {
+        id: "c1_opt3",
+        text: "Tell me more about us.",
+        next: "act1_s7c",
+        affection: { character: "rinn", amount: 5 },
+      },
     ],
   },
+
+  // ── Branch A ─────────────────────────────────────────────────────
+
   {
     id: "act1_s7a",
     type: "dialogue",
-    act: 1, sceneNumber: 7,
+    act: 1,
+    sceneNumber: 7,
     speaker: "Rinn",
     speakerId: "rinn",
-    text: "...Ah. Begitu ya.\n\nGak apa-apa. Mungkin memang sudah terlalu lama.",
-    characters: [{ id: "rinn", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }],
+    text: "...I see.\n\nIt's fine. Maybe it's just been too long.",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/kecewa.png",
+        position: "right",
+        size: "large",
+        dim: true,
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s8",
   },
+
+  // ── Branch B ─────────────────────────────────────────────────────
+
   {
     id: "act1_s7b",
     type: "dialogue",
-    act: 1, sceneNumber: 7,
+    act: 1,
+    sceneNumber: 7,
     speaker: "Rinn",
     speakerId: "rinn",
-    text: "Beneran?! Yay~!\n\nAku khawatir kamu sudah melupakanku selamanya...",
-    characters: [{ id: "rinn", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }],
+    text: "I knew it! You scared me for a moment.",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/eye-close-smile.png",
+        position: "right",
+        size: "large",
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s8",
   },
+
+  // ── Branch C ─────────────────────────────────────────────────────
+
   {
     id: "act1_s7c",
     type: "dialogue",
-    act: 1, sceneNumber: 7,
+    act: 1,
+    sceneNumber: 7,
     speaker: "Rinn",
     speakerId: "rinn",
-    text: "Hmm... Dari mana aku harus mulai?\n\nSemuanya berubah sejak hari itu. 4th November.",
-    characters: [{ id: "rinn", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }],
+    text: "Well... that's a long story. But there's no time now. Come on, we'll be late for school!",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/anoo.png",
+        position: "right",
+        size: "large",
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
     next: "act1_s8",
   },
+
+  // ── Convergence ─────────────────────────────────────────────────
+
   {
     id: "act1_s8",
-    type: "dialogue",
-    act: 1, sceneNumber: 8,
-    speaker: "Rinn",
-    speakerId: "rinn",
-    text: "Ngomong-ngomong... kamu mau kemana hari ini?\n\nKita kan janji mau pergi bareng.",
-    characters: [{ id: "rinn", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }],
+    type: "monologue",
+    act: 1,
+    sceneNumber: 8,
+    text: "She grabs my hand and pulls me along.\n\nI feel something... familiar. Yet strange. Like a memory just out of reach.",
+    characters: [
+      {
+        id: "rinn",
+        sprite: "/Image/Rinn/eye-close-smile.png",
+        position: "right",
+        size: "large",
+        dim: true,
+      },
+    ],
     bg: { image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" },
-    next: "act1_end",
+    next: "act1_s10",
   },
+
   {
-    id: "act1_end",
+    id: "act1_s10",
+    type: "cg",
+    act: 1,
+    sceneNumber: 10,
+    image: "/Image/GameBG/Bg-1.jpg",
+    caption: "You managed to piece together some memories.",
+    next: "act1_ending_good",
+  },
+
+  // ── Endings ──────────────────────────────────────────────────────
+
+  {
+    id: "act1_ending_good",
     type: "ending",
-    act: 1, sceneNumber: 9,
-    endingType: "act",
-    title: "— Act 1 Selesai —",
-    subtitle: "Kenangan pun mulai terungkap...",
+    act: 1,
+    sceneNumber: 11,
+    endingType: "good",
+    title: "Fragments of Memory",
+    subtitle: "You remembered something about Rinn.",
     characterSprite: "/Image/Rinn/eye-close-smile.png",
     bg: { color: "#06020f" },
-    audio: { bgmFade: true }, // ← fade out BGM gracefully at act end
     next: "act2_s1",
   },
 ];

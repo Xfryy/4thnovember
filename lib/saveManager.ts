@@ -1,14 +1,24 @@
 /**
- * saveManager.ts
+ * saveManager.ts - DEPRECATED
  *
- * Handles reading and writing SaveData to Firestore.
- * Auto-save is debounced — rapid scene changes won't spam Firebase.
+ * ⚠️ This file is deprecated. Use saveSlots.ts instead.
  *
- * Triggers wired in GameEngine:
- *   - beforeunload  (close tab / browser)
- *   - visibilitychange hidden  (switch tab / minimize)
- *   - ← Menu button click
- *   - Every scene advance (debounced 3s)
+ * Previously used for storing "current game progress" in the "saves" collection.
+ * This has been consolidated into the saveSlots system where:
+ *   - Slot 0: Auto-save (current game state)
+ *   - Slots 1-9: Manual saves
+ *
+ * The "saves" collection is no longer used but remains for backward compatibility.
+ * Do NOT add new functionality to this file.
+ *
+ * If you need to migrate old saves data:
+ * 1. Read from saves/{uid}
+ * 2. Convert to SaveSlot and write to save_slots/{uid}_s0
+ * 3. Update users/{uid} totalPlayTime / totalPlays
+ * 4. Delete old saves/{uid} document
+ *
+ * See: lib/saveSlots.ts for the active save system
+ * See: DATABASE_SCHEMA.md for schema documentation
  */
 
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -31,7 +41,7 @@ function clearDebounce() {
 
 // ── Write ──────────────────────────────────────────────────────────────────────
 
-/** Immediate write — use for critical moments (tab close, menu exit) */
+/** @deprecated Use saveSlots.writeSlot() instead */
 export async function writeSaveNow(save: SaveData): Promise<void> {
   clearDebounce();
   try {
@@ -44,7 +54,7 @@ export async function writeSaveNow(save: SaveData): Promise<void> {
   }
 }
 
-/** Debounced write — use on every scene advance to avoid spamming Firebase */
+/** @deprecated Use saveSlots.writeSlot() instead */
 export function writeSaveDebounced(save: SaveData): void {
   clearDebounce();
   debounceTimer = setTimeout(() => {
@@ -52,7 +62,7 @@ export function writeSaveDebounced(save: SaveData): void {
   }, DEBOUNCE_MS);
 }
 
-/** Flush any pending debounced save immediately (call before unmounting engine) */
+/** @deprecated Use saveSlots functions instead */
 export function flushSave(save: SaveData): Promise<void> {
   clearDebounce();
   return writeSaveNow(save);
@@ -60,7 +70,7 @@ export function flushSave(save: SaveData): Promise<void> {
 
 // ── Read ───────────────────────────────────────────────────────────────────────
 
-/** Returns SaveData if the user has a save, null if new player */
+/** @deprecated Use saveSlots.readSlot() instead */
 export async function readSave(uid: string): Promise<SaveData | null> {
   try {
     const snap = await getDoc(doc(db, COLLECTION, uid));
@@ -72,7 +82,7 @@ export async function readSave(uid: string): Promise<SaveData | null> {
   }
 }
 
-/** Delete save (for "New Game" feature) */
+/** @deprecated Use saveSlots.clearSlot() instead */
 export async function deleteSave(uid: string): Promise<void> {
   try {
     await setDoc(doc(db, COLLECTION, uid), { deleted: true, uid, lastSaved: Date.now() });
@@ -80,3 +90,4 @@ export async function deleteSave(uid: string): Promise<void> {
     console.error("[SaveManager] Failed to delete save:", e);
   }
 }
+

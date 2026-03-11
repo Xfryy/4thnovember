@@ -26,20 +26,17 @@ export default function GameToolbar({
   onSettings,
 }: GameToolbarProps) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0, left: 0, right: 0,
-        zIndex: 50,
-        padding: "10px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        background: "linear-gradient(180deg, rgba(0,0,0,0.60) 0%, transparent 100%)",
-        backdropFilter: "blur(6px)",
-        // Removed all transform/transition — toolbar is always visible now
-      }}
-    >
+    <div style={{
+      position: "absolute",
+      top: 0, left: 0, right: 0,
+      zIndex: 50,
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "10px 14px",
+      background: "linear-gradient(180deg, rgba(4,2,12,0.75) 0%, transparent 100%)",
+      backdropFilter: "blur(8px)",
+    }}>
       {/* ← Menu */}
       <ToolbarBtn
         onClick={onMenu}
@@ -47,75 +44,75 @@ export default function GameToolbar({
         accent="#ec4899"
         icon={isSaving ? "⟳" : "←"}
         spin={isSaving}
-        label={isSaving ? "Saving..." : "Menu"}
+        label={isSaving ? "Saving…" : "Menu"}
       />
+
+      {/* Separator */}
+      <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.07)", margin: "0 2px" }} />
 
       <div style={{ flex: 1 }} />
 
-      {/* Saved! flash */}
+      {/* Saved flash */}
       {savedFlash && (
-        <span
-          style={{
-            fontSize: "0.65rem",
-            fontWeight: 800,
-            color: "#4ade80",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            animation: "fade-in-out 1.8s ease both",
-          }}
-        >
+        <span style={{
+          fontSize: "0.6rem",
+          fontWeight: 800,
+          color: "#4ade80",
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          animation: "tb-flash 1.8s ease both",
+          marginRight: 4,
+        }}>
           ✓ Saved!
         </span>
       )}
 
-      {/* Act · Scene indicator */}
-      <span
-        style={{
-          fontSize: "0.6rem",
-          color: "rgba(255,255,255,0.45)",
-          letterSpacing: "0.12em",
+      {/* Act · Scene badge */}
+      <div style={{
+        padding: "3px 10px",
+        borderRadius: 6,
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        marginRight: 4,
+      }}>
+        <span style={{
+          fontSize: "0.55rem",
+          color: "rgba(255,255,255,0.35)",
+          letterSpacing: "0.14em",
           fontWeight: 600,
-          marginRight: 8,
-        }}
-      >
-        Act {actNumber} · {sceneNumber}
-      </span>
+        }}>
+          ACT {actNumber}
+        </span>
+        <span style={{
+          fontSize: "0.55rem",
+          color: "rgba(236,72,153,0.5)",
+          letterSpacing: "0.1em",
+          fontWeight: 600,
+          margin: "0 4px",
+        }}>·</span>
+        <span style={{
+          fontSize: "0.55rem",
+          color: "rgba(255,255,255,0.35)",
+          letterSpacing: "0.1em",
+          fontWeight: 600,
+        }}>
+          {sceneNumber}
+        </span>
+      </div>
 
-      <ToolbarBtn
-        onClick={onQuickSave}
-        accent="#38bdf8"
-        icon="💾"
-        label="Quick Save"
-        tooltip="Save to Slot 1"
-      />
-      <ToolbarBtn
-        onClick={onSave}
-        accent="#a855f7"
-        icon="📁"
-        label="Save"
-        tooltip="Save Slots"
-      />
-      <ToolbarBtn
-        onClick={onLoad}
-        accent="#f59e0b"
-        icon="📂"
-        label="Load"
-        tooltip="Load Slots"
-      />
-      <ToolbarBtn
-        onClick={onSettings}
-        accent="#6366f1"
-        icon="⚙"
-        label="Config"
-        tooltip="Settings"
-      />
+      <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.07)", margin: "0 2px" }} />
+
+      <ToolbarBtn onClick={onQuickSave} accent="#38bdf8" icon="💾" label="Quick" tooltip="Quick Save" />
+      <ToolbarBtn onClick={onSave}      accent="#a855f7" icon="📁" label="Save"  tooltip="Save Slots" />
+      <ToolbarBtn onClick={onLoad}      accent="#f59e0b" icon="📂" label="Load"  tooltip="Load Slots" />
+      <ToolbarBtn onClick={onSettings}  accent="#6366f1" icon="⚙"  label="Config" tooltip="Settings" />
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fade-in-out {
-          0%   { opacity: 0; transform: translateY(-4px); }
-          15%  { opacity: 1; transform: none; }
-          75%  { opacity: 1; }
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes tb-flash {
+          0%   { opacity: 0; transform: translateY(-3px); }
+          12%  { opacity: 1; transform: none; }
+          80%  { opacity: 1; }
           100% { opacity: 0; }
         }
       `}</style>
@@ -136,44 +133,43 @@ interface ToolbarBtnProps {
 }
 
 export function ToolbarBtn({ onClick, disabled, accent, icon, label, tooltip, spin }: ToolbarBtnProps) {
-  const [hovered, setHovered] = useState(false);
+  const [hov, setHov] = useState(false);
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={tooltip ?? label}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 5,
-        padding: "5px 10px",
-        borderRadius: 8,
-        border: `1px solid ${hovered ? accent + "88" : "rgba(255,255,255,0.12)"}`,
-        background: hovered ? `${accent}22` : "rgba(0,0,0,0.35)",
-        color: hovered ? accent : "rgba(255,255,255,0.65)",
-        fontSize: "0.65rem",
+        gap: 4,
+        padding: "4px 9px",
+        borderRadius: 7,
+        border: `1px solid ${hov ? accent + "66" : "rgba(255,255,255,0.09)"}`,
+        background: hov ? `${accent}1a` : "rgba(0,0,0,0.3)",
+        color: hov ? accent : "rgba(255,255,255,0.5)",
+        fontSize: "0.6rem",
         fontWeight: 700,
-        letterSpacing: "0.08em",
+        letterSpacing: "0.09em",
         cursor: disabled ? "not-allowed" : "pointer",
-        transition: "all 0.15s ease",
+        transition: "all 0.14s ease",
         backdropFilter: "blur(8px)",
-        opacity: disabled ? 0.5 : 1,
+        opacity: disabled ? 0.45 : 1,
         userSelect: "none",
       }}
     >
-      <span
-        style={{
-          fontSize: "0.8rem",
-          display: "inline-block",
-          animation: spin ? "spin 0.7s linear infinite" : "none",
-        }}
-      >
+      <span style={{
+        fontSize: "0.78rem",
+        display: "inline-block",
+        animation: spin ? "spin 0.7s linear infinite" : "none",
+        lineHeight: 1,
+      }}>
         {icon}
       </span>
-      <span style={{ fontSize: "0.65rem" }}>{label}</span>
+      <span>{label}</span>
     </button>
   );
 }

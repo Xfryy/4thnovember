@@ -21,21 +21,53 @@ html {
 body {
   background-color: #0f0f1e;
   color: #ffffff;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Font sizes for hierarchy */
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+p {
+  line-height: 1.6;
+  letter-spacing: 0.2px;
 }
 
 /* Tailwind custom utilities */
 @layer components {
   .btn-primary {
-    @apply px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold rounded-lg transition-colors;
+    @apply px-6 py-3 bg-gradient-to-br from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-pink-500/50;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-white hover:bg-gray-100 text-gray-800 font-bold rounded-lg transition-colors;
+    @apply px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg transition-all duration-300 border border-white/20 hover:border-white/40 backdrop-blur-sm;
   }
 
   .container-game {
     @apply w-full h-screen flex items-center justify-center;
+  }
+
+  /* Text styling for visual novel */
+  .vn-title {
+    @apply text-4xl font-bold tracking-widest;
+  }
+
+  .vn-subtitle {
+    @apply text-lg font-medium tracking-wide opacity-80;
+  }
+
+  .vn-dialogue {
+    @apply text-base leading-relaxed tracking-normal;
+  }
+
+  .vn-label {
+    @apply text-xs font-semibold tracking-widest uppercase opacity-70;
   }
 }
 
@@ -47,26 +79,33 @@ a {
 
 input,
 textarea {
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
 }
 
-/* Scrollbar styling */
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Scrollbar styling - matches theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ec4899;
-  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(236, 72, 153, 0.7), rgba(236, 72, 153, 0.5));
+  border-radius: 5px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #f92ba0;
+  background: linear-gradient(180deg, rgba(236, 72, 153, 1), rgba(236, 72, 153, 0.8));
 }
 
 /* Loading animation */
@@ -142,4 +181,133 @@ textarea {
 @keyframes star-blink {
   0%   { opacity: 0.2; transform: scale(0.8); }
   100% { opacity: 1;   transform: scale(1.2); }
+}
+
+/* ────────────────────────────────────────────────────────────────── */
+/* Professional game UI styling */
+/* ────────────────────────────────────────────────────────────────── */
+
+/* Consistent color palette */
+:root {
+  --color-primary: rgba(236, 72, 153, 1);      /* Pink */
+  --color-primary-light: rgba(236, 72, 153, 0.3);
+  --color-primary-dark: rgba(202, 31, 123, 1);
+  --color-accent: rgba(167, 139, 250, 1);      /* Purple */
+  --color-success: rgba(74, 222, 128, 1);      /* Green */
+  --color-warning: rgba(251, 146, 60, 1);      /* Orange */
+  --color-danger: rgba(248, 113, 113, 1);      /* Red */
+  --color-bg-dark: rgba(15, 15, 30, 1);
+  --color-bg-lighter: rgba(20, 20, 40, 1);
+  --color-text-primary: rgba(255, 255, 255, 1);
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-tertiary: rgba(255, 255, 255, 0.4);
+  --color-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Professional card styling */
+.vn-card {
+  background: var(--color-bg-lighter);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.vn-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 24px rgba(236, 72, 153, 0.2);
+}
+
+/* Badge styling for character names, labels */
+.vn-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+/* Input styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(236, 72, 153, 0.05);
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.2);
+}
+
+/* Disabled state */
+input:disabled,
+textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Professional text appearance */
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  letter-spacing: 0.5px;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: 0.3px;
+}
+
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0.2px;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.15px;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Visual divider for chapters/sections */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  margin: 32px 0;
+  opacity: 0.5;
+}
+
+/* Focus visible for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }

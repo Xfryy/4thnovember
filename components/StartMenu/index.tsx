@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import {
   auth,
@@ -8,11 +8,14 @@ import {
   updateCharacterName,
   getUserProfile,
   signOut,
+  updateUserPlaytime,
 } from "@/lib/firebase";
+import { loadSettingsFromFirestore, setupSettingsSync, cleanupSettingsSync } from "@/lib/settingsSync";
 import { useGameStore } from "@/store/gameStore";
 import { audioManager } from "@/lib/Audiomanager";
 import { loadProgress } from "@/lib/saveSystem";
-import { readSlot, AUTO_SAVE_SLOT, SaveSlot } from "@/lib/saveSlots";
+import { readSlot, AUTO_SAVE_SLOT, SaveSlot, calculateTotalPlaytime } from "@/lib/saveSlots";
+import { settingsManager } from "@/lib/settingsManager";
 import type { SaveData } from "@/types/game";
 import {
   getCachedProfile,
@@ -42,16 +45,40 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     setCharacterName,
     setCharacterNameSet,
     isLoading,
+    loadSettings,
   } = useGameStore();
 
   const [showCharacterInput, setShowCharacterInput] = useState(false);
   const [saveData,     setSaveData]     = useState<SaveData | null>(null);
   const [autoSaveSlot, setAutoSaveSlot] = useState<SaveSlot | null>(null);
+  const [bgmStarted, setBgmStarted] = useState(false);
+  const [settingsSyncUnsubscribe, setSettingsSyncUnsubscribe] = useState<(() => void) | null>(null);
+
+  // ── Initialize settings on mount ──────────────────────────────────────────
+  useEffect(() => {
+    const savedSettings = settingsManager.loadSettings();
+    if (savedSettings) {
+      loadSettings(savedSettings);
+      // Apply brightness on startup
+      document.documentElement.style.filter = `brightness(${savedSettings.brightness}%)`;
+      // Apply audio volumes
+      audioManager.setMasterVolume(savedSettings.masterVolume);
+      audioManager.setBgmVolume(savedSettings.bgmVolume);
+      audioManager.setSfxVolume(savedSettings.sfxVolume);
+      audioManager.setVoiceVolume(savedSettings.voiceVolume);
+    }
+  }, [loadSettings]);
 
   // ── Auth listener ──────────────────────────────────────────────────────────
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // User just signed in - play BGM
+        if (!bgmStarted) {
+          audioManager.playBGM("/audio/start-menu.mp3", 500);
+          setBgmStarted(true);
+        }
+        
         const uid = firebaseUser.uid;
         const email = firebaseUser.email || "";
 
@@ -62,6 +89,12 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
         const cachedSaveData = getCachedSaveData(uid);
 
         if (cachedProfile) {
+          // Show brief loading for returning users too
+          setLoading(true);
+          
+          // Brief delay for smooth transition
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
           setUser({
             uid,
             email: cachedProfile.email || email,
@@ -81,17 +114,21 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           if (cachedAutoSlot) setAutoSaveSlot(cachedAutoSlot);
           if (cachedSaveData) setSaveData(cachedSaveData);
 
-          // Show menu IMMEDIATELY — no spinner for returning users
+          // Show menu after brief loading
           setLoading(false);
+        } else {
+          // New user - show loading while fetching from Firestore
+          setLoading(true);
         }
 
         // ── STEP 2: Sync Firestore in background ──────────────────────────
         // Runs in parallel — doesn't block the UI that was shown from cache
         try {
-          const [profile, save, slot0] = await Promise.all([
+          const [profile, save, slot0, playtimeStats] = await Promise.all([
             getUserProfile(uid),
             loadProgress(),
             readSlot(uid, AUTO_SAVE_SLOT),
+            calculateTotalPlaytime(uid),
           ]);
 
           const characterNameFromDB = profile?.characterName || "";
@@ -129,8 +166,24 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
             setCachedAutoSlot(uid, slot0);
           }
 
+          // Update user profile with actual total playtime
+          if (playtimeStats) {
+            await updateUserPlaytime(uid, playtimeStats.totalMinutes, playtimeStats.totalPlays);
+          }
+
           // Keep profile cache fresh
           setCachedProfile(uid, { uid, email, characterName: characterNameFromDB });
+
+          // ── Load settings from Firestore and sync ─────────────────────
+          // This loads Firestore settings into Zustand store
+          await loadSettingsFromFirestore();
+
+          // Setup auto-sync for any future settings changes
+          if (settingsSyncUnsubscribe) {
+            settingsSyncUnsubscribe();
+          }
+          const unsubscribe = setupSettingsSync();
+          setSettingsSyncUnsubscribe(() => unsubscribe);
 
         } catch (error) {
           console.error("Background Firestore sync error:", error);
@@ -138,7 +191,9 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
         }
 
         // First-time user (no cache) — Firestore done, turn off loading
-        if (!cachedProfile) setLoading(false);
+        if (!cachedProfile) {
+          setLoading(false);
+        }
 
       } else {
         // Logged out state
@@ -148,6 +203,13 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
         setSaveData(null);
         setAutoSaveSlot(null);
         setLoading(false);
+
+        // Cleanup settings sync on logout
+        if (settingsSyncUnsubscribe) {
+          await cleanupSettingsSync();
+          settingsSyncUnsubscribe();
+          setSettingsSyncUnsubscribe(null);
+        }
       }
     });
 
@@ -155,18 +217,28 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Cleanup on unmount ────────────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      // Cleanup settings sync on component unmount
+      if (settingsSyncUnsubscribe) {
+        cleanupSettingsSync().catch(err => 
+          console.error("Error cleaning up settings sync:", err)
+        );
+        settingsSyncUnsubscribe();
+      }
+    };
+  }, [settingsSyncUnsubscribe]);
+
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleLogin = async () => {
-    audioManager.resume();
-    setLoading(true);
     try {
       await signInWithGoogle();
       // onAuthStateChanged handles everything after login
     } catch (error) {
       console.error("Login error:", error);
       alert("Login gagal. Silakan coba lagi.");
-      setLoading(false);
     }
   };
 
@@ -193,12 +265,14 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     try {
       if (user) clearUserCache(user.uid);
       await signOut();
+      audioManager.stopAll();
       setUser(null);
       setCharacterName("");
       setCharacterNameSet(false);
       setShowCharacterInput(false);
       setSaveData(null);
       setAutoSaveSlot(null);
+      setBgmStarted(false);
     } catch (error) {
       console.error("Logout error:", error);
       alert("Logout gagal. Silakan coba lagi.");
@@ -232,6 +306,56 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   };
 
   const handleSettings = () => {};
+
+  // ── Refresh save data on mount/focus ───────────────────────────────────────
+  // This ensures when user comes back from game, autoSaveSlot is updated
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshSaveData = async () => {
+      try {
+        const [saveData, slot0, playtimeStats] = await Promise.all([
+          loadProgress(),
+          readSlot(user.uid, AUTO_SAVE_SLOT),
+          calculateTotalPlaytime(user.uid),
+        ]);
+
+        if (saveData) {
+          setSaveData(saveData);
+          setCachedSaveData(user.uid, saveData);
+        }
+
+        if (slot0) {
+          setAutoSaveSlot(slot0);
+          setCachedAutoSlot(user.uid, slot0);
+        }
+
+        // Update user profile with actual total playtime
+        if (playtimeStats) {
+          await updateUserPlaytime(user.uid, playtimeStats.totalMinutes, playtimeStats.totalPlays);
+        }
+      } catch (error) {
+        console.error("Error refreshing save data:", error);
+      }
+    };
+
+    // Refresh on component mount/visibility
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshSaveData();
+      }
+    };
+
+    // Listen to page visibility (tab focus)
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Also refresh immediately on mount (in case user just came back from game)
+    refreshSaveData();
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 

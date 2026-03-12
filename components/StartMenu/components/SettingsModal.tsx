@@ -134,7 +134,7 @@ export default function SettingsModal({
                     }`}
                   >
                     {lang === "id"
-                      ? "🇮🇩  Bahasa Indonesia"
+                      ? "🇮🇩  Indonesia"
                       : "🇺🇸  English"}
                   </button>
                 ))}
@@ -208,9 +208,9 @@ export default function SettingsModal({
               >
                 <span className="stg-bright-preview__label">
                   {brightness < 90
-                    ? "🌙 Dimmed"
+                    ? "🌙 Dim"
                     : brightness > 110
-                    ? "☀ Brightened"
+                    ? "☀ Bright"
                     : "⚖ Normal"}{" "}
                   — {brightness}%
                 </span>
@@ -229,11 +229,10 @@ export default function SettingsModal({
               />
               <Chip>
                 {speedLabel}&nbsp;&nbsp;
-                <em>{Math.round(110 - textSpeed)}ms</em> per
-                character
+                <em>{Math.round(110 - textSpeed)}ms</em> per char
                 {textSpeed >= 90 && (
                   <span className="stg-chip__warn">
-                    &nbsp;⚡ Instant
+                    &nbsp;⚡
                   </span>
                 )}
               </Chip>
@@ -269,14 +268,14 @@ export default function SettingsModal({
           position:fixed; top:50%; left:50%;
           transform:translate(-50%,-50%);
           z-index:1001;
-          width:min(500px,calc(100vw - 32px));
-          max-height:min(84vh,700px);
+          width:min(480px,calc(100vw - 32px));
+          max-height:min(85vh,680px);
           display:flex; flex-direction:column;
         }
 
         .stg-panel {
           display:flex; flex-direction:column;
-          max-height:min(84vh,700px);
+          max-height:min(85vh,680px);
           border-radius:14px; overflow:hidden;
           background:rgba(8,4,20,0.98);
           border:1px solid rgba(255,255,255,.07);
@@ -294,30 +293,30 @@ export default function SettingsModal({
         }
 
         .stg-header {
-          display:flex; align-items:center; gap:10px;
-          padding:12px 15px 11px; flex-shrink:0;
+          display:flex; align-items:center; gap:8px;
+          padding:10px 14px 9px; flex-shrink:0;
           border-bottom:1px solid rgba(255,255,255,.05);
         }
         .stg-header__icon {
-          width:30px; height:30px; border-radius:7px; flex-shrink:0;
+          width:28px; height:28px; border-radius:6px; flex-shrink:0;
           display:flex; align-items:center; justify-content:center;
-          font-size:.85rem;
+          font-size:.8rem;
           background:rgba(139,92,246,.15);
           border:1px solid rgba(139,92,246,.28);
         }
         .stg-header__title {
-          margin:0; font-size:.88rem; font-weight:900;
+          margin:0; font-size:.8rem; font-weight:900;
           letter-spacing:.06em; color:#fff;
         }
         .stg-header__sub {
-          margin:0; font-size:.48rem; letter-spacing:.2em;
+          margin:0; font-size:.45rem; letter-spacing:.2em;
           text-transform:uppercase; color:rgba(167,139,250,.32); margin-top:1px;
         }
         .stg-close {
-          margin-left:auto; width:26px; height:26px;
-          border-radius:6px; border:1px solid rgba(255,255,255,.1);
+          margin-left:auto; width:24px; height:24px;
+          border-radius:5px; border:1px solid rgba(255,255,255,.1);
           background:rgba(255,255,255,.04); color:rgba(255,255,255,.38);
-          font-size:.72rem; cursor:pointer;
+          font-size:.68rem; cursor:pointer;
           display:flex; align-items:center; justify-content:center;
           transition:all .15s ease;
         }
@@ -329,7 +328,7 @@ export default function SettingsModal({
 
         .stg-body {
           flex:1; overflow-y:auto;
-          padding:11px 13px;
+          padding:10px 12px;
           display:flex; flex-direction:column; gap:8px;
           scrollbar-width:thin;
           scrollbar-color:rgba(236,72,153,.28) transparent;
@@ -340,35 +339,38 @@ export default function SettingsModal({
         }
 
         .stg-section {
-          border-radius:9px; overflow:hidden;
+          border-radius:8px; overflow:hidden;
           border:1px solid rgba(255,255,255,.05);
           background:rgba(255,255,255,.02);
         }
         .stg-section__hd {
-          display:flex; align-items:center; gap:7px;
-          padding:7px 13px;
+          display:flex; align-items:center; gap:6px;
+          padding:6px 12px;
           background:rgba(236,72,153,.04);
           border-bottom:1px solid rgba(255,255,255,.04);
         }
-        .stg-section__icon{font-size:.78rem;line-height:1}
+        .stg-section__icon{font-size:.7rem;line-height:1}
         .stg-section__title {
-          font-size:.52rem; font-weight:900;
-          letter-spacing:.24em; text-transform:uppercase;
+          font-size:.48rem; font-weight:900;
+          letter-spacing:.2em; text-transform:uppercase;
           color:rgba(236,72,153,.62);
         }
         .stg-section__body {
-          padding:12px 13px;
-          display:flex; flex-direction:column; gap:11px;
+          padding:10px 12px;
+          display:flex; flex-direction:column; gap:10px;
         }
 
-        .stg-lang{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+        .stg-lang{display:grid;grid-template-columns:1fr 1fr;gap:6px}
         .stg-lang__btn {
-          padding:8px 10px; border-radius:7px; cursor:pointer;
-          font-size:.7rem; font-weight:400; letter-spacing:.02em;
+          padding:7px 8px; border-radius:6px; cursor:pointer;
+          font-size:.65rem; font-weight:400; letter-spacing:.02em;
           border:1px solid rgba(255,255,255,.08);
           background:rgba(255,255,255,.03);
           color:rgba(196,181,253,.42);
           transition:all .15s ease;
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
         }
         .stg-lang__btn:hover {
           border-color:rgba(236,72,153,.28);
@@ -383,14 +385,14 @@ export default function SettingsModal({
           box-shadow:0 0 10px rgba(236,72,153,.1);
         }
 
-        .stg-slider{display:flex;flex-direction:column;gap:5px}
+        .stg-slider{display:flex;flex-direction:column;gap:4px}
         .stg-slider__head{display:flex;justify-content:space-between;align-items:baseline}
         .stg-slider__label{
-          font-size:.7rem;font-weight:600;
+          font-size:.65rem;font-weight:600;
           color:rgba(196,181,253,.72);letter-spacing:.03em;
         }
         .stg-slider__val{
-          font-size:.65rem;font-weight:800;
+          font-size:.6rem;font-weight:800;
           font-family:monospace;letter-spacing:.05em;
         }
 
@@ -416,18 +418,18 @@ export default function SettingsModal({
         }
         .stg-range::-webkit-slider-thumb {
           -webkit-appearance:none; appearance:none;
-          width:14px; height:14px; border-radius:50%;
+          width:12px; height:12px; border-radius:50%;
           background:#fff;
           box-shadow:0 0 0 2px rgba(0,0,0,.6),0 0 8px var(--accent-b);
           cursor:pointer;
           transition:transform .1s ease,box-shadow .1s ease;
         }
         .stg-range::-webkit-slider-thumb:hover{
-          transform:scale(1.28);
-          box-shadow:0 0 0 2px rgba(0,0,0,.6),0 0 14px var(--accent-b);
+          transform:scale(1.2);
+          box-shadow:0 0 0 2px rgba(0,0,0,.6),0 0 12px var(--accent-b);
         }
         .stg-range::-moz-range-thumb{
-          width:14px;height:14px;border-radius:50%;
+          width:12px;height:12px;border-radius:50%;
           background:#fff;border:none;
           box-shadow:0 0 0 2px rgba(0,0,0,.6),0 0 8px var(--accent-b);
           cursor:pointer;
@@ -441,7 +443,7 @@ export default function SettingsModal({
         .stg-slider--green  .stg-range{--accent-a:#34d39966;--accent-b:#34d399}
 
         .stg-bright-preview {
-          height:22px;border-radius:7px;overflow:hidden;position:relative;
+          height:20px;border-radius:6px;overflow:hidden;position:relative;
           border:1px solid rgba(255,255,255,.06);
           background:linear-gradient(90deg,#06020f 0%,#2a1050 35%,#ec4899 70%,#fff 100%);
           transition:filter .08s linear;
@@ -449,32 +451,32 @@ export default function SettingsModal({
         .stg-bright-preview__label {
           position:absolute;inset:0;
           display:flex;align-items:center;justify-content:center;
-          font-size:.52rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+          font-size:.48rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
           color:rgba(255,255,255,.78);text-shadow:0 1px 4px rgba(0,0,0,.9);
         }
 
         .stg-chip {
-          padding:5px 10px;
+          padding:4px 8px;
           background:rgba(139,92,246,.06);
           border:1px solid rgba(139,92,246,.12);
-          border-radius:7px;
-          font-size:.58rem;
+          border-radius:6px;
+          font-size:.54rem;
           color:rgba(167,139,250,.5);
-          letter-spacing:.03em;line-height:1.7;
+          letter-spacing:.03em;line-height:1.6;
         }
         .stg-chip b{color:rgba(236,72,153,.72);font-weight:700}
         .stg-chip em{color:rgba(196,181,253,.82);font-style:normal;font-weight:700}
         .stg-chip__warn{color:rgba(251,191,36,.68)}
 
         .stg-footer {
-          display:flex;gap:8px;
-          padding:10px 13px;
+          display:flex;gap:6px;
+          padding:8px 12px;
           border-top:1px solid rgba(255,255,255,.04);
           flex-shrink:0;
         }
         .stg-footer__reset {
-          flex:0 0 auto;padding:8px 13px;border-radius:7px;cursor:pointer;
-          font-size:.65rem;font-weight:700;letter-spacing:.07em;
+          flex:0 0 auto;padding:7px 10px;border-radius:6px;cursor:pointer;
+          font-size:.6rem;font-weight:700;letter-spacing:.07em;
           background:rgba(239,68,68,.07);
           border:1px solid rgba(239,68,68,.18);
           color:rgba(252,165,165,.55);
@@ -486,8 +488,8 @@ export default function SettingsModal({
           color:#fca5a5;
         }
         .stg-footer__close {
-          flex:1;padding:8px 13px;border-radius:7px;cursor:pointer;
-          font-size:.65rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+          flex:1;padding:7px 10px;border-radius:6px;cursor:pointer;
+          font-size:.6rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
           background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.16));
           border:1px solid rgba(236,72,153,.3);
           color:#f9a8d4;
@@ -495,8 +497,21 @@ export default function SettingsModal({
         }
         .stg-footer__close:hover{
           background:linear-gradient(135deg,rgba(236,72,153,.35),rgba(168,85,247,.28));
-          box-shadow:0 0 14px rgba(236,72,153,.16);
+          box-shadow:0 0 12px rgba(236,72,153,.16);
           color:#fff;
+        }
+
+        @media (max-width: 480px) {
+          .stg-lang__btn {
+            font-size:0.55rem;
+            padding:6px 4px;
+          }
+          .stg-slider__label {
+            font-size:0.6rem;
+          }
+          .stg-slider__val {
+            font-size:0.55rem;
+          }
         }
       `}</style>
     </>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import type { Scene, MonologueScene, SceneCharacter } from "@/types/game";
 import DialogueBox from "../DialogueBox";
 import {
@@ -27,6 +27,17 @@ export default function MonologueSceneView({
   }, [scene.next, onAdvance]);
 
   const characters = (scene as any).characters as SceneCharacter[] | undefined;
+  // Di dalam komponen, tambahkan:
+const [, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth <= 768);
+  };
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
 
   return (
     <div

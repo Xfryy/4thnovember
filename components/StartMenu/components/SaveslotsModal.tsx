@@ -69,7 +69,8 @@ function SlotRow({
       style={{
         display: "flex",
         gap: 0,
-        height: 96,
+        height: "auto",
+        minHeight: 80,
         borderRadius: 10,
         overflow: "hidden",
         border: isActive
@@ -92,7 +93,7 @@ function SlotRow({
     >
       {/* ── Slot number tab (left strip) ── */}
       <div style={{
-        width: 48,
+        width: 40,
         flexShrink: 0,
         display: "flex",
         flexDirection: "column",
@@ -110,7 +111,7 @@ function SlotRow({
         transition: "background 0.15s ease",
       }}>
         <span style={{
-          fontSize: isAuto ? "0.45rem" : "1rem",
+          fontSize: isAuto ? "0.4rem" : "0.8rem",
           fontWeight: 900,
           letterSpacing: isAuto ? "0.1em" : "0",
           color: isAuto
@@ -132,7 +133,7 @@ function SlotRow({
 
       {/* ── Screenshot preview ── */}
       <div style={{
-        width: 72,
+        width: 60,
         flexShrink: 0,
         position: "relative",
         overflow: "hidden",
@@ -161,7 +162,7 @@ function SlotRow({
                 src={slot.previewImage}
                 alt="save preview"
                 fill
-                sizes="72px"
+                sizes="60px"
                 style={{ objectFit: "cover", objectPosition: "top center", opacity: 0.85 }}
               />
             )}
@@ -175,7 +176,7 @@ function SlotRow({
           <div style={{
             width: "100%", height: "100%",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "1.4rem",
+            fontSize: "1.2rem",
             color: "rgba(139,92,246,0.12)",
           }}>
             {isEmpty ? "✦" : "🎭"}
@@ -189,7 +190,7 @@ function SlotRow({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "10px 12px",
+        padding: "8px 10px",
         minWidth: 0,
       }}>
         {isEmpty ? (
@@ -199,7 +200,7 @@ function SlotRow({
             justifyContent: "center", gap: 6,
           }}>
             <p style={{
-              fontSize: "0.65rem",
+              fontSize: "0.6rem",
               color: "rgba(255,255,255,0.12)",
               fontStyle: "italic",
               letterSpacing: "0.08em",
@@ -212,9 +213,9 @@ function SlotRow({
                 disabled={isWorking}
                 style={{
                   alignSelf: "flex-start",
-                  padding: "4px 14px",
+                  padding: "3px 10px",
                   borderRadius: 6,
-                  fontSize: "0.6rem",
+                  fontSize: "0.55rem",
                   fontWeight: 700,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
@@ -243,7 +244,7 @@ function SlotRow({
             {/* Top row: scene label + act badge */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
               <span style={{
-                fontSize: "0.55rem",
+                fontSize: "0.5rem",
                 fontWeight: 700,
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
@@ -254,19 +255,19 @@ function SlotRow({
               </span>
               {isAuto && (
                 <span style={{
-                  fontSize: "0.42rem", fontWeight: 900,
+                  fontSize: "0.4rem", fontWeight: 900,
                   letterSpacing: "0.12em",
-                  padding: "1px 5px",
+                  padding: "1px 4px",
                   borderRadius: 3,
                   background: "linear-gradient(135deg, #ec4899, #a855f7)",
                   color: "#fff",
-                }}>AUTO SAVE</span>
+                }}>AUTO</span>
               )}
             </div>
 
             {/* Preview text */}
             <p style={{
-              fontSize: "0.72rem",
+              fontSize: "0.65rem",
               color: isActive ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.55)",
               lineHeight: 1.5,
               letterSpacing: "0.02em",
@@ -283,11 +284,14 @@ function SlotRow({
 
             {/* Bottom row: date + time */}
             <div style={{
-              display: "flex", alignItems: "center", gap: 10,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
               marginTop: 4,
+              flexWrap: "wrap",
             }}>
               <span style={{
-                fontSize: "0.52rem",
+                fontSize: "0.45rem",
                 color: "rgba(107,70,193,0.65)",
                 letterSpacing: "0.05em",
                 fontFamily: "monospace",
@@ -295,7 +299,7 @@ function SlotRow({
                 {formatDate(slot!.lastSaved)}
               </span>
               <span style={{
-                fontSize: "0.52rem",
+                fontSize: "0.45rem",
                 color: "rgba(107,70,193,0.5)",
                 letterSpacing: "0.05em",
                 fontFamily: "monospace",
@@ -313,7 +317,7 @@ function SlotRow({
           display: "flex",
           flexDirection: "column",
           gap: 4,
-          padding: "10px 10px 10px 0",
+          padding: "8px 8px 8px 0",
           justifyContent: "center",
           flexShrink: 0,
         }}>
@@ -381,9 +385,9 @@ function ActionBtn({
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
-        padding: primary ? "5px 14px" : small ? "4px 8px" : "4px 10px",
-        borderRadius: 6,
-        fontSize: primary ? "0.58rem" : "0.54rem",
+        padding: primary ? "4px 10px" : small ? "3px 6px" : "3px 8px",
+        borderRadius: 5,
+        fontSize: primary ? "0.55rem" : "0.5rem",
         fontWeight: 800,
         letterSpacing: "0.14em",
         cursor: disabled ? "not-allowed" : "pointer",
@@ -397,7 +401,7 @@ function ActionBtn({
         transition: "all 0.12s ease",
         whiteSpace: "nowrap",
         opacity: disabled ? 0.4 : 1,
-        minWidth: primary ? 56 : 32,
+        minWidth: primary ? 50 : 28,
         textAlign: "center",
       }}
     >
@@ -491,8 +495,8 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
           top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
           zIndex: 201,
-          width: "min(640px, calc(100vw - 32px))",
-          maxHeight: "min(740px, calc(100vh - 32px))",
+          width: "min(600px, calc(100vw - 24px))",
+          maxHeight: "min(700px, calc(100vh - 40px))",
           /* No animation here — transform must never be overridden */
         }}
       >
@@ -501,10 +505,10 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
         style={{
           width: "100%",
           height: "100%",
-          maxHeight: "min(740px, calc(100vh - 32px))",
+          maxHeight: "min(700px, calc(100vh - 40px))",
           display: "flex",
           flexDirection: "column",
-          borderRadius: 16,
+          borderRadius: 14,
           overflow: "hidden",
           background: "rgba(8, 4, 20, 0.97)",
           border: "1px solid rgba(255,255,255,0.08)",
@@ -523,16 +527,16 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
         <div style={{
           display: "flex",
           alignItems: "center",
-          padding: "16px 20px 14px",
+          padding: "14px 16px 12px",
           borderBottom: "1px solid rgba(255,255,255,0.05)",
           flexShrink: 0,
-          gap: 12,
+          gap: 10,
         }}>
           {/* Mode icon */}
           <div style={{
-            width: 34, height: 34, borderRadius: 8,
+            width: 30, height: 30, borderRadius: 7,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "1.1rem",
+            fontSize: "1rem",
             background: mode === "save"
               ? "rgba(168,85,247,0.15)"
               : "rgba(236,72,153,0.15)",
@@ -546,7 +550,7 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
           <div>
             <h2 style={{
               margin: 0,
-              fontSize: "1rem",
+              fontSize: "0.9rem",
               fontWeight: 900,
               letterSpacing: "0.06em",
               color: "#fff",
@@ -555,8 +559,8 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
             </h2>
             <p style={{
               margin: 0,
-              fontSize: "0.58rem",
-              letterSpacing: "0.22em",
+              fontSize: "0.5rem",
+              letterSpacing: "0.2em",
               textTransform: "uppercase",
               color: "rgba(167,139,250,0.45)",
               marginTop: 1,
@@ -570,11 +574,11 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
             onClick={onClose}
             style={{
               marginLeft: "auto",
-              width: 30, height: 30, borderRadius: 7,
+              width: 28, height: 28, borderRadius: 6,
               border: "1px solid rgba(255,255,255,0.1)",
               background: "rgba(255,255,255,0.04)",
               color: "rgba(255,255,255,0.4)",
-              fontSize: "0.85rem",
+              fontSize: "0.8rem",
               cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.15s ease",
@@ -599,7 +603,7 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
         <div style={{
           flex: 1,
           overflowY: "auto",
-          padding: "14px 16px",
+          padding: "12px 12px",
           display: "flex",
           flexDirection: "column",
           gap: 6,
@@ -611,14 +615,14 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
               gap: 10, minHeight: 200,
             }}>
               <div style={{
-                width: 28, height: 28,
+                width: 26, height: 26,
                 border: "2px solid rgba(236,72,153,0.15)",
                 borderTopColor: "#ec4899",
                 borderRadius: "50%",
                 animation: "sm-spin 0.8s linear infinite",
               }} />
               <p style={{
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
                 color: "rgba(167,139,250,0.4)",
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
@@ -649,10 +653,10 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
               }}>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.05)" }} />
                 <span style={{
-                  fontSize: "0.5rem", letterSpacing: "0.25em",
+                  fontSize: "0.45rem", letterSpacing: "0.2em",
                   textTransform: "uppercase", color: "rgba(107,70,193,0.4)",
                 }}>
-                  Manual Saves
+                  Manual
                 </span>
                 <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.05)" }} />
               </div>
@@ -679,7 +683,7 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
 
         {/* ── Footer ── */}
         <div style={{
-          padding: "10px 16px",
+          padding: "8px 14px",
           borderTop: "1px solid rgba(255,255,255,0.04)",
           display: "flex",
           alignItems: "center",
@@ -687,23 +691,23 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
           flexShrink: 0,
         }}>
           <p style={{
-            fontSize: "0.52rem",
+            fontSize: "0.48rem",
             color: "rgba(107,70,193,0.35)",
             letterSpacing: "0.18em",
             textTransform: "uppercase",
             margin: 0,
           }}>
-            4th November — Save System &nbsp;·&nbsp; {TOTAL_SLOTS - 1} manual slots
+            {TOTAL_SLOTS - 1} manual slots
           </p>
           <button
             onClick={onClose}
             style={{
-              padding: "5px 18px",
-              borderRadius: 7,
+              padding: "4px 15px",
+              borderRadius: 6,
               background: "rgba(139,92,246,0.12)",
               border: "1px solid rgba(139,92,246,0.22)",
               color: "rgba(196,181,253,0.7)",
-              fontSize: "0.65rem",
+              fontSize: "0.6rem",
               fontWeight: 700,
               letterSpacing: "0.1em",
               cursor: "pointer",
@@ -731,6 +735,12 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
           to   { opacity:1; transform:scale(1)    translateY(0);   }
         }
         @keyframes sm-spin{ to{transform:rotate(360deg)} }
+        
+        @media (max-width: 480px) {
+          .sm-in {
+            animation-duration: 0.2s;
+          }
+        }
       `}</style>
     </>
   );

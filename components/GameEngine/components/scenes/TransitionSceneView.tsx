@@ -4,22 +4,20 @@ import React, { useEffect, useRef, useState } from "react";
 import type { TransitionScene } from "@/types/game";
 import { audioManager } from "@/lib/Audiomanager";
 
-// Explicitly named & exported so TS never conflates it with ChoiceSceneViewProps
 export interface TransitionSceneViewProps {
   scene: TransitionScene;
   onComplete: (nextSceneId: string) => Promise<void>;
 }
 
-type TransitionFadePhase = "fade-in" | "hold" | "fade-out";
+type TransitionPhase = "fade-in" | "hold" | "fade-out";
 
-const FADE_MS = 600;
+const FADE_MS = 400; // Lebih cepat untuk efek kedip
 
-// React.FC<T> forces TS to bind prop type at declaration — prevents identity collision
 const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
   scene,
   onComplete,
 }) => {
-  const [phase, setPhase] = useState<TransitionFadePhase>("fade-in");
+  const [phase, setPhase] = useState<TransitionPhase>("fade-in");
   const skippedRef = useRef(false);
 
   useEffect(() => {
@@ -28,15 +26,9 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
 
   useEffect(() => {
     skippedRef.current = false;
-    const duration = Math.max(scene.duration ?? 2000, FADE_MS * 2 + 100);
+    const duration = Math.max(scene.duration ?? 800, FADE_MS * 2);
 
-    // Timeline:
-    //   0ms           → phase = "fade-in"  (CSS opacity 0→1 over FADE_MS)
-    //   FADE_MS       → phase = "hold"     (fully visible)
-    //   duration-FADE → phase = "fade-out" (CSS opacity 1→0 over FADE_MS)
-    //   duration      → call onComplete
-
-    const t1 = setTimeout(() => setPhase("hold"),     FADE_MS);
+    const t1 = setTimeout(() => setPhase("hold"), FADE_MS);
     const t2 = setTimeout(() => setPhase("fade-out"), duration - FADE_MS);
     const t3 = setTimeout(async () => {
       if (scene.next) await onComplete(scene.next);
@@ -49,7 +41,6 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
     };
   }, [scene, onComplete]);
 
-  // ── Click to skip ─────────────────────────────────────────────────────────
   const handleClick = async () => {
     if (skippedRef.current || !scene.next) return;
     skippedRef.current = true;
@@ -58,8 +49,15 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
     await onComplete(scene.next);
   };
 
-  // Opacity: start hidden, animate to 1 via keyframe, then CSS transition handles fade-out
-  const opacity = phase === "fade-out" ? 0 : 1;
+  // Efek transisi yang lebih smooth - menggunakan opacity dengan easing yang tepat
+  const getOpacity = () => {
+    switch (phase) {
+      case "fade-in": return 1; // CSS animation handle from 0 to 1
+      case "hold": return 1;
+      case "fade-out": return 0;
+      default: return 1;
+    }
+  };
 
   return (
     <div
@@ -73,15 +71,13 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
         backgroundPosition: "center",
         overflow: "hidden",
         cursor: "pointer",
-        opacity,
-        transition: `opacity ${FADE_MS}ms ease`,
-        animation:
-          phase === "fade-in"
-            ? `tsv-fadein ${FADE_MS}ms ease forwards`
-            : "none",
+        opacity: getOpacity(),
+        transition: phase === "fade-out" ? `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
+        animation: phase === "fade-in" 
+          ? `tsv-fadein ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1) forwards` 
+          : "none",
       }}
     >
-      {/* BG overlay */}
       {scene.bg?.overlay && (
         <div
           style={{
@@ -94,7 +90,6 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
         />
       )}
 
-      {/* Scene text */}
       {scene.text && (
         <div
           style={{
@@ -117,7 +112,7 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
               lineHeight: 2,
               opacity: phase === "hold" ? 1 : 0,
               transform: phase === "hold" ? "none" : "translateY(8px)",
-              transition: `opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s`,
+              transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
             {scene.text}
@@ -128,7 +123,7 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
       <style>{`
         @keyframes tsv-fadein {
           from { opacity: 0; }
-          to   { opacity: 1; }
+          to { opacity: 1; }
         }
       `}</style>
     </div>

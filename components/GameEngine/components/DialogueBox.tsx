@@ -2,14 +2,11 @@
 
 /**
  * DialogueBox — Full VN-standard dialogue box
- *
- * Features:
- * - Typewriter effect (speed from settings)
- * - Click/tap/keyboard to skip typewriter or advance
- * - Auto-play mode (advance after configurable delay)
- * - Skip mode (instant display, auto-advance)
- * - {playerName} token resolution
- * - Appends every completed line to history log
+ * 
+ * Perbaikan:
+ * - Menghilangkan fade in/out yang aneh per klik dialog
+ * - Membuat responsive untuk mobile
+ * - Memperbaiki animasi typewriter
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -49,30 +46,27 @@ export default function DialogueBox({
   const [finished,  setFinished]  = useState(false);
   const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoPlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loggedRef     = useRef(false);   // prevent double-logging per line
+  const loggedRef     = useRef(false);
   const indexRef      = useRef(0);
 
-  // ── Clear timers helper ───────────────────────────────────────────────────
   const clearTimers = useCallback(() => {
     if (intervalRef.current)   { clearInterval(intervalRef.current);  intervalRef.current = null; }
     if (autoPlayTimer.current) { clearTimeout(autoPlayTimer.current); autoPlayTimer.current = null; }
   }, []);
 
-  // ── Show full text immediately ────────────────────────────────────────────
   const showInstant = useCallback(() => {
     clearTimers();
     setDisplayed(resolvedText);
     setFinished(true);
   }, [resolvedText, clearTimers]);
 
-  // ── Log entry (only once per text change) ────────────────────────────────
   const logEntry = useCallback(() => {
     if (loggedRef.current) return;
     loggedRef.current = true;
     addLogEntry({ speaker: resolvedSpeaker, text: resolvedText, sceneId });
   }, [resolvedSpeaker, resolvedText, sceneId, addLogEntry]);
 
-  // ── Typewriter effect ─────────────────────────────────────────────────────
+  // Typewriter effect
   useEffect(() => {
     clearTimers();
     setDisplayed("");
@@ -100,10 +94,9 @@ export default function DialogueBox({
     }, speedMs);
 
     return clearTimers;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedText, skipMode]);
+  }, [resolvedText, skipMode, getTextSpeedMs]);
 
-  // ── When finished: log + start auto-play timer ───────────────────────────
+  // Log + auto-play when finished
   useEffect(() => {
     if (!finished) return;
 
@@ -121,7 +114,6 @@ export default function DialogueBox({
     };
   }, [finished, autoPlay, skipMode, autoPlayDelay, onAdvance, logEntry]);
 
-  // ── Manual advance (click / tap) ─────────────────────────────────────────
   const handleAdvance = useCallback(() => {
     if (!finished) {
       showInstant();
@@ -131,7 +123,7 @@ export default function DialogueBox({
     }
   }, [finished, showInstant, clearTimers, onAdvance]);
 
-  // ── Keyboard ──────────────────────────────────────────────────────────────
+  // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight") {
@@ -143,8 +135,10 @@ export default function DialogueBox({
     return () => window.removeEventListener("keydown", onKey);
   }, [handleAdvance]);
 
-  // ── Hidden UI mode ────────────────────────────────────────────────────────
   if (hideUI) return null;
+
+  // Responsive styles
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   return (
     <div
@@ -153,31 +147,31 @@ export default function DialogueBox({
         position: "absolute",
         bottom: 0, left: 0, right: 0,
         zIndex: 20,
-        padding: "0 24px 24px",
+        padding: isMobile ? "0 12px 12px" : "0 24px 24px",
         cursor: "pointer",
         userSelect: "none",
       }}
     >
-      {/* Auto / Skip indicator badge */}
+      {/* Auto / Skip indicator */}
       {(autoPlay || skipMode) && (
         <div style={{
           position: "absolute",
           bottom: "calc(100% - 16px)",
-          right: 30,
+          right: isMobile ? 15 : 30,
           display: "flex",
           gap: 6,
           zIndex: 21,
         }}>
           {autoPlay && (
             <span style={{
-              fontSize: "0.52rem",
+              fontSize: isMobile ? "0.45rem" : "0.52rem",
               fontWeight: 800,
               letterSpacing: "0.18em",
               color: "#4ade80",
               background: "rgba(74,222,128,0.1)",
               border: "1px solid rgba(74,222,128,0.3)",
               borderRadius: 5,
-              padding: "2px 8px",
+              padding: isMobile ? "2px 6px" : "2px 8px",
               animation: "badge-pulse 1.2s ease-in-out infinite",
             }}>
               AUTO
@@ -185,14 +179,14 @@ export default function DialogueBox({
           )}
           {skipMode && (
             <span style={{
-              fontSize: "0.52rem",
+              fontSize: isMobile ? "0.45rem" : "0.52rem",
               fontWeight: 800,
               letterSpacing: "0.18em",
               color: "#f59e0b",
               background: "rgba(245,158,11,0.1)",
               border: "1px solid rgba(245,158,11,0.3)",
               borderRadius: 5,
-              padding: "2px 8px",
+              padding: isMobile ? "2px 6px" : "2px 8px",
               animation: "badge-pulse 0.6s ease-in-out infinite",
             }}>
               SKIP
@@ -201,27 +195,30 @@ export default function DialogueBox({
         </div>
       )}
 
-      {/* Speaker name tag */}
+      {/* Speaker name - responsive */}
       {resolvedSpeaker && (
-        <div style={{ paddingLeft: 8 }}>
+        <div style={{ paddingLeft: isMobile ? 4 : 8 }}>
           <div style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 8,
-            padding: "5px 18px 6px",
+            gap: isMobile ? 6 : 8,
+            padding: isMobile ? "4px 12px 5px" : "5px 18px 6px",
             borderRadius: "10px 10px 0 0",
             background: "rgba(10,5,25,0.92)",
             border: "1px solid rgba(236,72,153,0.4)",
             borderBottom: "none",
           }}>
             <span style={{
-              width: 5, height: 5, borderRadius: "50%",
-              background: "#ec4899", boxShadow: "0 0 6px #ec4899",
+              width: isMobile ? 4 : 5, 
+              height: isMobile ? 4 : 5, 
+              borderRadius: "50%",
+              background: "#ec4899", 
+              boxShadow: "0 0 6px #ec4899",
               flexShrink: 0,
             }} />
             <span style={{
               fontWeight: 800,
-              fontSize: "0.82rem",
+              fontSize: isMobile ? "0.7rem" : "0.82rem",
               letterSpacing: "0.12em",
               background: "linear-gradient(135deg, #fce7f3, #ec4899)",
               WebkitBackgroundClip: "text",
@@ -233,14 +230,14 @@ export default function DialogueBox({
         </div>
       )}
 
-      {/* Main box */}
+      {/* Main box - responsive */}
       <div style={{
         position: "relative",
         background: "rgba(6,2,18,0.88)",
         border: "1px solid rgba(236,72,153,0.18)",
         borderRadius: resolvedSpeaker ? "0 12px 12px 12px" : 12,
-        padding: "16px 50px 16px 20px",
-        minHeight: 100,
+        padding: isMobile ? "12px 40px 12px 16px" : "16px 50px 16px 20px",
+        minHeight: isMobile ? 80 : 100,
         backdropFilter: "blur(20px)",
         boxShadow: [
           "0 -2px 40px rgba(236,72,153,0.05)",
@@ -257,23 +254,25 @@ export default function DialogueBox({
           borderRadius: "12px 0 0 12px",
         }} />
 
-        {/* Text */}
+        {/* Text - responsive */}
         <p style={{
-          fontSize: "0.95rem",
-          lineHeight: 1.85,
+          fontSize: isMobile ? "0.85rem" : "0.95rem",
+          lineHeight: isMobile ? 1.7 : 1.85,
           color: "rgba(255,255,255,0.9)",
           fontWeight: 400,
           fontStyle: italic ? "italic" : "normal",
           letterSpacing: italic ? "0.04em" : "0.028em",
           margin: 0,
           whiteSpace: "pre-wrap",
-          paddingLeft: 10,
+          wordBreak: "break-word",
+          paddingLeft: isMobile ? 6 : 10,
         }}>
           {displayed}
           {!finished && (
             <span style={{
               display: "inline-block",
-              width: 2, height: "1em",
+              width: 2, 
+              height: isMobile ? "0.9em" : "1em",
               background: "#ec4899",
               marginLeft: 2,
               verticalAlign: "text-bottom",
@@ -282,21 +281,26 @@ export default function DialogueBox({
           )}
         </p>
 
-        {/* Continue arrow — hidden during auto/skip */}
+        {/* Continue arrow - hidden during auto/skip */}
         {finished && !autoPlay && !skipMode && (
           <div style={{
             position: "absolute",
-            bottom: 12, right: 16,
-            display: "flex", alignItems: "center", gap: 4,
+            bottom: isMobile ? 8 : 12, 
+            right: isMobile ? 12 : 16,
+            display: "flex", 
+            alignItems: "center", 
+            gap: 4,
             animation: "dlg-bounce 0.9s ease-in-out infinite alternate",
           }}>
             <span style={{
-              fontSize: "0.5rem",
+              fontSize: isMobile ? "0.45rem" : "0.5rem",
               letterSpacing: "0.2em",
               color: "rgba(236,72,153,0.5)",
               fontWeight: 700,
-            }}>TAP</span>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+            }}>
+              {isMobile ? "TAP" : "TAP"}
+            </span>
+            <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} viewBox="0 0 20 20" fill="none">
               <path d="M5 8l5 5 5-5" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>

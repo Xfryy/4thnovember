@@ -3,6 +3,19 @@
   position: relative;
   -webkit-user-select: none;
   user-select: none;
+  width: 100%;
+  animation: titleAppear 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+@keyframes titleAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ── Japanese subtitle ── */
@@ -12,15 +25,50 @@
   gap: 8px;
   margin-bottom: 12px;
   justify-content: center;
+  opacity: 0;
+  animation: subtitleSlide 0.5s ease-out 0.2s forwards;
 }
 
-@media (min-width: 768px) {
-  .subtitleRow { justify-content: flex-start; }
+@keyframes subtitleSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .subtitleRow { 
+    justify-content: flex-start; 
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .subtitleRow { 
+    gap: 16px;
+  }
 }
 
 .subtitleLine {
   height: 1px;
-  width: 36px;
+  width: 24px;
+  transition: width 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .subtitleLine {
+    width: 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .subtitleLine {
+    width: 48px;
+  }
 }
 
 .subtitleLineLeft {
@@ -32,11 +80,25 @@
 }
 
 .subtitleText {
-  font-size: 0.7rem;
-  letter-spacing: 0.35em;
+  font-size: 0.65rem;
+  letter-spacing: 0.25em;
   color: #a78bfa;
   white-space: nowrap;
   font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif;
+  text-shadow: 0 0 10px rgba(167,139,250,0.3);
+}
+
+@media (min-width: 640px) {
+  .subtitleText {
+    font-size: 0.7rem;
+    letter-spacing: 0.35em;
+  }
+}
+
+@media (min-width: 1024px) {
+  .subtitleText {
+    font-size: 0.8rem;
+  }
 }
 
 /* ── Letter rows ── */
@@ -44,14 +106,54 @@
   display: flex;
   justify-content: center;
   line-height: 1;
-  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  gap: 2px;
+  opacity: 0;
+  animation: letterRowAppear 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s forwards;
+}
+
+@keyframes letterRowAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 480px) {
+  .letterRow {
+    font-size: clamp(3rem, 7vw, 4.5rem);
+    gap: 4px;
+  }
 }
 
 @media (min-width: 768px) {
-  .letterRow { justify-content: flex-start; }
+  .letterRow {
+    justify-content: flex-start;
+    font-size: clamp(3.5rem, 8vw, 5.5rem);
+    gap: 8px;
+  }
 }
 
-.letterRow4th { margin-bottom: -4px; }
+@media (min-width: 1024px) {
+  .letterRow {
+    font-size: clamp(4rem, 5vw, 6rem);
+    gap: 12px;
+  }
+}
+
+.letterRow4th { 
+  margin-bottom: -8px; 
+}
+
+@media (min-width: 768px) {
+  .letterRow4th { 
+    margin-bottom: -12px; 
+  }
+}
 
 /* ── Individual letter ── */
 .letter {
@@ -62,6 +164,67 @@
   cursor: default;
   -webkit-user-select: none;
   user-select: none;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.22s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              filter 0.3s ease,
+              text-shadow 0.3s ease;
   paint-order: stroke fill;
+  transform-origin: center;
+  animation: letterPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes letterPop {
+  from {
+    opacity: 0;
+    transform: scale(0.5) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.letter:hover {
+  transform: scale(1.2) translateY(-5px) rotate(2deg);
+  filter: brightness(1.2);
+  z-index: 10;
+}
+
+/* Stagger animation for each letter */
+.letter:nth-child(1) { animation-delay: 0.1s; }
+.letter:nth-child(2) { animation-delay: 0.15s; }
+.letter:nth-child(3) { animation-delay: 0.2s; }
+.letter:nth-child(4) { animation-delay: 0.25s; }
+.letter:nth-child(5) { animation-delay: 0.3s; }
+.letter:nth-child(6) { animation-delay: 0.35s; }
+.letter:nth-child(7) { animation-delay: 0.4s; }
+.letter:nth-child(8) { animation-delay: 0.45s; }
+
+/* Mobile optimization */
+@media (max-width: 480px) {
+  .letter {
+    -webkit-text-stroke: 3px rgba(255,255,255,0.95) !important;
+  }
+  
+  .letter:hover {
+    transform: scale(1.1) translateY(-3px) rotate(1deg);
+  }
+}
+
+/* Tablet optimization */
+@media (min-width: 481px) and (max-width: 768px) {
+  .letter {
+    -webkit-text-stroke: 4px rgba(255,255,255,0.95) !important;
+  }
+}
+
+/* Touch device optimization */
+@media (hover: none) and (pointer: coarse) {
+  .letter:hover {
+    transform: none;
+  }
+  
+  .letter:active {
+    transform: scale(1.1) translateY(-3px);
+    transition: transform 0.15s ease;
+  }
 }

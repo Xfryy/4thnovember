@@ -147,14 +147,12 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           setUser(userData);
           setCharacterName(characterNameFromDB);
 
-          // Character name: trust Firestore data completely
-          if (characterNameFromDB && characterNameFromDB.trim()) {
+          if (characterNameFromDB) {
             setCharacterNameSet(true);
             setShowCharacterInput(false);
           } else {
-            // No name in Firestore = show character name input
-            setCharacterNameSet(false);
-            setShowCharacterInput(true);
+            // Only show input if really no name (not just cache miss)
+            if (!cachedProfile?.characterName) setShowCharacterInput(true);
           }
 
           // Update save state — won't cause visual flash since menu is already shown
@@ -163,15 +161,11 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
             setCachedSaveData(uid, save);
           }
 
-          // CRITICAL: Always update autoSaveSlot from Firestore, even if null
-          // This ensures "Continue" button accuracy and prevents stale cache data
+          // Critical: update autoSaveSlot from Firestore
+          // If slot0 exists and differs from cache, update — this keeps "Continue" accurate
           if (slot0) {
             setAutoSaveSlot(slot0);
             setCachedAutoSlot(uid, slot0);
-          } else {
-            // No auto-save found — explicitly clear it
-            setAutoSaveSlot(null);
-            // Don't keep stale auto-save cache
           }
 
           // Update user profile with actual total playtime
@@ -271,16 +265,9 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      // Clear cache FIRST before logging out
-      if (user) {
-        clearUserCache(user.uid);
-      }
-      
-      // Then logout
+      if (user) clearUserCache(user.uid);
       await signOut();
       audioManager.stopAll();
-      
-      // Reset all state completely
       setUser(null);
       setCharacterName("");
       setCharacterNameSet(false);
@@ -288,15 +275,6 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
       setSaveData(null);
       setAutoSaveSlot(null);
       setBgmStarted(false);
-      
-      // ⚠️ Additional security: ensure settings sync is cleaned
-      if (settingsSyncUnsubscribe) {
-        try {
-          await cleanupSettingsSync();
-          settingsSyncUnsubscribe();
-        } catch {}
-        setSettingsSyncUnsubscribe(null);
-      }
     } catch (error) {
       console.error("Logout error:", error);
       alert("Logout gagal. Silakan coba lagi.");
@@ -305,26 +283,14 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     }
   };
 
-  /** Request fullscreen — must be called inside a user gesture */
-  const enterFullscreen = () => {
-    const el = document.documentElement;
-    if (!document.fullscreenElement) {
-      el.requestFullscreen?.().catch(() => {
-        // Browser blocked fullscreen (e.g. iframe) — silently ignore
-      });
-    }
-  };
-
   /** Start brand-new game */
   const handleStartNewGame = () => {
-    enterFullscreen();
     audioManager.resume();
     onGameStart?.(1, undefined);
   };
 
   /** Continue from auto-save (slot 0) */
   const handleContinue = () => {
-    enterFullscreen();
     audioManager.resume();
     if (autoSaveSlot) {
       onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
@@ -337,7 +303,6 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
 
   /** Load from a specific manual save slot */
   const handleLoadSlot = (slot: SaveSlot) => {
-    enterFullscreen();
     audioManager.resume();
     onGameStart?.(slot.currentAct, slot.currentSceneId);
   };
@@ -362,14 +327,9 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           setCachedSaveData(user.uid, saveData);
         }
 
-        // CRITICAL: Always set autoSaveSlot, even if null
-        // This prevents stale cache data from showing wrong "Continue" button state
         if (slot0) {
           setAutoSaveSlot(slot0);
           setCachedAutoSlot(user.uid, slot0);
-        } else {
-          // No auto-save: explicitly clear it
-          setAutoSaveSlot(null);
         }
 
         // Update user profile with actual total playtime

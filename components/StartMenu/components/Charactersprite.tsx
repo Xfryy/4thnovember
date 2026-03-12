@@ -25,6 +25,19 @@ export default function CharacterSprite({
   height = 420,
 }: CharacterSpriteProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [, setIsVisible] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+
+  useEffect(() => {
+    setIsVisible(true);
+    
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!animated) return;
@@ -34,18 +47,38 @@ export default function CharacterSprite({
     return () => clearInterval(interval);
   }, [animated]);
 
+  const isMobile = windowWidth < 640;
+
   // ── Compact mode ─────────────────────────────────────────────
   if (compact) {
     return (
       <div className="relative" style={{ width, height }}>
+        <style>{`
+          @keyframes spriteFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+          }
+          
+          @keyframes spriteGlow {
+            0%, 100% { filter: drop-shadow(0 4px 16px rgba(236,72,153,0.3)); }
+            50% { filter: drop-shadow(0 8px 24px rgba(236,72,153,0.5)); }
+          }
+          
+          .sprite-container {
+            animation: spriteFloat 4s ease-in-out infinite,
+                       spriteGlow 3s ease-in-out infinite;
+          }
+        `}</style>
+        
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none sprite-container"
           style={{
             borderRadius: "50%",
             background: "radial-gradient(ellipse, rgba(236,72,153,0.15) 0%, transparent 70%)",
             filter: "blur(16px)",
           }}
         />
+        
         {RINN_SPRITES.map((src, i) => (
           <Image
             key={src}
@@ -54,13 +87,13 @@ export default function CharacterSprite({
             width={width}
             height={height}
             priority={i === 0}
-            className="object-contain"
+            className="object-contain transition-all duration-700 ease-in-out"
             style={{
               position: i === 0 ? "relative" : "absolute",
               top: 0, left: 0,
               opacity: i === currentIndex ? 1 : 0,
-              transition: "opacity 0.8s ease",
-              filter: "drop-shadow(0 4px 16px rgba(236,72,153,0.3))",
+              transform: i === currentIndex ? 'scale(1)' : 'scale(0.95)',
+              filter: `drop-shadow(0 4px ${isMobile ? 12 : 16}px rgba(236,72,153,0.3))`,
             }}
           />
         ))}
@@ -74,31 +107,70 @@ export default function CharacterSprite({
       <style>{`
         @keyframes breathing {
           0%   { transform: translateY(0px) scaleX(1); }
-          30%  { transform: translateY(-10px) scaleX(0.995); }
-          60%  { transform: translateY(-14px) scaleX(0.99); }
+          30%  { transform: translateY(-8px) scaleX(0.998); }
+          60%  { transform: translateY(-12px) scaleX(0.995); }
           100% { transform: translateY(0px) scaleX(1); }
         }
         @keyframes ground-pulse {
-          0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
-          50%       { opacity: 1;   transform: translateX(-50%) scaleX(1.08); }
+          0%, 100% { 
+            opacity: 0.4; 
+            transform: translateX(-50%) scaleX(1);
+          }
+          50% { 
+            opacity: 0.8; 
+            transform: translateX(-50%) scaleX(1.1);
+          }
         }
         @keyframes name-badge-glow {
-          0%, 100% { box-shadow: 0 0 8px rgba(236,72,153,0.3); }
-          50%       { box-shadow: 0 0 18px rgba(236,72,153,0.6); }
+          0%, 100% { 
+            box-shadow: 0 0 8px rgba(236,72,153,0.3);
+            border-color: rgba(236,72,153,0.4);
+          }
+          50% { 
+            box-shadow: 0 0 18px rgba(236,72,153,0.6);
+            border-color: rgba(236,72,153,0.7);
+          }
+        }
+        @keyframes spriteAppear {
+          from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        .sprite-wrapper {
+          animation: spriteAppear 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+        
+        .name-badge {
+          animation: name-badge-glow 3s ease-in-out infinite;
+        }
+        
+        @media (max-width: 768px) {
+          @keyframes breathing {
+            0%   { transform: translateY(0px) scaleX(1); }
+            30%  { transform: translateY(-5px) scaleX(0.998); }
+            60%  { transform: translateY(-8px) scaleX(0.995); }
+            100% { transform: translateY(0px) scaleX(1); }
+          }
         }
       `}</style>
 
       <div
-        className="relative w-full h-full pointer-events-none"
-        style={{ minHeight: "60vh" }}
+        className="sprite-wrapper relative w-full h-full pointer-events-none"
+        style={{ minHeight: isMobile ? "40vh" : "60vh" }}
       >
-        {/* Ground glow — stays still, breathing hanya sprite */}
+        {/* Ground glow */}
         <div
           className="absolute bottom-0 left-1/2 pointer-events-none"
           style={{
             transform: "translateX(-50%)",
-            width: "70%",
-            height: 60,
+            width: isMobile ? "50%" : "70%",
+            height: isMobile ? 40 : 60,
             borderRadius: "50%",
             background: "radial-gradient(ellipse, rgba(236,72,153,0.35) 0%, transparent 70%)",
             filter: "blur(12px)",
@@ -107,7 +179,7 @@ export default function CharacterSprite({
           }}
         />
 
-        {/* Breathing wrapper — hanya sprite yang bergerak */}
+        {/* Breathing wrapper */}
         <div
           className="absolute inset-0"
           style={{
@@ -122,11 +194,11 @@ export default function CharacterSprite({
               alt="Rinn"
               fill
               priority={i === 0}
-              sizes="30vw"
-              className="object-contain object-bottom"
+              sizes={isMobile ? "50vw" : "30vw"}
+              className="object-contain object-bottom transition-all duration-700 ease-in-out"
               style={{
                 opacity: i === currentIndex ? 1 : 0,
-                transition: "opacity 0.8s ease",
+                transform: i === currentIndex ? 'scale(1)' : 'scale(0.98)',
                 filter:
                   "drop-shadow(0 0 24px rgba(236,72,153,0.3)) drop-shadow(-8px 0 30px rgba(139,92,246,0.15))",
                 position: "absolute",
@@ -135,21 +207,20 @@ export default function CharacterSprite({
           ))}
         </div>
 
-        {/* Name plate — di luar breathing wrapper biar ga ikut gerak */}
+        {/* Name plate */}
         <div
-          className="absolute bottom-4 left-1/2 z-10 px-5 py-1.5 rounded-full flex items-center gap-2"
+          className="name-badge absolute bottom-4 left-1/2 z-10 px-4 py-1.5 
+                     rounded-full flex items-center gap-2 whitespace-nowrap"
           style={{
             transform: "translateX(-50%)",
-            background: "rgba(8, 5, 20, 0.65)",
+            background: "rgba(8, 5, 20, 0.7)",
             border: "1px solid rgba(236,72,153,0.4)",
             backdropFilter: "blur(10px)",
-            animation: "name-badge-glow 3s ease-in-out infinite",
-            whiteSpace: "nowrap",
           }}
         >
-          <span style={{ fontSize: 8, color: "#ec4899" }}>◆</span>
+          <span style={{ fontSize: isMobile ? 6 : 8, color: "#ec4899" }}>◆</span>
           <span
-            className="font-bold tracking-[0.3em] text-xs uppercase"
+            className="font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase"
             style={{
               background: "linear-gradient(135deg, #f9a8d4, #ec4899, #a78bfa)",
               WebkitBackgroundClip: "text",
@@ -158,7 +229,7 @@ export default function CharacterSprite({
           >
             -???????-
           </span>
-          <span style={{ fontSize: 8, color: "#a78bfa" }}>◆</span>
+          <span style={{ fontSize: isMobile ? 6 : 8, color: "#a78bfa" }}>◆</span>
         </div>
       </div>
     </>

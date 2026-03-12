@@ -66,10 +66,10 @@ const CAPSULES = [
   },
 ] as const;
 
-function capsulePos(anchor: number, offset: number): string {
-  if (anchor === 0)   return `${offset}px`;
-  if (anchor === 100) return `calc(100% + ${offset}px)`;
-  return `calc(${anchor}% + ${offset}px)`;
+function capsulePos(anchor: number, offset: string): string {
+  if (anchor === 0) return offset;
+  if (anchor === 100) return `calc(100% + ${offset})`;
+  return `calc(${anchor}% + ${offset})`;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -112,8 +112,8 @@ export default function GameBackground() {
           key={cap.id}
           className="gb-capsule absolute pointer-events-none"
           style={{
-            left:         capsulePos(cap.anchorX, cap.offsetX),
-            top:          capsulePos(cap.anchorY, cap.offsetY),
+            left:         capsulePos(cap.anchorX, `${cap.offsetX}px`),
+            top:          capsulePos(cap.anchorY, `${cap.offsetY}px`),
             width:        cap.width,
             height:       cap.height,
             borderRadius: "40px",

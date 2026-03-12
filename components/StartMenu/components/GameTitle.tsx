@@ -23,7 +23,7 @@ function AnimatedLetter({ char, gradFrom, gradTo, shadowColor, delay }: LetterPr
         background: `linear-gradient(170deg, ${gradFrom} 0%, ${gradTo} 100%)`,
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
-        WebkitTextStroke: "5px rgba(255,255,255,0.95)",
+        WebkitTextStroke: window.innerWidth < 768 ? "3px rgba(255,255,255,0.95)" : "5px rgba(255,255,255,0.95)",
         filter: hovered
           ? `drop-shadow(0 0 14px ${shadowColor}) drop-shadow(0 6px 0 ${shadowColor}55)`
           : `drop-shadow(0 4px 0 ${shadowColor}66) drop-shadow(0 0 6px ${shadowColor}33)`,

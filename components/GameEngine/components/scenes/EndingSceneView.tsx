@@ -20,6 +20,17 @@ const ENDING_CONFIG: Record<string, { color: string; label: string; glow: string
 export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewProps) {
   const [canContinue, setCanContinue] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     if (scene.audio?.bgm) audioManager.playBGM(scene.audio.bgm, 800);
@@ -62,23 +73,27 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
         <div style={{ position: "absolute", inset: 0, background: scene.bg.overlay, zIndex: 1, pointerEvents: "none" }} />
       )}
 
-      {/* Dark vignette overlay */}
+      {/* Dark vignette overlay - lebih subtle di mobile */}
       <div style={{
         position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 100%)",
+        background: isMobile
+          ? "linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.7) 100%)"
+          : "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 100%)",
         zIndex: 2, pointerEvents: "none",
       }} />
 
-      {/* Character sprite */}
+      {/* Character sprite - responsive */}
       {scene.characterSprite && (
         <div style={{
           position: "absolute",
           bottom: 0, left: "50%",
           transform: "translateX(-50%)",
-          width: 380, height: 580,
-          opacity: 0.45,
+          width: isMobile ? 280 : 380,
+          height: isMobile ? 420 : 580,
+          opacity: isMobile ? 0.3 : 0.45,
           zIndex: 3,
           animation: "end-char 1.4s ease 0.2s both",
+          pointerEvents: "none",
         }}>
           <img
             src={scene.characterSprite}
@@ -93,12 +108,13 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
         </div>
       )}
 
-      {/* Ambient glow behind text */}
+      {/* Ambient glow - responsive */}
       <div style={{
         position: "absolute",
         top: "50%", left: "50%",
         transform: "translate(-50%,-50%)",
-        width: 300, height: 200,
+        width: isMobile ? 200 : 300,
+        height: isMobile ? 150 : 200,
         borderRadius: "50%",
         background: `radial-gradient(ellipse, ${cfg.glow} 0%, transparent 70%)`,
         zIndex: 4, pointerEvents: "none",
@@ -106,7 +122,7 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
         filter: "blur(20px)",
       }} />
 
-      {/* Content */}
+      {/* Content - responsive */}
       <div style={{
         position: "absolute", inset: 0,
         zIndex: 5,
@@ -114,31 +130,34 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 10,
+        gap: isMobile ? 6 : 10,
+        padding: isMobile ? "0 20px" : 0,
       }}>
         {/* Ending type label */}
         <p style={{
-          fontSize: "0.55rem",
+          fontSize: isMobile ? "0.45rem" : "0.55rem",
           fontWeight: 800,
           letterSpacing: "0.45em",
           textTransform: "uppercase",
           color: `${cfg.color}88`,
           animation: "end-in 1s ease 0.3s both",
           margin: 0,
+          textAlign: "center",
         }}>
           {cfg.label}
         </p>
 
         {/* Decorative line */}
         <div style={{
-          width: 36, height: 1,
+          width: isMobile ? 30 : 36, 
+          height: 1,
           background: `linear-gradient(90deg, transparent, ${cfg.color}, transparent)`,
           animation: "end-in 1s ease 0.45s both",
         }} />
 
-        {/* Main title */}
+        {/* Main title - responsive */}
         <p style={{
-          fontSize: "clamp(1.5rem, 3.5vw, 2.2rem)",
+          fontSize: isMobile ? "clamp(1.2rem, 6vw, 1.8rem)" : "clamp(1.5rem, 3.5vw, 2.2rem)",
           fontWeight: 900,
           letterSpacing: "0.1em",
           color: cfg.color,
@@ -147,45 +166,54 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
           textAlign: "center",
           margin: 0,
           lineHeight: 1.2,
+          wordBreak: "break-word",
         }}>
           {scene.title}
         </p>
 
-        {/* Subtitle */}
+        {/* Subtitle - responsive */}
         {scene.subtitle && (
           <p style={{
-            fontSize: "0.72rem",
+            fontSize: isMobile ? "0.6rem" : "0.72rem",
             letterSpacing: "0.22em",
             color: "rgba(255,255,255,0.35)",
             animation: "end-in 1s ease 0.75s both",
             margin: "4px 0 0",
+            textAlign: "center",
           }}>
             {scene.subtitle}
           </p>
         )}
 
-        {/* Continue hint */}
+        {/* Continue hint - responsive */}
         <div style={{
-          marginTop: 28,
-          display: "flex", alignItems: "center", gap: 8,
+          marginTop: isMobile ? 20 : 28,
+          display: "flex", 
+          alignItems: "center", 
+          gap: isMobile ? 4 : 8,
           opacity: showHint ? 1 : 0,
           transition: "opacity 0.6s ease",
           animation: showHint ? "end-hint 1.8s ease-in-out infinite alternate" : "none",
+          flexWrap: "wrap",
+          justifyContent: "center",
         }}>
           <div style={{
-            width: 24, height: 1,
+            width: isMobile ? 16 : 24, 
+            height: 1,
             background: `linear-gradient(90deg, transparent, ${cfg.color}55)`,
           }} />
           <span style={{
-            fontSize: "0.48rem",
+            fontSize: isMobile ? "0.4rem" : "0.48rem",
             letterSpacing: "0.35em",
             color: `${cfg.color}60`,
             fontWeight: 700,
+            whiteSpace: "nowrap",
           }}>
-            CLICK TO CONTINUE
+            {isMobile ? "TAP" : "CLICK TO CONTINUE"}
           </span>
           <div style={{
-            width: 24, height: 1,
+            width: isMobile ? 16 : 24, 
+            height: 1,
             background: `linear-gradient(90deg, ${cfg.color}55, transparent)`,
           }} />
         </div>

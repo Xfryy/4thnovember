@@ -9,14 +9,25 @@ interface CgSceneViewProps {
   onApplyEffect?: (effectName: string, target?: HTMLElement) => Promise<void>;
 }
 
-const FADE_IN_DELAY = 50;  // ms before triggering the CSS fade-in
-const FADE_OUT_MS   = 400; // ms for fade-out before advancing
+const FADE_IN_DELAY = 50;
+const FADE_OUT_MS   = 400;
 
 export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
   const [visible, setVisible]     = useState(false);
   const [advancing, setAdvancing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // ── Fade-in on mount ──────────────────────────────────────────────────────
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Fade-in on mount
   useEffect(() => {
     setVisible(false);
     setAdvancing(false);
@@ -24,7 +35,7 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
     return () => clearTimeout(t);
   }, [scene.id]);
 
-  // ── Advance handler ───────────────────────────────────────────────────────
+  // Advance handler
   const handleAdvance = useCallback(async () => {
     if (advancing || !scene.next) return;
     setAdvancing(true);
@@ -33,7 +44,7 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
     await onAdvance(scene.next);
   }, [advancing, scene.next, onAdvance]);
 
-  // ── Keyboard support ──────────────────────────────────────────────────────
+  // Keyboard support
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight") {
@@ -55,7 +66,7 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
         cursor: advancing ? "default" : "pointer",
         overflow: "hidden",
         opacity: visible ? 1 : 0,
-        transition: "opacity 0.5s ease",
+        transition: "opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
       }}
     >
       {/* Fullscreen CG image */}
@@ -67,45 +78,46 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
           inset: 0,
           width: "100%",
           height: "100%",
-          objectFit: "cover",
-          objectPosition: "center top",
+          objectFit: isMobile ? "contain" : "cover",
+          objectPosition: "center",
           display: "block",
         }}
         draggable={false}
       />
 
-      {/* Vignette */}
+      {/* Vignette - lebih subtle di mobile */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)",
+          background: isMobile
+            ? "linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6) 100%)"
+            : "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%)",
           pointerEvents: "none",
           zIndex: 1,
         }}
       />
 
-      {/* Caption */}
+      {/* Caption - responsive */}
       {scene.caption && (
         <div
           style={{
             position: "absolute",
-            bottom: 60,
+            bottom: isMobile ? 40 : 60,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 5,
-            maxWidth: 580,
-            width: "calc(100% - 48px)",
+            maxWidth: isMobile ? "90%" : 580,
+            width: "auto",
             textAlign: "center",
-            padding: "14px 24px",
+            padding: isMobile ? "10px 16px" : "14px 24px",
             background: "rgba(4,2,14,0.78)",
             border: "1px solid rgba(236,72,153,0.2)",
             borderRadius: 10,
             backdropFilter: "blur(12px)",
             color: "rgba(255,255,255,0.88)",
-            fontSize: "1rem",
-            lineHeight: 1.75,
+            fontSize: isMobile ? "0.85rem" : "1rem",
+            lineHeight: isMobile ? 1.6 : 1.75,
             letterSpacing: "0.03em",
             animation: "cg-up 0.6s ease 0.3s both",
           }}
@@ -114,12 +126,12 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
         </div>
       )}
 
-      {/* Continue hint */}
+      {/* Continue hint - responsive */}
       <div
         style={{
           position: "absolute",
-          bottom: 18,
-          right: 20,
+          bottom: isMobile ? 12 : 18,
+          right: isMobile ? 15 : 20,
           zIndex: 5,
           display: "flex",
           alignItems: "center",
@@ -131,15 +143,15 @@ export default function CgSceneView({ scene, onAdvance }: CgSceneViewProps) {
       >
         <span
           style={{
-            fontSize: "0.5rem",
+            fontSize: isMobile ? "0.45rem" : "0.5rem",
             letterSpacing: "0.2em",
             color: "rgba(236,72,153,0.5)",
             fontWeight: 700,
           }}
         >
-          TAP
+          {isMobile ? "TAP" : "TAP"}
         </span>
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+        <svg width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} viewBox="0 0 20 20" fill="none">
           <path
             d="M5 8l5 5 5-5"
             stroke="#ec4899"

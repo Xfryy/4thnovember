@@ -30,11 +30,6 @@ interface SceneRendererProps {
   onApplyEffect:    (effectName: string, target?: HTMLElement) => Promise<void>;
 }
 
-// ── Adapters ──────────────────────────────────────────────────────────────────
-// scene views expect (nextSceneId: string) => Promise<void>
-// but onSceneAdvance has an optional second arg — TypeScript rejects the mismatch.
-// These wrappers fix the signature without touching the scene view files.
-
 function makeAdvance(
   fn: (id: string, data?: any) => Promise<void>
 ): (nextSceneId: string) => Promise<void> {
@@ -47,8 +42,6 @@ function makeChoose(
   return (nextSceneId: string, choiceData: any) => fn(nextSceneId, choiceData);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function SceneRenderer({
   scene,
   actConfig,
@@ -60,6 +53,7 @@ export default function SceneRenderer({
   const advance = makeAdvance(onSceneAdvance);
   const choose  = makeChoose(onSceneAdvance);
 
+  // Gunakan type guard yang benar
   if (scene.type === "dialogue") {
     return (
       <DialogueSceneView
@@ -92,6 +86,7 @@ export default function SceneRenderer({
     );
   }
 
+  // Perbaiki: pisahkan transition dan cg dengan jelas
   if (scene.type === "transition") {
     return (
       <TransitionSceneView

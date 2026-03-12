@@ -122,7 +122,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
       {/* ── Profile pill ── */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-3 rounded-2xl px-4 py-2.5 transition-all hover:scale-105 active:scale-95"
+        className="flex items-center gap-2 sm:gap-3 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 transition-all hover:scale-105 active:scale-95"
         style={{
           background:    "rgba(15, 10, 35, 0.65)",
           border:        "1px solid rgba(236,72,153,0.35)",
@@ -130,18 +130,18 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
           boxShadow:     "0 4px 20px rgba(236,72,153,0.15)",
         }}
       >
-        <div className="text-right hidden sm:block max-w-xs" style={{ minWidth: 0 }}>
-          <p className="text-sm font-bold leading-none mb-0.5 truncate"
+        <div className="text-right hidden sm:block max-w-[150px] md:max-w-xs" style={{ minWidth: 0 }}>
+          <p className="text-xs md:text-sm font-bold leading-none mb-0.5 truncate"
             style={{
               background: "linear-gradient(135deg, #f9a8d4, #ec4899)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             }}
           >{displayName}</p>
-          <p className="text-xs text-purple-400 leading-none whitespace-nowrap">
+          <p className="text-[10px] md:text-xs text-purple-400 leading-none whitespace-nowrap">
             🏆 {stats.totalPlays} &nbsp;·&nbsp; ⏱ {formatPlaytime(stats.totalPlayTime)}
           </p>
         </div>
-        <div className="w-9 h-9 rounded-full flex items-center justify-center font-black text-white text-base flex-shrink-0"
+        <div className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center font-black text-white text-sm md:text-base flex-shrink-0"
           style={{ background:"linear-gradient(135deg, #ec4899, #a855f7)", boxShadow:"0 0 12px rgba(236,72,153,0.5)" }}
         >{initial}</div>
       </button>
@@ -149,12 +149,12 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
       {/* ── Modal — only mounted when open ── */}
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background:"rgba(0,0,0,0.6)", backdropFilter:"blur(6px)" }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden"
+            className="relative w-full max-w-sm mx-auto rounded-3xl overflow-hidden"
             style={{
               background: "rgba(12, 8, 28, 0.95)",
               border:     "1px solid rgba(236,72,153,0.25)",
@@ -164,19 +164,19 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
           >
             <div className="h-1 w-full" style={{ background:"linear-gradient(90deg, #ec4899, #a855f7, #6366f1)" }} />
 
-            <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b" style={{ borderColor:"rgba(236,72,153,0.1)" }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+            <div className="flex items-center gap-3 px-4 sm:px-6 pt-5 pb-4 border-b" style={{ borderColor:"rgba(236,72,153,0.1)" }}>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background:"rgba(236,72,153,0.15)", border:"1px solid rgba(236,72,153,0.3)" }}>
-                <span style={{ fontSize:18 }}>👤</span>
+                <span style={{ fontSize:16 }}>👤</span>
               </div>
               <div>
-                <p className="text-white font-bold text-sm leading-none mb-0.5">Profile</p>
-                <p className="text-purple-400 text-xs tracking-widest uppercase">4th November</p>
+                <p className="text-white font-bold text-xs sm:text-sm leading-none mb-0.5">Profile</p>
+                <p className="text-purple-400 text-[10px] sm:text-xs tracking-widest uppercase">4th November</p>
               </div>
-              <button onClick={() => setOpen(false)} className="ml-auto text-purple-400 hover:text-white transition-colors text-lg">✕</button>
+              <button onClick={() => setOpen(false)} className="ml-auto text-purple-400 hover:text-white transition-colors text-base sm:text-lg">✕</button>
             </div>
 
-            <div className="px-6 py-6 flex flex-col gap-5">
+            <div className="px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
               {/* Name section with edit capability */}
               <div className="text-center">
                 {isEditingName ? (
@@ -188,7 +188,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
                       placeholder="Enter your name..."
                       autoFocus
                       maxLength={32}
-                      className="w-full px-4 py-2 rounded-lg text-center font-black text-lg text-white"
+                      className="w-full px-3 sm:px-4 py-2 rounded-lg text-center font-black text-base sm:text-lg text-white"
                       style={{
                         background: "rgba(236,72,153,0.1)",
                         border: "1px solid rgba(236,72,153,0.3)",
@@ -212,7 +212,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
                       <button
                         onClick={handleSaveName}
                         disabled={isSavingName}
-                        className="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
+                        className="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all"
                         style={{
                           background: "rgba(34,197,94,0.2)",
                           border: "1px solid rgba(34,197,94,0.5)",
@@ -226,7 +226,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
                       <button
                         onClick={handleCancelEdit}
                         disabled={isSavingName}
-                        className="px-4 py-1.5 rounded-lg text-sm font-bold transition-all"
+                        className="px-3 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all"
                         style={{
                           background: "rgba(239,68,68,0.2)",
                           border: "1px solid rgba(239,68,68,0.5)",
@@ -241,7 +241,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <h2 className="text-white font-black text-xl leading-tight">{displayName}</h2>
+                    <h2 className="text-white font-black text-lg sm:text-xl leading-tight">{displayName}</h2>
                     <button
                       onClick={() => setIsEditingName(true)}
                       className="p-1.5 rounded-lg transition-all hover:scale-110 active:scale-95"
@@ -257,43 +257,43 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
                     </button>
                   </div>
                 )}
-                <p className="text-purple-400 text-xs tracking-widest uppercase mt-2">Player Profile</p>
+                <p className="text-purple-400 text-[10px] sm:text-xs tracking-widest uppercase mt-2">Player Profile</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 {[
                   { icon:"🏆", label:"Total Sessions", value: stats.totalPlays, color:"rgba(236,72,153,0.08)", border:"rgba(236,72,153,0.15)" },
                   { icon:"⏱", label:"Total Play Time", value: formatPlaytime(stats.totalPlayTime), color:"rgba(99,102,241,0.08)", border:"rgba(99,102,241,0.15)" },
                 ].map(({ icon, label, value, color, border }) => (
-                  <div key={label} className="rounded-2xl p-4 text-center"
+                  <div key={label} className="rounded-2xl p-3 sm:p-4 text-center"
                     style={{ background:color, border:`1px solid ${border}` }}>
-                    <span className="text-2xl block mb-1">{icon}</span>
-                    <p className="text-purple-400 text-xs tracking-widest uppercase mb-1">{label}</p>
-                    <p className="text-white font-black text-2xl">{value}</p>
+                    <span className="text-xl sm:text-2xl block mb-1">{icon}</span>
+                    <p className="text-purple-400 text-[10px] sm:text-xs tracking-widest uppercase mb-1">{label}</p>
+                    <p className="text-white font-black text-xl sm:text-2xl">{value}</p>
                   </div>
                 ))}
               </div>
 
               <div>
-                <p className="text-purple-400 text-xs tracking-widest uppercase mb-2">Email</p>
-                <div className="flex items-center gap-3 rounded-xl px-4 py-3"
+                <p className="text-purple-400 text-[10px] sm:text-xs tracking-widest uppercase mb-2">Email</p>
+                <div className="flex items-center gap-3 rounded-xl px-3 sm:px-4 py-2 sm:py-3"
                   style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)" }}>
-                  <span className="text-purple-400">✉</span>
-                  <span className="text-white text-sm flex-1 truncate">{email}</span>
-                  <span style={{ color:"#22c55e", fontSize:16 }}>✓</span>
+                  <span className="text-purple-400 text-sm">✉</span>
+                  <span className="text-white text-xs sm:text-sm flex-1 truncate">{email}</span>
+                  <span style={{ color:"#22c55e", fontSize:14 }}>✓</span>
                 </div>
               </div>
 
               <button
                 onClick={() => { setOpen(false); onLogout(); }}
                 disabled={isLoading}
-                className="w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+                className="w-full py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
                 style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.3)", color:"#f87171" }}
               >
                 ⎋ &nbsp;Logout
               </button>
 
-              <p className="text-center text-purple-700 text-xs tracking-widest uppercase">
+              <p className="text-center text-purple-700 text-[10px] sm:text-xs tracking-widest uppercase">
                 4th November Profile System
               </p>
             </div>

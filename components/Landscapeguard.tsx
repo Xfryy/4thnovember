@@ -4,37 +4,61 @@ import { useEffect, useState } from "react";
 
 /**
  * LandscapeGuard
- * Blocks the game jika:
- * - Layar terlalu kecil (< 900px lebar atau < 500px tinggi)
- * - Orientasi portrait (tinggi > lebar) — HP/tablet di-vertical
- *
- * Cara pakai: Wrap di layout.tsx atau page.tsx
- * <LandscapeGuard>{children}</LandscapeGuard>
+ * Memastikan game bisa dimainkan di HP dengan orientasi landscape.
+ * 
+ * Aturan:
+ * - Jika lebar < tinggi (portrait) → block
+ * - Jika lebar >= 600px (landscape) → allow, meskipun layarnya kecil
+ * - Jika lebar >= 900px (desktop) → allow
+ * - Hanya block jika benar-benar portrait dan layar terlalu kecil
  */
 
-const MIN_WIDTH  = 900;
-const MIN_HEIGHT = 500;
+// Minimal lebar untuk landscape mode di HP
+const MIN_LANDSCAPE_WIDTH = 600;
+// Minimal tinggi untuk landscape mode
+const MIN_LANDSCAPE_HEIGHT = 320;
 
 export default function LandscapeGuard({ children }: { children: React.ReactNode }) {
   const [blocked, setBlocked] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    
     const check = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const isPortrait  = h > w;
-      const isTooSmall  = w < MIN_WIDTH || h < MIN_HEIGHT;
-      setBlocked(isPortrait || isTooSmall);
+      
+      // Logika baru:
+      // 1. Jika landscape (lebar > tinggi) DAN lebar cukup → OK
+      // 2. Jika lebar >= 900 (desktop) → OK
+      // 3. Jika portrait (tinggi > lebar) DAN lebar kecil → BLOCK
+      
+      const isPortrait = h > w;
+      const isLandscapeButTooSmall = !isPortrait && w < MIN_LANDSCAPE_WIDTH;
+      const isPortraitAndTooSmall = isPortrait && w < MIN_LANDSCAPE_WIDTH;
+      
+      // Block jika:
+      // - Portrait dan layar kecil
+      // - Landscape tapi layar terlalu kecil (jarang terjadi)
+      setBlocked(isPortraitAndTooSmall || isLandscapeButTooSmall);
     };
 
     check();
-    window.addEventListener("resize",             check);
-    window.addEventListener("orientationchange",  check);
+    
+    window.addEventListener("resize", check);
+    window.addEventListener("orientationchange", check);
+    
     return () => {
-      window.removeEventListener("resize",            check);
+      window.removeEventListener("resize", check);
       window.removeEventListener("orientationchange", check);
     };
   }, []);
+
+  // Jangan render overlay di server
+  if (!isClient) {
+    return <>{children}</>;
+  }
 
   return (
     <>
@@ -50,44 +74,47 @@ export default function LandscapeGuard({ children }: { children: React.ReactNode
           {/* rotating phone icon */}
           <div style={styles.iconWrap}>
             <svg viewBox="0 0 64 64" fill="none" style={{ width: "100%", height: "100%" }}>
-              {/* phone body */}
-              <rect x="18" y="8" width="28" height="48" rx="5" ry="5"
+              {/* phone body - rotated to landscape */}
+              <rect x="8" y="18" width="48" height="28" rx="5" ry="5"
                 stroke="#ec4899" strokeWidth="3" fill="none" />
-              <line x1="18" y1="18" x2="46" y2="18" stroke="#ec4899" strokeWidth="2" />
-              <line x1="18" y1="46" x2="46" y2="46" stroke="#ec4899" strokeWidth="2" />
-              <circle cx="32" cy="52" r="2" fill="#ec4899" />
-              {/* rotate arrow */}
-              <path d="M50 22 A18 18 0 0 1 14 42" stroke="#a855f7" strokeWidth="2.5"
+              <line x1="18" y1="22" x2="46" y2="22" stroke="#ec4899" strokeWidth="2" />
+              <line x1="18" y1="42" x2="46" y2="42" stroke="#ec4899" strokeWidth="2" />
+              <circle cx="52" cy="32" r="2" fill="#ec4899" />
+              {/* rotate arrow - menunjukkan putaran ke landscape */}
+              <path d="M22 50 A18 18 0 0 1 42 14" stroke="#a855f7" strokeWidth="2.5"
                 strokeLinecap="round" fill="none" />
-              <polygon points="10,38 14,45 18,39" fill="#a855f7" />
+              <polygon points="38,10 45,14 39,18" fill="#a855f7" />
             </svg>
           </div>
 
           {/* title */}
           <p style={styles.title}>
-            Putar Layarmu ke&nbsp;
+            Putar ke Mode&nbsp;
             <span style={{ color: "#ec4899" }}>Landscape</span>
           </p>
 
           {/* subtitle */}
           <p style={styles.sub}>
-            Game ini dirancang untuk tampilan <strong style={{ color: "#fff" }}>horizontal</strong>.
+            Game ini dirancang untuk tampilan horizontal.
             <br />
-            Silakan putar perangkatmu atau perlebar jendela browser.
+            <strong style={{ color: "#fff" }}>Putar HP-mu ke samping</strong> untuk melanjutkan.
           </p>
 
-          {/* badge */}
+          {/* info badge */}
           <div style={styles.badge}>
             <span style={styles.dot} />
-            Direkomendasikan: minimal {MIN_WIDTH} × {MIN_HEIGHT} px
+            {window.innerWidth} × {window.innerHeight} px
           </div>
 
+          {/* hint kecil */}
+          <p style={styles.hint}>
+            Landscape minimal {MIN_LANDSCAPE_WIDTH} × {MIN_LANDSCAPE_HEIGHT} px
+          </p>
+
           <style>{`
-            @keyframes lg-wiggle {
+            @keyframes lg-rotate-phone {
               0%,100% { transform: rotate(0deg); }
-              25%      { transform: rotate(-85deg); }
-              55%      { transform: rotate(-85deg); }
-              80%      { transform: rotate(0deg); }
+              30%,70% { transform: rotate(-90deg); }
             }
             @keyframes lg-pulse-dot {
               0%,100% { opacity: 1; }
@@ -98,7 +125,11 @@ export default function LandscapeGuard({ children }: { children: React.ReactNode
       )}
 
       {/* ── GAME CONTENT ────────────────────────────────────────── */}
-      <div style={{ visibility: blocked ? "hidden" : "visible" }}>
+      <div style={{ 
+        display: blocked ? "none" : "block",
+        width: "100%",
+        height: "100%",
+      }}>
         {children}
       </div>
     </>
@@ -117,8 +148,8 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection:  "column",
     alignItems:     "center",
     justifyContent: "center",
-    gap:            "28px",
-    padding:        "40px 24px",
+    gap:            "20px",
+    padding:        "24px 20px",
     textAlign:      "center",
     userSelect:     "none",
   },
@@ -133,25 +164,25 @@ const styles: Record<string, React.CSSProperties> = {
     top:          "35%",
     left:         "50%",
     transform:    "translate(-50%, -50%)",
-    width:        "320px",
-    height:       "160px",
+    width:        "280px",
+    height:       "140px",
     borderRadius: "50%",
-    background:   "radial-gradient(ellipse, rgba(236,72,153,0.12) 0%, transparent 70%)",
+    background:   "radial-gradient(ellipse, rgba(236,72,153,0.15) 0%, transparent 70%)",
     filter:       "blur(32px)",
     pointerEvents:"none",
   },
   iconWrap: {
-    width:     "88px",
-    height:    "88px",
-    animation: "lg-wiggle 2.6s ease-in-out infinite",
+    width:     "76px",
+    height:    "76px",
+    animation: "lg-rotate-phone 2.2s ease-in-out infinite",
     position:  "relative",
     zIndex:    1,
-    filter:    "drop-shadow(0 0 12px rgba(236,72,153,0.6))",
+    filter:    "drop-shadow(0 0 15px rgba(236,72,153,0.7))",
   },
   title: {
     fontFamily:  "'Sora', 'Inter', system-ui, sans-serif",
     fontWeight:  800,
-    fontSize:    "clamp(18px, 5vw, 28px)",
+    fontSize:    "clamp(20px, 6vw, 30px)",
     color:       "#fff",
     letterSpacing: "-0.3px",
     lineHeight:  1.2,
@@ -161,11 +192,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   sub: {
     fontFamily:  "'Inter', system-ui, sans-serif",
-    fontSize:    "clamp(12px, 2.5vw, 14px)",
-    color:       "rgba(255,255,255,0.45)",
-    lineHeight:  1.75,
-    margin:      0,
-    maxWidth:    "340px",
+    fontSize:    "clamp(13px, 3vw, 15px)",
+    color:       "rgba(255,255,255,0.6)",
+    lineHeight:  1.6,
+    margin:      "4px 0 0",
+    maxWidth:    "320px",
     position:    "relative",
     zIndex:      1,
   },
@@ -173,17 +204,17 @@ const styles: Record<string, React.CSSProperties> = {
     display:        "inline-flex",
     alignItems:     "center",
     gap:            "8px",
-    background:     "rgba(255,255,255,0.04)",
-    border:         "1px solid rgba(255,255,255,0.08)",
+    background:     "rgba(236,72,153,0.08)",
+    border:         "1px solid rgba(236,72,153,0.2)",
     borderRadius:   "999px",
-    padding:        "8px 18px",
+    padding:        "6px 16px",
     fontFamily:     "monospace",
-    fontSize:       "11px",
-    color:          "rgba(236,72,153,0.8)",
-    letterSpacing:  "0.07em",
-    textTransform:  "uppercase",
+    fontSize:       "12px",
+    color:          "#ec4899",
+    letterSpacing:  "0.05em",
     position:       "relative",
     zIndex:         1,
+    marginTop:      "8px",
   },
   dot: {
     display:      "inline-block",
@@ -191,8 +222,17 @@ const styles: Record<string, React.CSSProperties> = {
     height:       "6px",
     borderRadius: "50%",
     background:   "#ec4899",
-    boxShadow:    "0 0 6px #ec4899",
+    boxShadow:    "0 0 8px #ec4899",
     animation:    "lg-pulse-dot 1.3s ease-in-out infinite",
     flexShrink:   0,
+  },
+  hint: {
+    fontFamily:  "monospace",
+    fontSize:    "10px",
+    color:       "rgba(255,255,255,0.2)",
+    letterSpacing: "0.1em",
+    margin:      "4px 0 0",
+    position:    "relative",
+    zIndex:      1,
   },
 };

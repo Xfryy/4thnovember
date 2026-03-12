@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { preloadAssetsForScene, LoadProgress } from "@/lib/assetLoader";
+import { preloadAllAssets, PreloadProgress } from "@/lib/assetPreloader";
+import { ASSET_LIST } from '@/lib/assetList';
 
 interface PreloaderProps {
   actNumber: number;
@@ -16,36 +17,60 @@ const QUOTES = [
   "Ada yang menunggumu di sisi lain layar ini.",
   "4th November — hari yang mengubah segalanya.",
   "Waktu tidak bisa diputar, tapi bisa dirasakan kembali.",
+  "Memuat gambar... sedikit sabar ya~",
+  "Mempersiapkan pengalaman terbaik untukmu.",
+  "Hampir siap...",
 ];
+export async function getAllPublicAssets(): Promise<string[]> {
+  return ASSET_LIST;
+}
 
-const PRELOAD_DEPTH = 10;
-
-export default function Preloader({ actNumber, startSceneId, onReady, onCancel }: PreloaderProps) {
-  const [progress, setProgress] = useState<LoadProgress>({
-    loaded: 0, current: "Mempersiapkan...", total: 0, done: 0,
+export default function Preloader({ actNumber, onReady, onCancel }: PreloaderProps) {
+  const [progress, setProgress] = useState<PreloadProgress>({
+    loaded: 0,
+    total: 100,
+    current: "Mempersiapkan...",
+    percentage: 0,
   });
-  const [quote]   = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+  const [quote] = useState(() => QUOTES[Math.floor(Math.random() * QUOTES.length)]);
   const [fadeOut, setFadeOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const loadedRef = useRef(false);
 
   useEffect(() => {
-    if (loadedRef.current || !startSceneId) return;
+    if (loadedRef.current) return;
     loadedRef.current = true;
 
     let t1: ReturnType<typeof setTimeout>;
     let t2: ReturnType<typeof setTimeout>;
 
-    preloadAssetsForScene(startSceneId, PRELOAD_DEPTH, setProgress).then(() => {
-      t1 = setTimeout(() => {
-        setFadeOut(true);
-        t2 = setTimeout(onReady, 500);
-      }, 350);
-    });
+    // Preload SEMUA aset, bukan hanya scene tertentu
+    preloadAllAssets(setProgress)
+      .then(() => {
+        console.log('✅ All assets preloaded successfully');
+        t1 = setTimeout(() => {
+          setFadeOut(true);
+          t2 = setTimeout(onReady, 500);
+        }, 350);
+      })
+      .catch((err) => {
+        console.error('❌ Failed to preload assets:', err);
+        setError(err.message);
+        
+        // Tetap lanjut meskipun error, kasih delay lebih lama
+        t1 = setTimeout(() => {
+          setFadeOut(true);
+          t2 = setTimeout(onReady, 500);
+        }, 2000);
+      });
 
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [startSceneId, onReady]);
+    return () => { 
+      clearTimeout(t1); 
+      clearTimeout(t2); 
+    };
+  }, [onReady]);
 
-  const pct = progress.loaded;
+  const pct = progress.percentage;
 
   return (
     <div style={{
@@ -71,7 +96,7 @@ export default function Preloader({ actNumber, startSceneId, onReady, onCancel }
       }} />
 
       {/* Back to menu */}
-      {onCancel && (
+      {onCancel && !fadeOut && (
         <button
           onClick={onCancel}
           style={{
@@ -86,6 +111,7 @@ export default function Preloader({ actNumber, startSceneId, onReady, onCancel }
             letterSpacing: "0.1em",
             cursor: "pointer",
             transition: "all 0.2s ease",
+            zIndex: 101,
           }}
           onMouseEnter={e => {
             e.currentTarget.style.color = "rgba(255,255,255,0.75)";
@@ -100,6 +126,23 @@ export default function Preloader({ actNumber, startSceneId, onReady, onCancel }
         >
           ← Menu
         </button>
+      )}
+
+      {/* Error message jika ada */}
+      {error && (
+        <div style={{
+          position: "absolute", bottom: 20,
+          background: "rgba(239,68,68,0.1)",
+          border: "1px solid rgba(239,68,68,0.3)",
+          borderRadius: 8,
+          padding: "8px 16px",
+          color: "#f87171",
+          fontSize: "0.75rem",
+          maxWidth: "80%",
+          textAlign: "center",
+        }}>
+          ⚠️ {error}
+        </div>
       )}
 
       {/* Act label */}
@@ -197,7 +240,7 @@ export default function Preloader({ actNumber, startSceneId, onReady, onCancel }
             textAlign: "right",
             margin: "5px 0 0",
           }}>
-            {progress.done} / {progress.total} assets
+            {progress.loaded} / {progress.total} aset
           </p>
         )}
       </div>

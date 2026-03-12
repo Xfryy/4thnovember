@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { SCENE_REGISTRY } from "@/lib/acts";
+import { useLocaleRegistry } from "@/lib/actRegistry";
+import { useSettingsStore } from "@/store/Settingsstore";
 import { Scene } from "@/types/game";
 
 const TRANSITION_MS = 280;
@@ -17,13 +18,31 @@ export function useSceneTransition({
   onSceneAdvance,
   onNoNextScene,
 }: UseSceneTransitionOptions) {
-  const [currentId, setCurrentId]         = useState(initialSceneId);
-  const [visible, setVisible]             = useState(true);
+  // Get language for reactivity
+  const language = useSettingsStore((s) => s.language);
+  
+  // Use locale registry instead of static SCENE_REGISTRY
+  const sceneRegistry = useLocaleRegistry();
+  
+  const [currentId, setCurrentId] = useState(initialSceneId);
+  const [visible, setVisible] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Store the current scene from registry - updates when language changes
+  const [currentScene, setCurrentScene] = useState<Scene | undefined>(() => {
+    return sceneRegistry[currentId];
+  });
+
+  // Update scene when language changes OR when currentId changes
+  useEffect(() => {
+    const newScene = sceneRegistry[currentId];
+    if (newScene) {
+      setCurrentScene(newScene);
+    }
+  }, [language, currentId, sceneRegistry]);
+
   const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const scene = SCENE_REGISTRY[currentId] as Scene | undefined;
 
   useEffect(() => {
     // Cleanup timers when the whole hook unmounts
@@ -33,44 +52,77 @@ export function useSceneTransition({
     }
   }, []);
 
+  // Handle transition auto-advance
   useEffect(() => {
-    if (!scene) return;
-    if (scene.type === "transition" && scene.duration) {
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); // clear previous before setting new
-      autoAdvanceRef.current = setTimeout(() => goToScene(scene.next), scene.duration);
+    if (!currentScene) return;
+    
+    if (currentScene.type === "transition" && currentScene.duration) {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = setTimeout(() => goToScene(currentScene.next), currentScene.duration);
     }
-    return () => { if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); };
+    
+    return () => { 
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current); 
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId]);
+  }, [currentId, language]); // Re-run when language changes too
 
   const goToScene = useCallback((nextId?: string) => {
     if (isTransitioning) return;
-    if (!nextId || !SCENE_REGISTRY[nextId]) { onNoNextScene(); return; }
+    
+    if (!nextId || !sceneRegistry[nextId]) { 
+      onNoNextScene(); 
+      return; 
+    }
+    
     onSceneAdvance(nextId);
     setIsTransitioning(true);
     setVisible(false);
-    transitionTimerRef.current = setTimeout(() => { setCurrentId(nextId); setVisible(true); setIsTransitioning(false); }, TRANSITION_MS);
+    
+    transitionTimerRef.current = setTimeout(() => { 
+      setCurrentId(nextId); 
+      setVisible(true); 
+      setIsTransitioning(false); 
+    }, TRANSITION_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTransitioning, onSceneAdvance, onNoNextScene]);
+  }, [isTransitioning, onSceneAdvance, onNoNextScene, sceneRegistry]);
 
   const goToSceneWithChoice = useCallback((nextId: string, choiceSceneId: string, choiceId: string) => {
     if (isTransitioning) return;
-    if (!SCENE_REGISTRY[nextId]) return;
+    
+    if (!sceneRegistry[nextId]) return;
+    
     onSceneAdvance(nextId, choiceSceneId, choiceId);
     setIsTransitioning(true);
     setVisible(false);
-    transitionTimerRef.current = setTimeout(() => { setCurrentId(nextId); setVisible(true); setIsTransitioning(false); }, TRANSITION_MS);
+    
+    transitionTimerRef.current = setTimeout(() => { 
+      setCurrentId(nextId); 
+      setVisible(true); 
+      setIsTransitioning(false); 
+    }, TRANSITION_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTransitioning, onSceneAdvance]);
+  }, [isTransitioning, onSceneAdvance, sceneRegistry]);
 
   const jumpToScene = useCallback((nextId: string) => {
     setIsTransitioning(true);
     setVisible(false);
-    transitionTimerRef.current = setTimeout(() => { setCurrentId(nextId); setVisible(true); setIsTransitioning(false); }, TRANSITION_MS);
+    
+    transitionTimerRef.current = setTimeout(() => { 
+      setCurrentId(nextId); 
+      setVisible(true); 
+      setIsTransitioning(false); 
+    }, TRANSITION_MS);
   }, []);
 
   return {
-    currentId, scene, visible, isTransitioning,
-    goToScene, goToSceneWithChoice, jumpToScene, TRANSITION_MS,
+    currentId,
+    scene: currentScene, // Return the reactive scene
+    visible,
+    isTransitioning,
+    goToScene,
+    goToSceneWithChoice,
+    jumpToScene,
+    TRANSITION_MS,
   };
 }

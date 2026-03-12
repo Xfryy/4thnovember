@@ -1,13 +1,12 @@
 "use client";
 
+import React from "react";
 import { useSettingsStore } from "@/store/Settingsstore";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-// ── CSS-native slider — zero JS overhead on drag ────────────────────────────
 
 interface SliderRowProps {
   label: string;
@@ -19,13 +18,24 @@ interface SliderRowProps {
   onChange: (v: number) => void;
 }
 
-function SliderRow({ label, value, min = 0, max = 100, unit = "%", accentVar, onChange }: SliderRowProps) {
+function SliderRow({
+  label,
+  value,
+  min = 0,
+  max = 100,
+  unit = "%",
+  accentVar,
+  onChange,
+}: SliderRowProps) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <div className={`stg-slider stg-slider--${accentVar}`}>
       <div className="stg-slider__head">
         <span className="stg-slider__label">{label}</span>
-        <span className="stg-slider__val">{value}{unit}</span>
+        <span className="stg-slider__val">
+          {value}
+          {unit}
+        </span>
       </div>
       <input
         type="range"
@@ -33,14 +43,22 @@ function SliderRow({ label, value, min = 0, max = 100, unit = "%", accentVar, on
         max={max}
         value={value}
         style={{ "--pct": `${pct}%` } as React.CSSProperties}
-        onChange={e => onChange(parseInt(e.target.value))}
+        onChange={(e) => onChange(parseInt(e.target.value))}
         className="stg-range"
       />
     </div>
   );
 }
 
-function Section({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="stg-section">
       <div className="stg-section__hd">
@@ -56,19 +74,30 @@ function Chip({ children }: { children: React.ReactNode }) {
   return <div className="stg-chip">{children}</div>;
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const {
-    masterVolume, bgmVolume, sfxVolume, voiceVolume,
-    brightness, language, textSpeed,
-    updateSetting, resetSettings,
-  } = useSettingsStore();
+export default function SettingsModal({
+  isOpen,
+  onClose,
+}: SettingsModalProps) {
+  const language = useSettingsStore((s) => s.language);
+  const masterVolume = useSettingsStore((s) => s.masterVolume);
+  const bgmVolume = useSettingsStore((s) => s.bgmVolume);
+  const sfxVolume = useSettingsStore((s) => s.sfxVolume);
+  const voiceVolume = useSettingsStore((s) => s.voiceVolume);
+  const brightness = useSettingsStore((s) => s.brightness);
+  const textSpeed = useSettingsStore((s) => s.textSpeed);
+  const updateSetting = useSettingsStore((s) => s.updateSetting);
+  const resetSettings = useSettingsStore((s) => s.resetSettings);
 
   if (!isOpen) return null;
 
   const speedLabel =
-    textSpeed <= 25 ? "🐢 Slow" :
-    textSpeed <= 60 ? "🚶 Normal" :
-    textSpeed <= 85 ? "🏃 Fast" : "⚡ Instant";
+    textSpeed <= 25
+      ? "🐢 Slow"
+      : textSpeed <= 60
+      ? "🚶 Normal"
+      : textSpeed <= 85
+      ? "🏃 Fast"
+      : "⚡ Instant";
 
   return (
     <>
@@ -76,7 +105,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
       <div className="stg-shell">
         <div className="stg-panel">
-
           <div className="stg-bar" />
 
           <div className="stg-header">
@@ -85,65 +113,149 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <p className="stg-header__title">Settings</p>
               <p className="stg-header__sub">Game Configuration</p>
             </div>
-            <button className="stg-close" onClick={onClose} aria-label="Close">✕</button>
+            <button
+              className="stg-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="stg-body">
-
             <Section icon="🌐" title="Language">
               <div className="stg-lang">
-                {(["id", "en"] as const).map(lang => (
+                {(["id", "en"] as const).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => updateSetting("language", lang)}
-                    className={`stg-lang__btn${language === lang ? " stg-lang__btn--on" : ""}`}
+                    className={`stg-lang__btn${
+                      language === lang ? " stg-lang__btn--on" : ""
+                    }`}
                   >
-                    {lang === "id" ? "🇮🇩  Bahasa Indonesia" : "🇺🇸  English"}
+                    {lang === "id"
+                      ? "🇮🇩  Bahasa Indonesia"
+                      : "🇺🇸  English"}
                   </button>
                 ))}
               </div>
             </Section>
 
             <Section icon="🎵" title="Audio">
-              <SliderRow label="Master Volume"    value={masterVolume} accentVar="pink"   onChange={v => updateSetting("masterVolume", v)} />
-              <SliderRow label="Background Music" value={bgmVolume}    accentVar="purple" onChange={v => updateSetting("bgmVolume", v)} />
-              <SliderRow label="Sound Effects"    value={sfxVolume}    accentVar="indigo" onChange={v => updateSetting("sfxVolume", v)} />
-              <SliderRow label="Voice"            value={voiceVolume}  accentVar="sky"    onChange={v => updateSetting("voiceVolume", v)} />
+              <SliderRow
+                label="Master Volume"
+                value={masterVolume}
+                accentVar="pink"
+                onChange={(v) => updateSetting("masterVolume", v)}
+              />
+              <SliderRow
+                label="Background Music"
+                value={bgmVolume}
+                accentVar="purple"
+                onChange={(v) => updateSetting("bgmVolume", v)}
+              />
+              <SliderRow
+                label="Sound Effects"
+                value={sfxVolume}
+                accentVar="indigo"
+                onChange={(v) => updateSetting("sfxVolume", v)}
+              />
+              <SliderRow
+                label="Voice"
+                value={voiceVolume}
+                accentVar="sky"
+                onChange={(v) => updateSetting("voiceVolume", v)}
+              />
               <Chip>
-                <b>Effective</b>&nbsp;—&nbsp;
-                BGM: <em>{Math.round((masterVolume / 100) * bgmVolume)}%</em>&nbsp;·&nbsp;
-                SFX: <em>{Math.round((masterVolume / 100) * sfxVolume)}%</em>&nbsp;·&nbsp;
-                Voice: <em>{Math.round((masterVolume / 100) * voiceVolume)}%</em>
+                <b>Effective</b>&nbsp;—&nbsp; BGM:{" "}
+                <em>
+                  {Math.round(
+                    (masterVolume / 100) * bgmVolume
+                  )}
+                  %
+                </em>
+                &nbsp;·&nbsp; SFX:{" "}
+                <em>
+                  {Math.round(
+                    (masterVolume / 100) * sfxVolume
+                  )}
+                  %
+                </em>
+                &nbsp;·&nbsp; Voice:{" "}
+                <em>
+                  {Math.round(
+                    (masterVolume / 100) * voiceVolume
+                  )}
+                  %
+                </em>
               </Chip>
             </Section>
 
             <Section icon="🖥" title="Display">
-              <SliderRow label="Brightness" value={brightness} min={50} max={150} accentVar="amber" onChange={v => updateSetting("brightness", v)} />
-              <div className="stg-bright-preview" style={{ filter: `brightness(${brightness / 100})` }}>
+              <SliderRow
+                label="Brightness"
+                value={brightness}
+                min={50}
+                max={150}
+                accentVar="amber"
+                onChange={(v) => updateSetting("brightness", v)}
+              />
+              <div
+                className="stg-bright-preview"
+                style={{
+                  filter: `brightness(${brightness / 100})`,
+                }}
+              >
                 <span className="stg-bright-preview__label">
-                  {brightness < 90 ? "🌙 Dimmed" : brightness > 110 ? "☀ Brightened" : "⚖ Normal"} — {brightness}%
+                  {brightness < 90
+                    ? "🌙 Dimmed"
+                    : brightness > 110
+                    ? "☀ Brightened"
+                    : "⚖ Normal"}{" "}
+                  — {brightness}%
                 </span>
               </div>
             </Section>
 
             <Section icon="💬" title="Text & Story">
-              <SliderRow label="Text Speed" value={textSpeed} min={10} max={100} unit="" accentVar="green" onChange={v => updateSetting("textSpeed", v)} />
+              <SliderRow
+                label="Text Speed"
+                value={textSpeed}
+                min={10}
+                max={100}
+                unit=""
+                accentVar="green"
+                onChange={(v) => updateSetting("textSpeed", v)}
+              />
               <Chip>
-                {speedLabel}&nbsp;&nbsp;<em>{Math.round(110 - textSpeed)}ms</em> per character
-                {textSpeed >= 90 && <span className="stg-chip__warn">&nbsp;⚡ Instant</span>}
+                {speedLabel}&nbsp;&nbsp;
+                <em>{Math.round(110 - textSpeed)}ms</em> per
+                character
+                {textSpeed >= 90 && (
+                  <span className="stg-chip__warn">
+                    &nbsp;⚡ Instant
+                  </span>
+                )}
               </Chip>
             </Section>
-
           </div>
 
           <div className="stg-footer">
-            <button className="stg-footer__reset" onClick={resetSettings}>🔄 Reset</button>
-            <button className="stg-footer__close" onClick={onClose}>Close</button>
+            <button
+              className="stg-footer__reset"
+              onClick={resetSettings}
+            >
+              🔄 Reset
+            </button>
+            <button
+              className="stg-footer__close"
+              onClick={onClose}
+            >
+              Close
+            </button>
           </div>
-
         </div>
       </div>
-
       <style>{`
         .stg-backdrop {
           position:fixed; inset:0; z-index:1000;

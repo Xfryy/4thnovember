@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { GameUser, GameProgress, Character, SaveData } from "@/types/game";
+import { GameUser, Character, SaveData } from "@/types/game";
 import type { SaveSlot } from "@/lib/saveSlots";
 
 export interface GameSettings {

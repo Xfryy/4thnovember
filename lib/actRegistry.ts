@@ -1,45 +1,85 @@
 /**
- * actRegistry.ts — single source of truth for all acts.
+ * useLocaleRegistry
  *
- * ✅ Cara tambah act baru:
- *   1. Buat folder: lib/acts/act_2/
- *   2. Buat: scenes.ts, index.ts (export ACT_2_SCENES, ACT_2_META)
- *   3. Import di sini dan tambah ke ALL_SCENES + ACT_META
+ * Drop-in replacement untuk SCENE_REGISTRY yang aware terhadap bahasa.
+ * Setiap kali user ganti language di Settings, registry otomatis update
+ * dan GameEngine akan baca scene dalam bahasa yang benar.
+ *
+ * ── Cara integrasi di index.tsx ───────────────────────────────────────
+ *
+ * BEFORE:
+ *   import { SCENE_REGISTRY } from "@/lib/acts";
+ *   // ... lalu pakai SCENE_REGISTRY[sceneId] di mana-mana
+ *
+ * AFTER:
+ *   import { useLocaleRegistry } from "@/lib/useLocaleRegistry";
+ *   // di dalam component:
+ *   const SCENE_REGISTRY = useLocaleRegistry(actNumber);
+ *   // sisanya tidak perlu diubah sama sekali
  */
 
-import { Scene } from "@/types/game";
-import { ACT_1_SCENES, ACT_1_META } from "./acts/act_1";
+import { useMemo } from "react";
+import { useSettingsStore } from "@/store/Settingsstore";
+import type { Scene } from "@/types/game";
 
-// ── Register scenes dari semua act ─────────────────────────────────────────────
+// ── Import semua scene files ───────────────────────────────────────────────────
 
-const ALL_SCENES: Scene[] = [
-  ...ACT_1_SCENES,
-  // ...ACT_2_SCENES,  ← tambah act baru di sini
-];
+import { ACT_1_SCENES }    from "@/lib/acts/act_1/scenes";
 
-// ── Act metadata registry ──────────────────────────────────────────────────────
+import { ACT_1_SCENES_EN } from "@/lib/acts/act_1/scenes.en";
 
-export const ACT_META: Record<number, { actNumber: number; title: string; firstSceneId: string }> = {
-  1: ACT_1_META,
-  // 2: ACT_2_META,   ← tambah act baru di sini
+// Tambah act baru di sini:
+// import { ACT_2_SCENES }    from "@/lib/acts/act_2/scenes";
+// import { ACT_2_SCENES_EN } from "@/lib/acts/act_2/scenes.en";
+
+// ── Registry map ──────────────────────────────────────────────────────────────
+
+type SceneRegistry = Record<string, Scene>;
+
+function buildRegistry(scenes: Scene[]): SceneRegistry {
+  return Object.fromEntries(scenes.map((s) => [s.id, s]));
+}
+// Pre-build registries sekali (tidak rebuild tiap render)
+const REGISTRIES: Record<number, Record<string, SceneRegistry>> = {
+  1: {
+    id: buildRegistry(ACT_1_SCENES),
+    en: buildRegistry(ACT_1_SCENES_EN), // ganti ke ACT_1_SCENES_EN setelah translate
+  },
+  // 2: {
+  //   id: buildRegistry(ACT_2_SCENES),
+  //   en: buildRegistry(ACT_2_SCENES_EN),
+  // },
 };
 
-// ── Scene registry — O(1) lookup by scene ID ──────────────────────────────────
+// Gabungan semua act — untuk akses global tanpa tahu act number
+const ALL_REGISTRIES: Record<string, Record<string, Scene>> = {
+  id: Object.assign({}, ...Object.values(REGISTRIES).map((r) => r.id)),
+  en: Object.assign({}, ...Object.values(REGISTRIES).map((r) => r.en ?? r.id)),
+};
 
-export const SCENE_REGISTRY: Record<string, Scene> = ALL_SCENES.reduce(
-  (acc, scene) => {
-    acc[scene.id] = scene;
-    return acc;
-  },
-  {} as Record<string, Scene>
-);
+// ── Hooks ─────────────────────────────────────────────────────────────────────
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
+/**
+ * Gunakan ini jika GameEngine butuh registry untuk satu act.
+ * Return value stabil (tidak recreate setiap render).
+ */
+export function useLocaleRegistry(actNumber?: number): SceneRegistry {
+  const language = useSettingsStore((s) => s.language);
 
-export function getActFirstScene(actNumber: number): string {
-  return ACT_META[actNumber]?.firstSceneId ?? "act1_s1";
+  return useMemo(() => {
+    if (actNumber !== undefined && REGISTRIES[actNumber]) {
+      return REGISTRIES[actNumber][language] ?? REGISTRIES[actNumber]["id"];
+    }
+    // Fallback: return semua scenes dari semua act
+    return ALL_REGISTRIES[language] ?? ALL_REGISTRIES["id"];
+  }, [actNumber, language]);
 }
 
-export function getActForScene(sceneId: string): number {
-  return SCENE_REGISTRY[sceneId]?.act ?? 1;
+/**
+ * Gunakan ini kalau kamu butuh lookup single scene tanpa hook
+ * (misal di server component atau utility function).
+ */
+export function getSceneLocale(sceneId: string, language: string): Scene | undefined {
+  const reg = ALL_REGISTRIES[language] ?? ALL_REGISTRIES["id"];
+  return reg[sceneId];
 }

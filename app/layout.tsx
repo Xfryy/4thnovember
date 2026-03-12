@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SparkleProvider from "@/components/Sparkleprovider";
 import SettingsProvider from "@/components/Settingsprovider";
+import LandscapeGuard from "@/components/Landscapeguard";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -35,7 +36,9 @@ export default function RootLayout({
           - Sets --text-speed-ms CSS variable for dialogue typewriter
         */}
         <SettingsProvider>
-          {children}
+          <LandscapeGuard>
+            {children}
+          </LandscapeGuard>
         </SettingsProvider>
         <SparkleProvider />
       </body>

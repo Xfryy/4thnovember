@@ -18,11 +18,12 @@ export interface SaveSlot {
   slotId: number;           // 0 = auto, 1–9 = manual
   uid: string;
   currentAct: number;
-  currentSceneId: string;   // scene to resume AT (already 1 ahead from auto-save)
+  currentSceneId: string;   // scene to resume AT
   choices: Record<string, string>;
   affection: Record<string, number>;
   playTimeSeconds: number;
   lastSaved: number;        // timestamp ms
+  cleared?: boolean;        // tombstone flag — slot was soft-deleted
   // Preview metadata
   previewImage?: string;    // character sprite URL from that scene
   previewText?: string;     // first ~60 chars of dialogue/narration
@@ -58,10 +59,10 @@ export async function readSlot(uid: string, slotId: number): Promise<SaveSlot | 
   try {
     const snap = await getDoc(doc(db, COLLECTION, docId(uid, slotId)));
     if (!snap.exists()) return null;
-    const data = snap.data();
+    const data = snap.data() as SaveSlot;
     // Ignore tombstone records
-    if ((data as any).cleared) return null;
-    return data as SaveSlot;
+    if (data.cleared) return null;
+    return data;
   } catch (e) {
     console.error("[SaveSlots] readSlot failed:", e);
     return null;
@@ -85,7 +86,7 @@ export async function clearSlot(uid: string, slotId: number): Promise<void> {
       slotId,
       uid,
       lastSaved: Date.now(),
-    });
+    } satisfies Partial<SaveSlot>);
   } catch (e) {
     console.error("[SaveSlots] clearSlot failed:", e);
   }
@@ -96,7 +97,7 @@ export async function calculateTotalPlaytime(uid: string): Promise<{ totalMinute
   try {
     const slots = await readAllSlots(uid);
     let totalSeconds = 0;
-    let totalPlays = 0;
+    let totalPlays   = 0;
 
     slots.forEach((slot) => {
       if (slot && !slot.cleared) {
@@ -105,8 +106,7 @@ export async function calculateTotalPlaytime(uid: string): Promise<{ totalMinute
       }
     });
 
-    const totalMinutes = Math.floor(totalSeconds / 60);
-    return { totalMinutes, totalPlays };
+    return { totalMinutes: Math.floor(totalSeconds / 60), totalPlays };
   } catch (e) {
     console.error("[SaveSlots] calculateTotalPlaytime failed:", e);
     return { totalMinutes: 0, totalPlays: 0 };

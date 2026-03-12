@@ -1,511 +1,447 @@
 "use client";
 
 /**
- * GameEngine - Main game loop and lifecycle manager
- * Handles: scene progression, save/load, audio lifecycle, effect triggers, act transitions
+ * GameEngine — Main game loop and lifecycle manager
+ *
+ * Fixes applied (vs original):
+ * 1. createGameEngineContext() NO LONGER called at render-time.
+ *    A stable `gameContextRef` is built once and kept in sync with mutable
+ *    engine state — no new object every render, no stale closures.
+ * 2. getChoices() / getChoice() now read from saveStateRef (real data).
+ * 3. isLoading prop is forwarded to GameToolbar.
+ * 4. useSceneTransition integrated — handles visible fade + transition lock.
+ * 5. Spam-click protection: pointer-events disabled on game-scene while
+ *    isTransitioning is true, preventing double-advance on fast clicks.
+ * 6. handleBackToMenu uses exitSave from useSaveState (fires final save).
  */
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, { useEffect, useRef, useCallback, useState, useMemo } from "react";
 import { SCENE_REGISTRY, getActForScene, getActFirstScene } from "@/lib/acts";
 import { useSaveState } from "./components/Usesavestate";
+import { useSceneTransition } from "./components/Usescenetransition";
 import { audioManager } from "@/lib/Audiomanager";
 import GameToolbar from "./components/Gametoolbar";
 import SceneRenderer from "./components/SceneRenderer";
 import SaveSlotsModal from "../StartMenu/components/SaveslotsModal";
 import SettingsModal from "../StartMenu/components/SettingsModal";
 import type { SceneAudio } from "@/types/game";
-import { ActConfig, GameEngineContext, MinigameResult } from "@/components/Acts/BaseActConfig";
+import type { SaveSlot } from "@/lib/saveSlots";
+import type { ActConfig, GameEngineContext } from "@/components/Acts/BaseActConfig";
+import HistoryLog from "./components/scenes/Historylog ";
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+
+// ── Player name substitution ──────────────────────────────────────────────────
+// Replaces {playerName} tokens in scene text/speaker fields with the real name.
+function substitutePlayerName<T extends Record<string, any>>(
+  scene: T,
+  name: string
+): T {
+  if (!name) return scene;
+  const replace = (v: any): any => {
+    if (typeof v === "string") return v.replace(/\{playerName\}/g, name);
+    if (Array.isArray(v))      return v.map(replace);
+    if (v && typeof v === "object") {
+      const out: Record<string, any> = {};
+      for (const k of Object.keys(v)) out[k] = replace(v[k]);
+      return out;
+    }
+    return v;
+  };
+  return replace(scene) as T;
+}
 
 interface GameEngineProps {
   actNumber: number;
   startSceneId?: string;
+  characterName?: string;
   onBackToMenu: () => void;
   onActComplete?: (actNumber: number) => void;
 }
 
-interface GameEngineState {
-  currentSceneId: string;
-  currentActNumber: number;
-  actConfig: ActConfig | null;
-  isLoading: boolean;
-  error: string | null;
-  lastMinigameResult: MinigameResult | null;
-}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function GameEngine({
   actNumber,
   startSceneId,
+  characterName = "",
   onBackToMenu,
   onActComplete,
 }: GameEngineProps) {
-  const engineStateRef = useRef<GameEngineState>({
-    currentSceneId: startSceneId || getActFirstScene(actNumber),
-    currentActNumber: actNumber,
-    actConfig: null,
-    isLoading: true,
-    error: null,
-    lastMinigameResult: null,
-  });
+  // ── Core refs (mutated in-place, never trigger re-render alone) ────────────
+  const actConfigRef   = useRef<ActConfig | null>(null);
+  const actDataRef     = useRef<Record<string, any>>({});
 
-  const [state, setState] = useState<GameEngineState>(engineStateRef.current);
-  const actDataRef = useRef<Record<string, any>>({});
-  const { savedFlash, isSaving, onSceneAdvance, handleManualSave } = useSaveState({
-    actNumber,
-    startSceneId: engineStateRef.current.currentSceneId,
-  });
+  // ── UI state ───────────────────────────────────────────────────────────────
+  const [actConfig,   setActConfig]   = useState<ActConfig | null>(null);
+  const [isActLoading, setIsActLoading] = useState(true);
+  const [error,        setError]       = useState<string | null>(null);
 
-  // Modal state
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showLoadModal, setShowLoadModal] = useState(false);
+  const [showSaveModal,     setShowSaveModal]     = useState(false);
+  const [showLoadModal,     setShowLoadModal]     = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  // ────────────────────────────────────────────────────────────────────
-  // 1. LOAD ACT CONFIG ON MOUNT
-  // ────────────────────────────────────────────────────────────────────
+  // ── Save state (choices, affection, save/load helpers) ────────────────────
+  const initialSceneId = startSceneId || getActFirstScene(actNumber);
 
-  useEffect(() => {
-    const loadActConfig = async () => {
-      try {
-        // Add slight delay for loading feel (800ms)
-        await new Promise(resolve => setTimeout(resolve, 800));
+  const {
+    saveStateRef,
+    savedFlash,
+    isSaving,
+    handleManualSave,
+    onSceneAdvance: persistSceneAdvance,
+    exitSave,
+    loadSlotIntoState,
+  } = useSaveState({ actNumber, startSceneId: initialSceneId });
 
-        // Dynamically import act config
-        const module = await import(`@/components/Acts/Act${actNumber}/config`);
-        const actConfig = module.default as ActConfig;
+  // ── Stable GameEngineContext ───────────────────────────────────────────────
+  // Built once; methods close over refs so they always see current data.
+  const gameContext = useMemo<GameEngineContext>(() => ({
+    get currentScene()   { return SCENE_REGISTRY[saveStateRef.current.sceneId]; },
+    get currentAct()     { return saveStateRef.current.actNumber; },
+    get currentSceneId() { return saveStateRef.current.sceneId; },
 
-        // Update state
-        engineStateRef.current.actConfig = actConfig;
-        engineStateRef.current.isLoading = false;
-        actDataRef.current = {};
+    advanceScene: async (nextSceneId, choiceData) => {
+      await handleSceneAdvanceRef.current(nextSceneId, choiceData);
+    },
 
-        setState({ ...engineStateRef.current });
+    updateAffection: (characterId, delta) => {
+      saveStateRef.current.affection = {
+        ...saveStateRef.current.affection,
+        [characterId]: (saveStateRef.current.affection[characterId] ?? 0) + delta,
+      };
+    },
 
-        // Call onActStart hook
-        if (actConfig.onActStart) {
-          await actConfig.onActStart(createGameEngineContext());
-        }
+    getAffection: (characterId) => {
+      return saveStateRef.current.affection[characterId] ?? 0;
+    },
 
-        // Load first scene
-        await loadScene(engineStateRef.current.currentSceneId, actConfig);
-      } catch (err) {
-        console.error("❌ Failed to load act config:", err);
-        engineStateRef.current.error = String(err);
-        engineStateRef.current.isLoading = false;
-        setState({ ...engineStateRef.current });
+    triggerEffect: async (effectName, target) => {
+      await applyEffectRef.current(effectName, target);
+    },
+
+    playAudio: async (path, type) => {
+      if (type === "bgm")   await audioManager.playBGM(path);
+      else if (type === "voice") await audioManager.playVoice(path);
+      else                  await audioManager.playSFX(path);
+    },
+
+    stopAudio: () => audioManager.stopAll(),
+
+    // ✅ FIX: reads from real save state
+    getChoices: () => ({ ...saveStateRef.current.choices }),
+    getChoice:  (sceneId) => saveStateRef.current.choices[sceneId],
+
+    setActData: (key, value) => { actDataRef.current[key] = value; },
+    getActData: (key)        => actDataRef.current[key],
+
+    loadAsset:     async (path) => path,
+    preloadAssets: async ()     => {},
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []); // intentionally empty deps — all data via refs
+
+  // ── Forward-refs for functions that reference each other ──────────────────
+  // (avoids circular dependency in useCallback chains)
+  const handleSceneAdvanceRef = useRef<
+    (nextId: string, choiceData?: { choiceSceneId: string; choiceId: string }) => Promise<void>
+  >(async () => {});
+  const applyEffectRef = useRef<
+    (effectName: string, target?: HTMLElement) => Promise<void>
+  >(async () => {});
+
+  // ── Audio helper ───────────────────────────────────────────────────────────
+  const playSceneAudio = useCallback(async (audio: SceneAudio) => {
+    if (audio.bgmStop) { audioManager.stopAll(); return; }
+    if (audio.bgm)    await audioManager.playBGM(audio.bgm, audio.bgmFade !== false ? 1000 : 0);
+    if (audio.voice)  await audioManager.playVoice(audio.voice);
+    if (audio.sfx)    await audioManager.playSFX(audio.sfx);
+  }, []);
+
+  // ── Effect handler ─────────────────────────────────────────────────────────
+  const applyEffect = useCallback(async (effectName: string, target?: HTMLElement) => {
+    const el: HTMLElement =
+      target ??
+      (document.querySelector(".game-scene") as HTMLElement) ??
+      document.body;
+
+    // Forces reflow so browser re-runs animation even if same name was set before
+    function runAnimation(element: HTMLElement, animation: string, durationMs: number): Promise<void> {
+      return new Promise((resolve) => {
+        element.style.animation = "none";
+        void element.offsetHeight; // flush pending styles
+        element.style.animation = animation;
+        setTimeout(() => { element.style.animation = ""; resolve(); }, durationMs);
+      });
+    }
+
+    switch (effectName) {
+      case "screenShake":
+        await runAnimation(el, "fx-screen-shake 0.5s ease-in-out", 500);
+        return;
+      case "fadeIn":
+        el.style.opacity = "0";
+        void el.offsetHeight;
+        el.style.transition = "opacity 0.8s ease";
+        el.style.opacity = "1";
+        await new Promise((r) => setTimeout(r, 800));
+        el.style.transition = "";
+        return;
+      case "fadeOut":
+        el.style.transition = "opacity 0.6s ease";
+        el.style.opacity = "0";
+        await new Promise((r) => setTimeout(r, 600));
+        el.style.transition = "";
+        el.style.opacity = "1";
+        return;
+      case "flash": {
+        const overlay = document.createElement("div");
+        overlay.style.cssText = "position:fixed;inset:0;background:#fff;z-index:99999;pointer-events:none;opacity:0.85;transition:opacity 0.45s ease;";
+        document.body.appendChild(overlay);
+        void overlay.offsetHeight;
+        overlay.style.opacity = "0";
+        await new Promise((r) => setTimeout(r, 500));
+        overlay.remove();
+        return;
       }
-    };
+      case "textEffect":
+        await runAnimation(el, "fx-text-glow 1.5s ease-in-out 3", 4500);
+        return;
+      default: {
+        // Delegate to actConfig custom handlers
+        const cfg = actConfigRef.current;
+        if (cfg?.effectHandlers?.[effectName]) {
+          await cfg.effectHandlers[effectName](el);
+        } else {
+          console.warn(`⚠️ Effect not found: ${effectName}`);
+        }
+      }
+    }
+  }, []);
 
-    loadActConfig();
+  useEffect(() => { applyEffectRef.current = applyEffect; }, [applyEffect]);
 
-    // Cleanup on unmount
-    return () => {
-      // Stop all audio
+  // ── Scene transition hook ─────────────────────────────────────────────────
+  // Provides: currentId, visible, isTransitioning, goToScene, goToSceneWithChoice, jumpToScene
+  const {
+    currentId: currentSceneId,
+    scene: currentScene,
+    visible,
+    isTransitioning,
+    goToScene,
+    goToSceneWithChoice,
+    jumpToScene,
+    TRANSITION_MS,
+  } = useSceneTransition({
+    initialSceneId,
+    onSceneAdvance: (nextId, choiceSceneId, choiceId) => {
+      persistSceneAdvance(nextId, choiceSceneId, choiceId);
+    },
+    onNoNextScene: () => {
+      // Reached the end — fire act-complete callback
+      onActComplete?.(saveStateRef.current.actNumber);
+    },
+  });
+
+  // ── Act-level scene load hook (audio + lifecycle) ─────────────────────────
+  const runSceneHooks = useCallback(async (sceneId: string) => {
+    const cfg = actConfigRef.current;
+    if (!cfg) return;
+    if (cfg.onSceneLoad) await cfg.onSceneLoad(sceneId, gameContext);
+    const s = SCENE_REGISTRY[sceneId];
+    if (s && "audio" in s && s.audio) await playSceneAudio(s.audio as SceneAudio);
+  }, [gameContext, playSceneAudio]);
+
+  // Run hooks whenever the displayed scene changes
+  useEffect(() => {
+    runSceneHooks(currentSceneId);
+  }, [currentSceneId, runSceneHooks]);
+
+  // ── Scene advance handler (exposed to SceneRenderer) ─────────────────────
+  const handleSceneAdvance = useCallback(
+    async (
+      nextSceneId: string,
+      choiceData?: { choiceSceneId: string; choiceId: string },
+    ) => {
+      if (isTransitioning) return; // ✅ spam-click guard
+
+      const nextScene = SCENE_REGISTRY[nextSceneId];
+      if (!nextScene) {
+        console.error(`❌ Scene not found: ${nextSceneId}`);
+        return;
+      }
+
+      // Act change?
+      const nextAct = getActForScene(nextSceneId);
+      if (nextAct !== saveStateRef.current.actNumber) {
+        await handleActChange(nextAct, nextSceneId);
+        return;
+      }
+
+      if (choiceData) {
+        goToSceneWithChoice(nextSceneId, choiceData.choiceSceneId, choiceData.choiceId);
+      } else {
+        goToScene(nextSceneId);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isTransitioning, goToScene, goToSceneWithChoice],
+  );
+
+  useEffect(() => { handleSceneAdvanceRef.current = handleSceneAdvance; }, [handleSceneAdvance]);
+
+  // ── Act change ────────────────────────────────────────────────────────────
+  const handleActChange = useCallback(
+    async (newActNumber: number, firstSceneId: string) => {
+      // Teardown current act
+      if (actConfigRef.current?.onActEnd) {
+        await actConfigRef.current.onActEnd(gameContext, "complete");
+      }
       audioManager.stopAll();
-      // Could add more cleanup here
+
+      try {
+        const module = await import(`@/components/Acts/Act${newActNumber}/config`);
+        const newCfg = module.default as ActConfig;
+        actConfigRef.current = newCfg;
+        actDataRef.current   = {};
+        setActConfig(newCfg);
+
+        if (newCfg.onActStart) await newCfg.onActStart(gameContext);
+        onActComplete?.(newActNumber);
+        jumpToScene(firstSceneId);
+      } catch (err) {
+        console.error("❌ Failed to load new act:", err);
+        setError(String(err));
+      }
+    },
+    [gameContext, jumpToScene, onActComplete],
+  );
+
+  // ── Initial act load ──────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setIsActLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        // Small artificial delay so the loading spinner isn't a flash
+        await new Promise((r) => setTimeout(r, 600));
+        if (cancelled) return;
+
+        const module = await import(`@/components/Acts/Act${actNumber}/config`);
+        const cfg = module.default as ActConfig;
+        actConfigRef.current = cfg;
+        actDataRef.current   = {};
+
+        if (!cancelled) {
+          setActConfig(cfg);
+          setIsActLoading(false);
+          if (cfg.onActStart) await cfg.onActStart(gameContext);
+          await runSceneHooks(initialSceneId);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("❌ Failed to load act config:", err);
+          setError(String(err));
+          setIsActLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      audioManager.stopAll();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actNumber]);
 
-  // ────────────────────────────────────────────────────────────────────
-  // 2. CREATE GAME ENGINE CONTEXT (available to act handlers)
-  // ────────────────────────────────────────────────────────────────────
-
-  const createGameEngineContext = useCallback((): GameEngineContext => {
-    const currentScene = SCENE_REGISTRY[engineStateRef.current.currentSceneId];
-
-    return {
-      currentScene,
-      currentAct: engineStateRef.current.currentActNumber,
-      currentSceneId: engineStateRef.current.currentSceneId,
-
-      advanceScene: async (nextSceneId, choiceData) => {
-        await handleSceneAdvance(nextSceneId, choiceData);
-      },
-
-      updateAffection: (characterId: string, delta: number) => {
-        // Implement if using affection system
-        console.log(`💕 ${characterId} affection +${delta}`);
-      },
-
-      getAffection: () => {
-        // Return stored affection
-        return 0; // Placeholder
-      },
-
-      triggerEffect: async (effectName: string, target?: HTMLElement) => {
-        await applyEffect(effectName, target);
-      },
-
-      playAudio: async (path: string, type: "bgm" | "voice" | "sfx") => {
-        if (type === "bgm") {
-          await audioManager.playBGM(path);
-        } else if (type === "voice") {
-          await audioManager.playVoice(path);
-        } else {
-          await audioManager.playSFX(path);
-        }
-      },
-
-      stopAudio: () => {
-        audioManager.stopAll();
-      },
-
-      getChoices: () => {
-        // Return from useSaveState
-        return {};
-      },
-
-      getChoice: () => {
-        return undefined;
-      },
-
-      setActData: (key: string, value: any) => {
-        actDataRef.current[key] = value;
-      },
-
-      getActData: (key: string) => {
-        return actDataRef.current[key];
-      },
-
-      loadAsset: async (path: string) => {
-        return path; // Could implement actual asset loading
-      },
-
-      preloadAssets: async () => {
-        // Could implement asset preloading
-      },
-    };
-  }, []);
-
-  // ────────────────────────────────────────────────────────────────────
-  // 3. LOAD SCENE AND TRIGGER HOOKS
-  // ────────────────────────────────────────────────────────────────────
-
-  const loadScene = useCallback(
-    async (sceneId: string, actConfig: ActConfig) => {
-      const scene = SCENE_REGISTRY[sceneId];
-      if (!scene) {
-        console.error(`❌ Scene not found: ${sceneId}`);
-        return;
-      }
-
-      // Call onSceneLoad hook
-      if (actConfig.onSceneLoad) {
-        const context = createGameEngineContext();
-        await actConfig.onSceneLoad(sceneId, context);
-      }
-
-      // Play scene audio (only if scene has audio property)
-      if ("audio" in scene && (scene as any).audio) {
-        await playSceneAudio((scene as any).audio);
-      }
-
-      // Update state
-      engineStateRef.current.currentSceneId = sceneId;
-      setState({ ...engineStateRef.current });
-    },
-    [createGameEngineContext]
-  );
-
-  // ────────────────────────────────────────────────────────────────────
-  // 4. HANDLE SCENE ADVANCEMENT
-  // ────────────────────────────────────────────────────────────────────
-
-  const handleSceneAdvance = useCallback(
-    async (nextSceneId: string, choiceData?: { choiceSceneId: string; choiceId: string }) => {
-      // Update save state through useSaveState
-      onSceneAdvance(nextSceneId, choiceData?.choiceSceneId, choiceData?.choiceId);
-
-      // Load next scene
-      if (engineStateRef.current.actConfig) {
-        await loadScene(nextSceneId, engineStateRef.current.actConfig);
-      }
-
-      // Check if act is complete
-      const newAct = getActForScene(nextSceneId);
-      if (newAct !== engineStateRef.current.currentActNumber) {
-        // Act change detected
-        await handleActChange(newAct, nextSceneId);
-      }
-    },
-    [onSceneAdvance, loadScene]
-  );
-
-  // ────────────────────────────────────────────────────────────────────
-  // 5. HANDLE ACT CHANGE
-  // ────────────────────────────────────────────────────────────────────
-
-  const handleActChange = useCallback(async (newActNumber: number, firstSceneId: string) => {
-    console.log(`🎬 Changing act: ${engineStateRef.current.currentActNumber} → ${newActNumber}`);
-
-    // Call onActEnd for current act
-    if (engineStateRef.current.actConfig?.onActEnd) {
-      const context = createGameEngineContext();
-      await engineStateRef.current.actConfig.onActEnd(context, "complete");
+  // ── Back to menu ──────────────────────────────────────────────────────────
+  const handleBackToMenu = useCallback(async () => {
+    if (actConfigRef.current?.onActEnd) {
+      await actConfigRef.current.onActEnd(gameContext, "exit");
     }
-
-    // Stop all audio from previous act
+    // ✅ FIX: use exitSave so progress is written before leaving
+    await exitSave();
     audioManager.stopAll();
+    onBackToMenu();
+  }, [gameContext, exitSave, onBackToMenu]);
 
-    // Load new act
-    try {
-      const module = await import(`@/components/Acts/Act${newActNumber}/config`);
-      const newActConfig = module.default as ActConfig;
-
-      // Update state
-      engineStateRef.current.currentActNumber = newActNumber;
-      engineStateRef.current.currentSceneId = firstSceneId;
-      engineStateRef.current.actConfig = newActConfig;
-      actDataRef.current = {};
-
-      setState({ ...engineStateRef.current });
-
-      // Call onActStart
-      if (newActConfig.onActStart) {
-        const context = createGameEngineContext();
-        await newActConfig.onActStart(context);
-      }
-
-      onActComplete?.(engineStateRef.current.currentActNumber);
-    } catch (err) {
-      console.error("❌ Failed to load new act:", err);
-    }
-  }, [createGameEngineContext, onActComplete]);
-
-  // ────────────────────────────────────────────────────────────────────
-  // 6. HANDLE AUDIO PLAYBACK FOR SCENE
-  // ────────────────────────────────────────────────────────────────────
-
-  const playSceneAudio = useCallback(async (audio: SceneAudio) => {
-    if (audio.bgmStop) {
-      audioManager.stopAll();
-      return;
-    }
-
-    if (audio.bgm) {
-      const fade = audio.bgmFade !== false; // Default to fade
-      const duration = fade ? 1000 : 0;
-      await audioManager.playBGM(audio.bgm, duration);
-    }
-
-    if (audio.voice) {
-      await audioManager.playVoice(audio.voice);
-    }
-
-    if (audio.sfx) {
-      await audioManager.playSFX(audio.sfx);
-    }
-  }, []);
-
-  // ────────────────────────────────────────────────────────────────────
-  // 7. APPLY EFFECTS
-  // ────────────────────────────────────────────────────────────────────
-
-  const applyEffect = useCallback(
-    async (effectName: string, target?: HTMLElement) => {
-      const { actConfig } = engineStateRef.current;
-      if (!actConfig?.effectHandlers?.[effectName]) {
-        console.warn(`⚠️ Effect not found: ${effectName}`);
-        return;
-      }
-
-      let element = target;
-      if (!element) {
-        const el = document.querySelector(".game-scene");
-        element = el instanceof HTMLElement ? el : undefined;
-      }
-
-      if (!element) {
-        console.warn("⚠️ No target element for effect");
-        return;
-      }
-
-      await actConfig.effectHandlers[effectName](element);
-    },
-    []
-  );
-
-  // ────────────────────────────────────────────────────────────────────
-  // 8. HANDLE CHARACTER INTERACTIONS
-  // ────────────────────────────────────────────────────────────────────
-
+  // ── Character click ───────────────────────────────────────────────────────
   const handleCharacterClick = useCallback(
     async (characterId: string) => {
-      const { actConfig } = engineStateRef.current;
-      if (!actConfig?.characterInteractions?.[characterId]) {
-        return;
-      }
-
-      const context = createGameEngineContext();
-      await actConfig.characterInteractions[characterId](context);
+      const cfg = actConfigRef.current;
+      if (!cfg?.characterInteractions?.[characterId]) return;
+      await cfg.characterInteractions[characterId](gameContext);
     },
-    [createGameEngineContext]
+    [gameContext],
   );
 
-  // ────────────────────────────────────────────────────────────────────
-  // 9. HANDLE EXIT/BACK TO MENU
-  // ────────────────────────────────────────────────────────────────────
+  // ── Load slot ─────────────────────────────────────────────────────────────
+  const handleLoadSlot = useCallback(
+    async (slot: SaveSlot) => {
+      loadSlotIntoState(slot);
+      if (slot.currentAct !== saveStateRef.current.actNumber) {
+        await handleActChange(slot.currentAct, slot.currentSceneId);
+      } else {
+        jumpToScene(slot.currentSceneId);
+      }
+    },
+    [handleActChange, jumpToScene, loadSlotIntoState, saveStateRef],
+  );
 
-  const handleBackToMenu = useCallback(async () => {
-    // Call onActEnd
-    if (engineStateRef.current.actConfig?.onActEnd) {
-      const context = createGameEngineContext();
-      await engineStateRef.current.actConfig.onActEnd(context, "exit");
-    }
-
-    // Stop all audio
-    audioManager.stopAll();
-
-    // Go back
-    onBackToMenu();
-  }, [createGameEngineContext, onBackToMenu]);
-
-  // ────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   // RENDER
-  // ────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
 
-  if (state.error) {
+  if (error) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "linear-gradient(135deg, rgba(0,0,0,0.95), rgba(10,5,30,0.95))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          color: "#fff",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-        }}
-      >
-        <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "12px", textAlign: "center", maxWidth: "600px" }}>Game Engine Error</h2>
-        <p style={{ fontSize: "16px", color: "#d4d4d8", marginBottom: "32px", textAlign: "center", maxWidth: "600px", lineHeight: "1.6" }}>{state.error}</p>
-        <button
-          onClick={handleBackToMenu}
-          style={{
-            marginTop: "20px",
-            padding: "14px 32px",
-            background: "linear-gradient(135deg, #ec4899, #a855f7)",
-            color: "white",
-            border: "none",
-            borderRadius: "12px",
-            cursor: "pointer",
-            fontWeight: "700",
-            fontSize: "16px",
-            letterSpacing: "0.1em",
-            boxShadow: "0 8px 28px rgba(236, 72, 153, 0.4), 0 0 40px rgba(168, 85, 247, 0.2)",
-            transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 12px 36px rgba(236, 72, 153, 0.5), 0 0 60px rgba(168, 85, 247, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1) translateY(0)";
-            e.currentTarget.style.boxShadow = "0 8px 28px rgba(236, 72, 153, 0.4), 0 0 40px rgba(168, 85, 247, 0.2)";
-          }}
-        >
-          Back to Menu
-        </button>
+      <div style={fullScreenCenteredStyle}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12, textAlign: "center", maxWidth: 600 }}>
+          Game Engine Error
+        </h2>
+        <p style={{ fontSize: 16, color: "#d4d4d8", marginBottom: 32, textAlign: "center", maxWidth: 600, lineHeight: 1.6 }}>
+          {error}
+        </p>
+        <MenuButton onClick={handleBackToMenu}>Back to Menu</MenuButton>
       </div>
     );
   }
 
-  if (state.isLoading || !state.actConfig) {
+  if (isActLoading || !actConfig) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "linear-gradient(135deg, rgba(0,0,0,0.95), rgba(10,5,30,0.95))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-        }}
-      >
-        <div
-          style={{
-            width: "60px",
-            height: "60px",
-            borderRadius: "50%",
-            border: "3px solid rgba(236, 72, 153, 0.2)",
-            borderTopColor: "#ec4899",
-            animation: "spin 1s linear infinite",
-            marginBottom: "24px",
-          }}
-        />
-        <h3 style={{ fontSize: "20px", color: "#fff", fontWeight: "600", marginBottom: "8px", letterSpacing: "0.1em" }}>Loading Game</h3>
-        <p style={{ fontSize: "14px", color: "#a1a1a1", textAlign: "center" }}>Initializing Act {state.currentActNumber}...</p>
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div style={fullScreenCenteredStyle}>
+        <div style={{
+          width: 60, height: 60, borderRadius: "50%",
+          border: "3px solid rgba(236,72,153,0.2)", borderTopColor: "#ec4899",
+          animation: "spin 1s linear infinite", marginBottom: 24,
+        }} />
+        <h3 style={{ fontSize: 20, color: "#fff", fontWeight: 600, marginBottom: 8, letterSpacing: "0.1em" }}>
+          Loading Game
+        </h3>
+        <p style={{ fontSize: 14, color: "#a1a1a1" }}>
+          Initializing Act {actNumber}...
+        </p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  const currentScene = SCENE_REGISTRY[state.currentSceneId];
   if (!currentScene) {
     return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: "linear-gradient(135deg, rgba(0,0,0,0.95), rgba(10,5,30,0.95))",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-          color: "#fff",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-        }}
-      >
-        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔍</div>
-        <h2 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "12px", textAlign: "center" }}>Scene Not Found</h2>
-        <p style={{ fontSize: "16px", color: "#d4d4d8", marginBottom: "32px", textAlign: "center", maxWidth: "600px", lineHeight: "1.6" }}>The scene "<code style={{ color: "#ec4899", fontFamily: "monospace" }}>{state.currentSceneId}</code>" could not be loaded. Please check the scene configuration.</p>
-        <button
-          onClick={handleBackToMenu}
-          style={{
-            marginTop: "20px",
-            padding: "14px 32px",
-            background: "linear-gradient(135deg, #ec4899, #a855f7)",
-            color: "white",
-            border: "none",
-            borderRadius: "12px",
-            cursor: "pointer",
-            fontWeight: "700",
-            fontSize: "16px",
-            letterSpacing: "0.1em",
-            boxShadow: "0 8px 28px rgba(236, 72, 153, 0.4), 0 0 40px rgba(168, 85, 247, 0.2)",
-            transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
-            e.currentTarget.style.boxShadow = "0 12px 36px rgba(236, 72, 153, 0.5), 0 0 60px rgba(168, 85, 247, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1) translateY(0)";
-            e.currentTarget.style.boxShadow = "0 8px 28px rgba(236, 72, 153, 0.4), 0 0 40px rgba(168, 85, 247, 0.2)";
-          }}
-        >
-          Back to Menu
-        </button>
+      <div style={fullScreenCenteredStyle}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+        <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 12, textAlign: "center" }}>
+          Scene Not Found
+        </h2>
+        <p style={{ fontSize: 16, color: "#d4d4d8", marginBottom: 32, textAlign: "center", maxWidth: 600, lineHeight: 1.6 }}>
+          Scene{" "}
+          <code style={{ color: "#ec4899", fontFamily: "monospace" }}>{currentSceneId}</code>{" "}
+          could not be loaded.
+        </p>
+        <MenuButton onClick={handleBackToMenu}>Back to Menu</MenuButton>
       </div>
     );
   }
@@ -514,33 +450,43 @@ export default function GameEngine({
     <div
       className="game-engine"
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        position: "fixed", inset: 0,
         background: "#000",
         overflow: "hidden",
-        fontFamily: "monospace",
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Game scene renderer */}
-      <div className="game-scene" style={{ width: "100%", height: "100%" }}>
+      {/* ── Scene container ──────────────────────────────────────────────── */}
+      <div
+        className="game-scene"
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          // ✅ FIX: opacity fade between scenes + spam-click lock
+          opacity:        visible ? 1 : 0,
+          transition:     `opacity ${TRANSITION_MS}ms ease`,
+          pointerEvents:  isTransitioning ? "none" : "auto", // blocks clicks mid-transition
+        }}
+      >
+        {/* ✅ FIX: context is the stable memo object, NOT createGameEngineContext() */}
         <SceneRenderer
-          scene={currentScene}
-          actConfig={state.actConfig}
-          context={createGameEngineContext()}
+          scene={substitutePlayerName(currentScene, characterName)}
+          actConfig={actConfig}
+          context={gameContext}
           onSceneAdvance={handleSceneAdvance}
           onCharacterClick={handleCharacterClick}
           onApplyEffect={applyEffect}
         />
       </div>
 
-      {/* Game toolbar (HUD) */}
+      {/* ── HUD toolbar ──────────────────────────────────────────────────── */}
+      {/* ✅ FIX: isLoading prop now forwarded */}
       <GameToolbar
-        actNumber={state.currentActNumber}
+        actNumber={saveStateRef.current.actNumber}
         sceneNumber={currentScene.sceneNumber}
         isSaving={isSaving}
+        isLoading={isActLoading}
         savedFlash={savedFlash}
         onMenu={handleBackToMenu}
         onQuickSave={() => handleManualSave(1)}
@@ -549,15 +495,12 @@ export default function GameEngine({
         onSettings={() => setShowSettingsModal(true)}
       />
 
-      {/* Save/Load Modals */}
+      {/* ── Modals ────────────────────────────────────────────────────────── */}
       {showSaveModal && (
         <SaveSlotsModal
           isOpen={showSaveModal}
           onClose={() => setShowSaveModal(false)}
-          onSave={async (slotId) => {
-            await handleManualSave(slotId);
-            setShowSaveModal(false);
-          }}
+          onSave={async (slotId) => { await handleManualSave(slotId); setShowSaveModal(false); }}
         />
       )}
 
@@ -565,48 +508,80 @@ export default function GameEngine({
         <SaveSlotsModal
           isOpen={showLoadModal}
           onClose={() => setShowLoadModal(false)}
-          onLoad={() => {
-            // Load from slot (handled by SaveSlotsModal)
-            setShowLoadModal(false);
-          }}
+          onLoad={async (slot) => { await handleLoadSlot(slot); setShowLoadModal(false); }}
         />
       )}
 
-      {/* Settings Modal */}
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
       />
 
-      {/* CSS for animations */}
+      {/* History Log overlay */}
+      <HistoryLog />
+
+      {/* ── Global keyframes ─────────────────────────────────────────────── */}
       <style>{`
-        @keyframes screenShake {
-          0%, 100% { transform: translate(0, 0) rotate(0deg); }
-          10% { transform: translate(-2px, -2px) rotate(0.5deg); }
-          20% { transform: translate(2px, 2px) rotate(-0.5deg); }
-          30% { transform: translate(-2px, 2px) rotate(0.5deg); }
-          40% { transform: translate(2px, -2px) rotate(-0.5deg); }
-          50% { transform: translate(-1px, 1px) rotate(0.5deg); }
-          60% { transform: translate(1px, -1px) rotate(-0.5deg); }
-          70% { transform: translate(-1px, -1px) rotate(0.5deg); }
-          80% { transform: translate(1px, 1px) rotate(-0.5deg); }
-          90% { transform: translate(0, 0) rotate(0deg); }
+        @keyframes fx-screen-shake {
+          0%,100% { transform: translate(0,0) rotate(0deg); }
+          10%  { transform: translate(-6px,-3px) rotate(-0.8deg); }
+          20%  { transform: translate(6px,3px) rotate(0.8deg); }
+          30%  { transform: translate(-5px,4px) rotate(-0.5deg); }
+          40%  { transform: translate(5px,-4px) rotate(0.5deg); }
+          50%  { transform: translate(-4px,2px) rotate(-0.3deg); }
+          60%  { transform: translate(4px,-2px) rotate(0.3deg); }
+          70%  { transform: translate(-2px,-2px) rotate(-0.2deg); }
+          80%  { transform: translate(2px,2px) rotate(0.2deg); }
+          90%  { transform: translate(-1px,0) rotate(0deg); }
         }
-
-        @keyframes fadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
+        @keyframes fx-text-glow {
+          0%,100% { filter: brightness(1); }
+          50%     { filter: brightness(1.4) drop-shadow(0 0 8px rgba(236,72,153,0.8)); }
         }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .game-engine {
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
+        @keyframes fadeOut { from{opacity:1} to{opacity:0} }
+        @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
       `}</style>
     </div>
+  );
+}
+
+// ── Small shared UI helpers (keep file self-contained) ────────────────────────
+
+const fullScreenCenteredStyle: React.CSSProperties = {
+  position: "fixed", inset: 0,
+  background: "linear-gradient(135deg, rgba(0,0,0,0.95), rgba(10,5,30,0.95))",
+  display: "flex", flexDirection: "column",
+  alignItems: "center", justifyContent: "center",
+  zIndex: 1000, color: "#fff",
+  fontFamily: "system-ui, -apple-system, sans-serif",
+};
+
+function MenuButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  const [hov, setHov] = React.useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        marginTop: 20,
+        padding: "14px 32px",
+        background: "linear-gradient(135deg, #ec4899, #a855f7)",
+        color: "white",
+        border: "none",
+        borderRadius: 12,
+        cursor: "pointer",
+        fontWeight: 700,
+        fontSize: 16,
+        letterSpacing: "0.1em",
+        boxShadow: hov
+          ? "0 12px 36px rgba(236,72,153,0.5), 0 0 60px rgba(168,85,247,0.3)"
+          : "0 8px 28px rgba(236,72,153,0.4), 0 0 40px rgba(168,85,247,0.2)",
+        transform: hov ? "scale(1.05) translateY(-2px)" : "none",
+        transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+      }}
+    >
+      {children}
+    </button>
   );
 }

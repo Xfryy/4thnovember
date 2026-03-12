@@ -92,8 +92,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           // Show brief loading for returning users too
           setLoading(true);
           
-          // Brief delay for smooth transition
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // ⚠️ REMOVED 800ms delay — was causing character name input flash!
+          // Load from cache immediately
           
           setUser({
             uid,
@@ -104,17 +104,19 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           });
           setCharacterName(cachedProfile.characterName);
 
-          if (cachedProfile.characterName) {
+          // Character name check: only show input if name is ACTUALLY empty
+          if (cachedProfile.characterName && cachedProfile.characterName.trim()) {
             setCharacterNameSet(true);
             setShowCharacterInput(false);
           } else {
-            setShowCharacterInput(true);
+            // Will be corrected by Firestore sync below
+            setShowCharacterInput(false);
           }
 
           if (cachedAutoSlot) setAutoSaveSlot(cachedAutoSlot);
           if (cachedSaveData) setSaveData(cachedSaveData);
 
-          // Show menu after brief loading
+          // Show menu immediately (no delay)
           setLoading(false);
         } else {
           // New user - show loading while fetching from Firestore
@@ -145,12 +147,14 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           setUser(userData);
           setCharacterName(characterNameFromDB);
 
-          if (characterNameFromDB) {
+          // Character name: trust Firestore data completely
+          if (characterNameFromDB && characterNameFromDB.trim()) {
             setCharacterNameSet(true);
             setShowCharacterInput(false);
           } else {
-            // Only show input if really no name (not just cache miss)
-            if (!cachedProfile?.characterName) setShowCharacterInput(true);
+            // No name in Firestore = show character name input
+            setCharacterNameSet(false);
+            setShowCharacterInput(true);
           }
 
           // Update save state — won't cause visual flash since menu is already shown
@@ -159,11 +163,15 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
             setCachedSaveData(uid, save);
           }
 
-          // Critical: update autoSaveSlot from Firestore
-          // If slot0 exists and differs from cache, update — this keeps "Continue" accurate
+          // CRITICAL: Always update autoSaveSlot from Firestore, even if null
+          // This ensures "Continue" button accuracy and prevents stale cache data
           if (slot0) {
             setAutoSaveSlot(slot0);
             setCachedAutoSlot(uid, slot0);
+          } else {
+            // No auto-save found — explicitly clear it
+            setAutoSaveSlot(null);
+            // Don't keep stale auto-save cache
           }
 
           // Update user profile with actual total playtime
@@ -263,9 +271,16 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      if (user) clearUserCache(user.uid);
+      // Clear cache FIRST before logging out
+      if (user) {
+        clearUserCache(user.uid);
+      }
+      
+      // Then logout
       await signOut();
       audioManager.stopAll();
+      
+      // Reset all state completely
       setUser(null);
       setCharacterName("");
       setCharacterNameSet(false);
@@ -273,6 +288,15 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
       setSaveData(null);
       setAutoSaveSlot(null);
       setBgmStarted(false);
+      
+      // ⚠️ Additional security: ensure settings sync is cleaned
+      if (settingsSyncUnsubscribe) {
+        try {
+          await cleanupSettingsSync();
+          settingsSyncUnsubscribe();
+        } catch {}
+        setSettingsSyncUnsubscribe(null);
+      }
     } catch (error) {
       console.error("Logout error:", error);
       alert("Logout gagal. Silakan coba lagi.");
@@ -281,14 +305,26 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     }
   };
 
+  /** Request fullscreen — must be called inside a user gesture */
+  const enterFullscreen = () => {
+    const el = document.documentElement;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.().catch(() => {
+        // Browser blocked fullscreen (e.g. iframe) — silently ignore
+      });
+    }
+  };
+
   /** Start brand-new game */
   const handleStartNewGame = () => {
+    enterFullscreen();
     audioManager.resume();
     onGameStart?.(1, undefined);
   };
 
   /** Continue from auto-save (slot 0) */
   const handleContinue = () => {
+    enterFullscreen();
     audioManager.resume();
     if (autoSaveSlot) {
       onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
@@ -301,6 +337,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
 
   /** Load from a specific manual save slot */
   const handleLoadSlot = (slot: SaveSlot) => {
+    enterFullscreen();
     audioManager.resume();
     onGameStart?.(slot.currentAct, slot.currentSceneId);
   };
@@ -325,9 +362,14 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           setCachedSaveData(user.uid, saveData);
         }
 
+        // CRITICAL: Always set autoSaveSlot, even if null
+        // This prevents stale cache data from showing wrong "Continue" button state
         if (slot0) {
           setAutoSaveSlot(slot0);
           setCachedAutoSlot(user.uid, slot0);
+        } else {
+          // No auto-save: explicitly clear it
+          setAutoSaveSlot(null);
         }
 
         // Update user profile with actual total playtime

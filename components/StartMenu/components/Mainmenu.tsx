@@ -13,17 +13,20 @@ import SupportBanner from "../components/Supportbanner";
 import SettingsModal from "../components/SettingsModal";
 import SaveSlotsModal from "../components/SaveslotsModal";
 
+const ADMIN_EMAIL = "faricandra5@gmail.com";
+
 interface MainMenuProps {
   characterName: string;
   email: string;
   isLoading: boolean;
   saveData: SaveData | null;
-  autoSaveSlot: SaveSlot | null;   // slot 0 — tells us if player has played before
+  autoSaveSlot: SaveSlot | null;
   onStartNew: () => void;
-  onContinue: () => void;          // load from auto-save (slot 0)
-  onLoadSlot: (slot: SaveSlot) => void; // load from any slot
+  onContinue: () => void;
+  onLoadSlot: (slot: SaveSlot) => void;
   onSettings: () => void;
   onLogout: () => void;
+  onNameChange?: (newName: string) => void;
 }
 
 export default function MainMenu({
@@ -36,12 +39,14 @@ export default function MainMenu({
   onLoadSlot,
   onSettings,
   onLogout,
+  onNameChange,
 }: MainMenuProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [showSaves,    setShowSaves]    = useState(false);
   const [displayName,  setDisplayName]  = useState(characterName);
 
   const hasPlayed = !!autoSaveSlot;
+  const isAdmin   = email === ADMIN_EMAIL;
 
   const handleSettingsClick = () => {
     setShowSettings(true);
@@ -53,16 +58,56 @@ export default function MainMenu({
 
       <GameBackground />
 
-      {/* Top-right: Announcement + Profile Card */}
-      <div className="absolute top-5 right-5 z-30 flex items-center gap-2">
-        <AnnouncementBell />
-        <ProfileCard
-          characterName={characterName}
-          email={email}
-          onLogout={onLogout}
-          isLoading={isLoading}
-          onNameChange={setDisplayName}
-        />
+      {/* Top-right: Announcement + Profile Card + Admin Button */}
+      <div className="absolute top-5 right-5 z-30 flex flex-col items-end gap-2">
+
+        {/* Row: bell + profile */}
+        <div className="flex items-center gap-2">
+          <AnnouncementBell />
+          <ProfileCard
+            characterName={characterName}
+            email={email}
+            onLogout={onLogout}
+            isLoading={isLoading}
+            onNameChange={(newName) => {
+              setDisplayName(newName);
+              onNameChange?.(newName);
+            }}
+          />
+        </div>
+
+        {/* Admin button — only visible for admin account */}
+        {isAdmin && (
+          <button
+            onClick={() => console.log("Admin page — implement navigation here")}
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all hover:scale-105 active:scale-95"
+            style={{
+              background:    "rgba(15, 10, 35, 0.65)",
+              border:        "1px solid rgba(234,179,8,0.45)",
+              backdropFilter:"blur(12px)",
+              boxShadow:     "0 4px 20px rgba(234,179,8,0.2)",
+              color:         "#eab308",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = "0 6px 28px rgba(234,179,8,0.45)";
+              e.currentTarget.style.borderColor = "rgba(234,179,8,0.8)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = "0 4px 20px rgba(234,179,8,0.2)";
+              e.currentTarget.style.borderColor = "rgba(234,179,8,0.45)";
+            }}
+          >
+            <span>🛡</span>
+            <span>Admin Page</span>
+            <span style={{
+              fontSize: "9px",
+              background: "rgba(234,179,8,0.2)",
+              border: "1px solid rgba(234,179,8,0.4)",
+              borderRadius: "4px",
+              padding: "1px 5px",
+            }}>ADMIN</span>
+          </button>
+        )}
       </div>
 
       {/* 3-column layout: Menu | Calendar | Character */}
@@ -100,23 +145,14 @@ export default function MainMenu({
 
       </div>
 
-      {/* Bottom support banner */}
       <SupportBanner />
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
-      {/* Save Slots Modal — load-only from main menu */}
       <SaveSlotsModal
         isOpen={showSaves}
         onClose={() => setShowSaves(false)}
-        onLoad={(slot) => {
-          setShowSaves(false);
-          onLoadSlot(slot);
-        }}
+        onLoad={(slot) => { setShowSaves(false); onLoadSlot(slot); }}
       />
 
     </div>

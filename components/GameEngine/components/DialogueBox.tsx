@@ -1,76 +1,154 @@
 "use client";
 
+/**
+ * DialogueBox — Full VN-standard dialogue box
+ *
+ * Features:
+ * - Typewriter effect (speed from settings)
+ * - Click/tap/keyboard to skip typewriter or advance
+ * - Auto-play mode (advance after configurable delay)
+ * - Skip mode (instant display, auto-advance)
+ * - {playerName} token resolution
+ * - Appends every completed line to history log
+ */
+
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useGameStore } from "@/store/gameStore";
+import { useSettingsStore } from "@/store/Settingsstore";
+import { useVNControls } from "@/store/Usevncontrols";
 
 interface DialogueBoxProps {
   speaker?: string;
   text: string;
   onAdvance: () => void;
+  italic?: boolean;
+  sceneId?: string;
 }
 
-function getTextSpeedMs(): number {
-  if (typeof window === "undefined") return 40;
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--text-speed-ms").trim();
-  const parsed = parseInt(raw);
-  return isNaN(parsed) ? 40 : parsed;
+function resolveTokens(str: string, playerName: string): string {
+  if (!str) return str;
+  return str.replace(/\{playerName\}/gi, playerName || "???");
 }
 
-export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxProps) {
+export default function DialogueBox({
+  speaker,
+  text,
+  onAdvance,
+  italic = false,
+  sceneId = "",
+}: DialogueBoxProps) {
+  const characterName  = useGameStore((s) => s.characterName);
+  const getTextSpeedMs = useSettingsStore((s) => s.getTextSpeedMs);
+
+  const { autoPlay, autoPlayDelay, skipMode, hideUI, addLogEntry } = useVNControls();
+
+  const resolvedSpeaker = speaker ? resolveTokens(speaker, characterName) : undefined;
+  const resolvedText    = resolveTokens(text, characterName);
+
   const [displayed, setDisplayed] = useState("");
-  const [finished, setFinished]   = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const indexRef    = useRef(0);
+  const [finished,  setFinished]  = useState(false);
+  const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoPlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loggedRef     = useRef(false);   // prevent double-logging per line
+  const indexRef      = useRef(0);
 
+  // ── Clear timers helper ───────────────────────────────────────────────────
+  const clearTimers = useCallback(() => {
+    if (intervalRef.current)   { clearInterval(intervalRef.current);  intervalRef.current = null; }
+    if (autoPlayTimer.current) { clearTimeout(autoPlayTimer.current); autoPlayTimer.current = null; }
+  }, []);
+
+  // ── Show full text immediately ────────────────────────────────────────────
+  const showInstant = useCallback(() => {
+    clearTimers();
+    setDisplayed(resolvedText);
+    setFinished(true);
+  }, [resolvedText, clearTimers]);
+
+  // ── Log entry (only once per text change) ────────────────────────────────
+  const logEntry = useCallback(() => {
+    if (loggedRef.current) return;
+    loggedRef.current = true;
+    addLogEntry({ speaker: resolvedSpeaker, text: resolvedText, sceneId });
+  }, [resolvedSpeaker, resolvedText, sceneId, addLogEntry]);
+
+  // ── Typewriter effect ─────────────────────────────────────────────────────
   useEffect(() => {
+    clearTimers();
     setDisplayed("");
     setFinished(false);
     indexRef.current = 0;
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    loggedRef.current = false;
 
     const speedMs = getTextSpeedMs();
-    if (speedMs <= 15) {
-      setDisplayed(text);
+    const instant = skipMode || speedMs <= 15;
+
+    if (instant) {
+      setDisplayed(resolvedText);
       setFinished(true);
       return;
     }
 
     intervalRef.current = setInterval(() => {
       indexRef.current += 1;
-      setDisplayed(text.slice(0, indexRef.current));
-      if (indexRef.current >= text.length) {
+      setDisplayed(resolvedText.slice(0, indexRef.current));
+      if (indexRef.current >= resolvedText.length) {
         clearInterval(intervalRef.current!);
+        intervalRef.current = null;
         setFinished(true);
       }
     }, speedMs);
 
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [text]);
+    return clearTimers;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedText, skipMode]);
 
-  const handleClick = useCallback(() => {
+  // ── When finished: log + start auto-play timer ───────────────────────────
+  useEffect(() => {
+    if (!finished) return;
+
+    logEntry();
+
+    if (autoPlay || skipMode) {
+      const delay = skipMode ? 80 : autoPlayDelay;
+      autoPlayTimer.current = setTimeout(() => {
+        onAdvance();
+      }, delay);
+    }
+
+    return () => {
+      if (autoPlayTimer.current) { clearTimeout(autoPlayTimer.current); autoPlayTimer.current = null; }
+    };
+  }, [finished, autoPlay, skipMode, autoPlayDelay, onAdvance, logEntry]);
+
+  // ── Manual advance (click / tap) ─────────────────────────────────────────
+  const handleAdvance = useCallback(() => {
     if (!finished) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setDisplayed(text);
-      setFinished(true);
+      showInstant();
     } else {
+      clearTimers();
       onAdvance();
     }
-  }, [finished, text, onAdvance]);
+  }, [finished, showInstant, clearTimers, onAdvance]);
 
+  // ── Keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.code === "Enter") {
+      if (e.code === "Space" || e.code === "Enter" || e.code === "ArrowRight") {
         e.preventDefault();
-        handleClick();
+        handleAdvance();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handleClick]);
+  }, [handleAdvance]);
+
+  // ── Hidden UI mode ────────────────────────────────────────────────────────
+  if (hideUI) return null;
 
   return (
     <div
-      onClick={handleClick}
+      onClick={handleAdvance}
       style={{
         position: "absolute",
         bottom: 0, left: 0, right: 0,
@@ -80,9 +158,52 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
         userSelect: "none",
       }}
     >
+      {/* Auto / Skip indicator badge */}
+      {(autoPlay || skipMode) && (
+        <div style={{
+          position: "absolute",
+          bottom: "calc(100% - 16px)",
+          right: 30,
+          display: "flex",
+          gap: 6,
+          zIndex: 21,
+        }}>
+          {autoPlay && (
+            <span style={{
+              fontSize: "0.52rem",
+              fontWeight: 800,
+              letterSpacing: "0.18em",
+              color: "#4ade80",
+              background: "rgba(74,222,128,0.1)",
+              border: "1px solid rgba(74,222,128,0.3)",
+              borderRadius: 5,
+              padding: "2px 8px",
+              animation: "badge-pulse 1.2s ease-in-out infinite",
+            }}>
+              AUTO
+            </span>
+          )}
+          {skipMode && (
+            <span style={{
+              fontSize: "0.52rem",
+              fontWeight: 800,
+              letterSpacing: "0.18em",
+              color: "#f59e0b",
+              background: "rgba(245,158,11,0.1)",
+              border: "1px solid rgba(245,158,11,0.3)",
+              borderRadius: 5,
+              padding: "2px 8px",
+              animation: "badge-pulse 0.6s ease-in-out infinite",
+            }}>
+              SKIP
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Speaker name tag */}
-      {speaker && (
-        <div style={{ paddingLeft: 8, marginBottom: 0 }}>
+      {resolvedSpeaker && (
+        <div style={{ paddingLeft: 8 }}>
           <div style={{
             display: "inline-flex",
             alignItems: "center",
@@ -92,13 +213,10 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
             background: "rgba(10,5,25,0.92)",
             border: "1px solid rgba(236,72,153,0.4)",
             borderBottom: "none",
-            position: "relative",
           }}>
-            {/* Pink dot accent */}
             <span style={{
               width: 5, height: 5, borderRadius: "50%",
-              background: "#ec4899",
-              boxShadow: "0 0 6px #ec4899",
+              background: "#ec4899", boxShadow: "0 0 6px #ec4899",
               flexShrink: 0,
             }} />
             <span style={{
@@ -109,18 +227,18 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}>
-              {speaker}
+              {resolvedSpeaker}
             </span>
           </div>
         </div>
       )}
 
-      {/* Main dialogue box */}
+      {/* Main box */}
       <div style={{
         position: "relative",
-        background: "rgba(6,2,18,0.86)",
+        background: "rgba(6,2,18,0.88)",
         border: "1px solid rgba(236,72,153,0.18)",
-        borderRadius: speaker ? "0 12px 12px 12px" : 12,
+        borderRadius: resolvedSpeaker ? "0 12px 12px 12px" : 12,
         padding: "16px 50px 16px 20px",
         minHeight: 100,
         backdropFilter: "blur(20px)",
@@ -131,21 +249,22 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
         ].join(", "),
         overflow: "hidden",
       }}>
-        {/* Subtle gradient shimmer on left edge */}
+        {/* Left accent */}
         <div style={{
           position: "absolute",
-          top: 0, left: 0, bottom: 0,
-          width: 2,
+          top: 0, left: 0, bottom: 0, width: 2,
           background: "linear-gradient(180deg, transparent, rgba(236,72,153,0.5) 40%, rgba(168,85,247,0.5) 70%, transparent)",
           borderRadius: "12px 0 0 12px",
         }} />
 
+        {/* Text */}
         <p style={{
           fontSize: "0.95rem",
           lineHeight: 1.85,
           color: "rgba(255,255,255,0.9)",
           fontWeight: 400,
-          letterSpacing: "0.028em",
+          fontStyle: italic ? "italic" : "normal",
+          letterSpacing: italic ? "0.04em" : "0.028em",
           margin: 0,
           whiteSpace: "pre-wrap",
           paddingLeft: 10,
@@ -154,8 +273,7 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
           {!finished && (
             <span style={{
               display: "inline-block",
-              width: 2,
-              height: "1em",
+              width: 2, height: "1em",
               background: "#ec4899",
               marginLeft: 2,
               verticalAlign: "text-bottom",
@@ -164,14 +282,12 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
           )}
         </p>
 
-        {/* Continue arrow */}
-        {finished && (
+        {/* Continue arrow — hidden during auto/skip */}
+        {finished && !autoPlay && !skipMode && (
           <div style={{
             position: "absolute",
             bottom: 12, right: 16,
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
+            display: "flex", alignItems: "center", gap: 4,
             animation: "dlg-bounce 0.9s ease-in-out infinite alternate",
           }}>
             <span style={{
@@ -188,11 +304,9 @@ export default function DialogueBox({ speaker, text, onAdvance }: DialogueBoxPro
       </div>
 
       <style>{`
-        @keyframes dlg-blink  { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes dlg-bounce {
-          from { transform: translateY(0); }
-          to   { transform: translateY(4px); }
-        }
+        @keyframes dlg-blink   { 0%,100%{opacity:1} 50%{opacity:0} }
+        @keyframes dlg-bounce  { from{transform:translateY(0)} to{transform:translateY(4px)} }
+        @keyframes badge-pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
       `}</style>
     </div>
   );

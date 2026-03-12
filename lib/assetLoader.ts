@@ -6,7 +6,6 @@
  */
 import { getReachableScenes } from "@/lib/sceneGraph";
 import { extractAudioForScenes, extractImagesForScenes } from "@/lib/assetManifest";
-import { audioManager } from "@/lib/Audiomanager";
 
 export interface LoadProgress {
   loaded: number;   // 0–100
@@ -31,6 +30,18 @@ function preloadImage(src: string): Promise<void> {
   });
 }
 
+// ── Audio preloader (native fetch — no AudioManager dependency) ───────────────
+
+function preloadAudio(src: string): Promise<void> {
+  return fetch(src, { method: "GET" })
+    .then((res) => {
+      if (!res.ok) console.warn(`[AssetLoader] Audio not found: ${src}`);
+    })
+    .catch(() => {
+      console.warn(`[AssetLoader] Audio failed to preload: ${src}`);
+    });
+}
+
 // ── Main loader ────────────────────────────────────────────────────────────────
 
 export async function preloadAssetsForScene(
@@ -46,12 +57,12 @@ export async function preloadAssetsForScene(
 
   const scenesToLoad = getReachableScenes(startSceneId, preloadDepth);
   const images = extractImagesForScenes(scenesToLoad);
-  const audio = extractAudioForScenes(scenesToLoad);
-  // TODO: Add minigame extraction if needed in the future
-  const minigames: any[] = [];
+  const audio  = extractAudioForScenes(scenesToLoad);
 
-  const audioToPreload = audio.filter(src => !src.endsWith('.mp3'));
-  const total = images.length + audioToPreload.length + minigames.length;
+  // Skip mp3 streaming — preload only short sfx/voice files
+  const audioToPreload = audio.filter((src) => !src.endsWith(".mp3"));
+
+  const total = images.length + audioToPreload.length;
 
   if (total === 0) {
     onProgress?.({ loaded: 100, current: "Ready", total: 0, done: 0 });
@@ -70,36 +81,17 @@ export async function preloadAssetsForScene(
     });
   };
 
-  // Build task list — each returns a promise
   const tasks: Promise<void>[] = [
     // Images
     ...images.map((src) =>
-      preloadImage(src).then(() =>
-        report(src.split("/").pop() ?? src)
-      )
+      preloadImage(src).then(() => report(src.split("/").pop() ?? src))
     ),
 
-    // Audio (decoded into AudioManager buffer cache)
+    // Audio
     ...audioToPreload.map((src) =>
-      audioManager.fetchBuffer(src)
-        .then(() => report(src.split("/").pop() ?? src))
-        .catch(() => {
-          // This is non-fatal, just report it
-          report(src.split("/").pop() ?? src);
-        })
-    ),
-
-    // Minigame dynamic imports
-    ...minigames.map((loader, i) =>
-      loader()
-        .then(() => report(`Minigame ${i + 1}`))
-        .catch(() => {
-          console.warn(`[AssetLoader] Minigame ${i + 1} failed to load`);
-          report(`Minigame ${i + 1}`);
-        })
+      preloadAudio(src).then(() => report(src.split("/").pop() ?? src))
     ),
   ];
 
-  // Run everything in parallel
   await Promise.all(tasks);
 }

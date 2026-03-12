@@ -43,7 +43,7 @@ export type CharacterPosition =
 export type CharacterSize = "small" | "medium" | "large" | "xl" | "full";
 
 export type CharacterAnimation =
-  | "enter-bottom" | "enter-left" | "enter-right" | "fade" | "none";
+  | "enter-bottom" | "enter-left" | "enter-right" | "fade" | "none" | "fade-in" | "fade-out";
 
 export interface SceneCharacter {
   id: string;
@@ -54,7 +54,34 @@ export interface SceneCharacter {
   dim?: boolean;
   zIndex?: number;
   animation?: CharacterAnimation;
+
+  /**
+   * Override ukuran sprite secara bebas.
+   * Contoh: customSize: { width: "35vw", height: "90vh" }
+   *         customSize: { width: 500 }          — angka = px
+   */
+  customSize?: {
+    width?:  string | number;
+    height?: string | number;
+  };
+
+  /**
+   * Geser posisi dari titik anchor (bottom + horizontal position).
+   * offsetX: geser kiri/kanan dalam px (positif = kanan, negatif = kiri)
+   * offsetY: geser atas/bawah dalam px (positif = naik, negatif = turun)
+   * Contoh: offsetY: 80  → karakter naik 80px dari posisi normal
+   */
+  offsetX?: number;
+  offsetY?: number;
+
+  /**
+   * Override posisi bottom secara eksplisit (px).
+   * Kalau diset, menggantikan offsetY sepenuhnya.
+   * Contoh: bottom: -40  → karakter turun 40px ke bawah layar (crop kaki)
+   */
+  bottom?: number;
 }
+
 
 // ── Background config ──────────────────────────────────────────────────────────
 
@@ -79,10 +106,7 @@ export interface SceneAudio {
 
 // ── Screen effect config ───────────────────────────────────────────────────────
 
-export interface SceneEffect {
-  shake?: boolean;
-  flash?: string;
-}
+export type SceneEffect = string;
 
 // ── Scene types ────────────────────────────────────────────────────────────────
 
@@ -95,6 +119,7 @@ export interface BaseScene {
   type: SceneType;
   act: number;
   sceneNumber: number;
+  next?: string;
 }
 
 export interface DialogueScene extends BaseScene {
@@ -106,7 +131,6 @@ export interface DialogueScene extends BaseScene {
   bg?: SceneBg;
   audio?: SceneAudio;
   effect?: SceneEffect;
-  next?: string;
 }
 
 export interface MonologueScene extends BaseScene {
@@ -116,7 +140,6 @@ export interface MonologueScene extends BaseScene {
   bg?: SceneBg;
   audio?: SceneAudio;
   effect?: SceneEffect;
-  next?: string;
 }
 
 export interface ChoiceOption {
@@ -132,6 +155,7 @@ export interface ChoiceScene extends BaseScene {
   options: ChoiceOption[];
   characters?: SceneCharacter[];
   bg?: SceneBg;
+  effect?: SceneEffect;
 }
 
 export interface TransitionScene extends BaseScene {
@@ -140,7 +164,7 @@ export interface TransitionScene extends BaseScene {
   bg?: SceneBg;
   duration?: number;
   audio?: SceneAudio;
-  next: string;
+  effect?: SceneEffect;
 }
 
 export interface CgScene extends BaseScene {
@@ -148,7 +172,7 @@ export interface CgScene extends BaseScene {
   image: string;
   caption?: string;
   audio?: SceneAudio;
-  next?: string;
+  effect?: SceneEffect;
 }
 
 export interface EndingScene extends BaseScene {
@@ -159,24 +183,18 @@ export interface EndingScene extends BaseScene {
   characterSprite?: string;
   bg?: SceneBg;
   audio?: SceneAudio;
-  next?: string;
+  effect?: SceneEffect;
 }
 
-/**
- * MinigameScene — launches an in-story mini game.
- * gameId maps to a registered mini game component in SceneRenderer.
- * onWinNext / onLoseNext allow branching based on result.
- * If only `next` is provided, both win and lose continue to the same scene.
- */
 export interface MinigameScene extends BaseScene {
   type: "minigame";
-  gameId: string;       // e.g. "card-match"
+  gameId: string;
   title?: string;
   description?: string;
   bg?: SceneBg;
   audio?: SceneAudio;
-  next?: string;        // fallback / lose path
-  onWinNext?: string;   // override next on win
+  effect?: SceneEffect;
+  onWinNext?: string;
 }
 
 export type Scene =

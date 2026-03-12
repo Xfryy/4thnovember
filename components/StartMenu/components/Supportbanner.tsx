@@ -197,7 +197,7 @@ export default function SupportBanner() {
                 </div>
 
                 <p className="text-center text-xs mt-3" style={{ color: "rgba(236,72,153,0.45)" }}>
-                  Replace with your real QR code
+                  Scan me!!
                 </p>
               </div>
             </div>

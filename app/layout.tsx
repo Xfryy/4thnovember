@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import SparkleProvider from "@/components/Sparkleprovider";
 import SettingsProvider from "@/components/Settingsprovider";
-import LandscapeGuard from "@/components/Landscapeguard";
-import GrokStarBackground from "@/components/StartMenu/components/AlwaysOnStarBackground";
+import LandscapeGuard from "@/components/Landscapeguard"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -42,7 +42,7 @@ export default function RootLayout({
           </LandscapeGuard>
         </SettingsProvider>
                 <SparkleProvider />
-                <GrokStarBackground />
+                <SpeedInsights/>
               </body>
             </html>
           );

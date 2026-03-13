@@ -86,7 +86,7 @@ export default function LoadingScreen() {
         
         <p className="mt-2 text-xs text-purple-400/60 tracking-wider 
                       animate-pulse">
-          memasuki dunia 4th November...
+           Please wait and be patient..
         </p>
       </div>
       

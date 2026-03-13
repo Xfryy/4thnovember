@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { SaveData } from "@/types/game";
 import type { SaveSlot } from "@/lib/saveSlots";
 import GameBackground from "./GameBackground";
@@ -44,25 +44,48 @@ export default function MainMenu({
   const [showSettings, setShowSettings] = useState(false);
   const [showSaves,    setShowSaves]    = useState(false);
   const [displayName,  setDisplayName]  = useState(characterName);
+  const [windowWidth,  setWindowWidth]  = useState(1200);
+  const [mounted,      setMounted]      = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setWindowWidth(window.innerWidth);
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const hasPlayed = !!autoSaveSlot;
   const isAdmin   = email === ADMIN_EMAIL;
+
+  const isMobile  = windowWidth < 768;
+  const isTablet  = windowWidth >= 768 && windowWidth < 1024;
 
   const handleSettingsClick = () => {
     setShowSettings(true);
     onSettings();
   };
 
+  if (!mounted) return null;
+
   return (
     <div className="w-full h-screen relative overflow-hidden">
-
       <GameBackground />
 
       {/* Top-right: Announcement + Profile Card + Admin Button */}
-      <div className="absolute top-5 right-5 z-30 flex flex-col items-end gap-2">
-
-        {/* Row: bell + profile */}
-        <div className="flex items-center gap-2">
+      <div
+        style={{
+          position: "absolute",
+          top: isMobile ? 10 : 20,
+          right: isMobile ? 10 : 20,
+          zIndex: 30,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: 8,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
           <AnnouncementBell />
           <ProfileCard
             characterName={characterName}
@@ -76,29 +99,27 @@ export default function MainMenu({
           />
         </div>
 
-        {/* Admin button — only visible for admin account */}
         {isAdmin && (
           <button
             onClick={() => console.log("Admin page — implement navigation here")}
-            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all hover:scale-105 active:scale-95"
             style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              borderRadius: 12,
+              padding: isMobile ? "6px 10px" : "8px 14px",
+              fontSize: isMobile ? "0.7rem" : "0.85rem",
+              fontWeight: 700,
               background:    "rgba(15, 10, 35, 0.65)",
               border:        "1px solid rgba(234,179,8,0.45)",
               backdropFilter:"blur(12px)",
               boxShadow:     "0 4px 20px rgba(234,179,8,0.2)",
               color:         "#eab308",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = "0 6px 28px rgba(234,179,8,0.45)";
-              e.currentTarget.style.borderColor = "rgba(234,179,8,0.8)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = "0 4px 20px rgba(234,179,8,0.2)";
-              e.currentTarget.style.borderColor = "rgba(234,179,8,0.45)";
+              cursor: "pointer",
             }}
           >
             <span>🛡</span>
-            <span>Admin Page</span>
+            <span>Admin</span>
             <span style={{
               fontSize: "9px",
               background: "rgba(234,179,8,0.2)",
@@ -110,40 +131,161 @@ export default function MainMenu({
         )}
       </div>
 
-      {/* 3-column layout: Menu | Calendar | Character */}
-      <div className="absolute inset-0 z-20 flex items-stretch" style={{ paddingBottom: 40 }}>
-
-        {/* LEFT — Menu Buttons (32%) */}
-        <div className="flex-none flex items-center justify-center" style={{ width: "32%" }}>
-          <div className="w-full px-10 md:px-14">
-            <MenuButtons
-              characterName={displayName}
-              hasPlayed={hasPlayed}
-              onStart={onStartNew}
-              onContinue={onContinue}
-              onSaves={() => setShowSaves(true)}
-              onSettings={handleSettingsClick}
-            />
-          </div>
-        </div>
-
-        {/* CENTER — Calendar (36%) */}
-        <div className="flex-none flex items-center justify-center" style={{ width: "36%" }}>
-          <div className="w-full max-w-sm" style={{
-            filter: "drop-shadow(0 0 32px rgba(236, 72, 153, 0.2))"
+      {/* ── MOBILE LAYOUT ── */}
+      {isMobile && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 20,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            paddingTop: 60,
+            paddingBottom: 50,
+          }}
+        >
+          {/* Character sprite - compact at top */}
+          <div style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            paddingRight: 16,
+            height: "35vh",
+            flexShrink: 0,
           }}>
-            <Calendar />
+            <div style={{ position: "relative", width: 140, height: "100%" }}>
+              <CharacterSprite animated />
+            </div>
+          </div>
+
+          {/* Menu buttons - scrollable bottom area */}
+          <div style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "flex-end",
+            padding: "0 20px 8px",
+            overflowY: "auto",
+          }}>
+            <div style={{ width: "100%" }}>
+              <MenuButtons
+                characterName={displayName}
+                hasPlayed={hasPlayed}
+                onStart={onStartNew}
+                onContinue={onContinue}
+                onSaves={() => setShowSaves(true)}
+                onSettings={handleSettingsClick}
+              />
+            </div>
           </div>
         </div>
+      )}
 
-        {/* RIGHT — Character Sprite (32%) */}
-        <div className="flex-none flex items-end justify-center" style={{ width: "32%" }}>
-          <div className="relative w-full" style={{ height: "90vh" }}>
-            <CharacterSprite animated />
+      {/* ── TABLET LAYOUT ── */}
+      {isTablet && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 20,
+            display: "flex",
+            alignItems: "stretch",
+            paddingBottom: 44,
+          }}
+        >
+          {/* LEFT — Menu Buttons (50%) */}
+          <div style={{
+            flex: "0 0 50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 24px",
+          }}>
+            <div style={{ width: "100%" }}>
+              <MenuButtons
+                characterName={displayName}
+                hasPlayed={hasPlayed}
+                onStart={onStartNew}
+                onContinue={onContinue}
+                onSaves={() => setShowSaves(true)}
+                onSettings={handleSettingsClick}
+              />
+            </div>
+          </div>
+
+          {/* RIGHT — Character Sprite (50%) */}
+          <div style={{
+            flex: "0 0 50%",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}>
+            <div style={{ position: "relative", width: "100%", height: "85vh" }}>
+              <CharacterSprite animated />
+            </div>
           </div>
         </div>
+      )}
 
-      </div>
+      {/* ── DESKTOP LAYOUT ── */}
+      {!isMobile && !isTablet && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 20,
+            display: "flex",
+            alignItems: "stretch",
+            paddingBottom: 40,
+          }}
+        >
+          {/* LEFT — Menu Buttons (32%) */}
+          <div style={{
+            flex: "0 0 32%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <div style={{ width: "100%", padding: "0 40px 0 56px" }}>
+              <MenuButtons
+                characterName={displayName}
+                hasPlayed={hasPlayed}
+                onStart={onStartNew}
+                onContinue={onContinue}
+                onSaves={() => setShowSaves(true)}
+                onSettings={handleSettingsClick}
+              />
+            </div>
+          </div>
+
+          {/* CENTER — Calendar (36%) */}
+          <div style={{
+            flex: "0 0 36%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <div style={{
+              width: "100%",
+              maxWidth: 380,
+              filter: "drop-shadow(0 0 32px rgba(236, 72, 153, 0.2))",
+            }}>
+              <Calendar />
+            </div>
+          </div>
+
+          {/* RIGHT — Character Sprite (32%) */}
+          <div style={{
+            flex: "0 0 32%",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}>
+            <div style={{ position: "relative", width: "100%", height: "90vh" }}>
+              <CharacterSprite animated />
+            </div>
+          </div>
+        </div>
+      )}
 
       <SupportBanner />
 
@@ -154,7 +296,6 @@ export default function MainMenu({
         onClose={() => setShowSaves(false)}
         onLoad={(slot) => { setShowSaves(false); onLoadSlot(slot); }}
       />
-
     </div>
   );
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import GameBackground from "./GameBackground";
-import CharacterSprite from "../components/Charactersprite";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface CharacterNameInputProps {
   isLoading: boolean;
@@ -11,223 +11,367 @@ interface CharacterNameInputProps {
 
 export default function CharacterNameInput({ isLoading, onSubmit }: CharacterNameInputProps) {
   const [inputValue, setInputValue] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [isFocused,  setIsFocused]  = useState(false);
+  const [mounted,    setMounted]    = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
+  // Trigger enter animation
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const t = setTimeout(() => setMounted(true), 30);
+    return () => clearTimeout(t);
   }, []);
 
-  const isMobile = windowWidth < 640;
-  const isTablet = windowWidth >= 640 && windowWidth < 1024;
-
   const handleSubmit = () => {
-    if (!inputValue.trim()) {
-      alert("Nama karakter tidak boleh kosong!");
+    const name = inputValue.trim();
+    if (!name) {
+      inputRef.current?.focus();
+      // Shake the input
+      inputRef.current?.classList.add("cni-shake");
+      setTimeout(() => inputRef.current?.classList.remove("cni-shake"), 500);
       return;
     }
-    onSubmit(inputValue.trim());
+    onSubmit(name);
   };
 
   return (
-    <div className="w-full h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      <style>{`
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-        
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes inputPulse {
-          0%, 100% {
-            box-shadow: 0 0 0 0 rgba(236,72,153,0.3);
-          }
-          50% {
-            box-shadow: 0 0 20px 5px rgba(236,72,153,0.2);
-          }
-        }
-        
-        @keyframes buttonPulse {
-          0%, 100% {
-            transform: scale(1);
-            box-shadow: 0 0 20px rgba(236,72,153,0.35);
-          }
-          50% {
-            transform: scale(1.02);
-            box-shadow: 0 0 30px rgba(236,72,153,0.5);
-          }
-        }
-        
-        .character-container {
-          animation: fadeInScale 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
-        }
-        
-        .character-title {
-          animation: slideInLeft 0.5s ease-out 0.1s both;
-        }
-        
-        .character-sprite {
-          animation: slideInRight 0.5s ease-out 0.1s both;
-        }
-        
-        .character-input {
-          animation: slideInLeft 0.5s ease-out 0.2s both;
-        }
-        
-        .character-button {
-          animation: slideInLeft 0.5s ease-out 0.3s both;
-        }
-        
-        .input-focus {
-          animation: inputPulse 2s ease-in-out infinite;
-        }
-      `}</style>
-      
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: "100dvh",          // dvh → correct on mobile browsers
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: isMobile ? "16px" : "24px",
+        overflow: "hidden",
+      }}
+    >
       <GameBackground />
 
+      {/* ── Main card ── */}
       <div
-        className="character-container relative z-10 rounded-2xl p-6 md:p-8 max-w-md w-full"
         style={{
-          background: "rgba(10, 6, 24, 0.8)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(139,92,246,0.3)",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.6), 0 0 40px rgba(139,92,246,0.15)",
+          position: "relative",
+          zIndex: 10,
+          width: "100%",
+          maxWidth: 400,
+          borderRadius: 20,
+          padding: isMobile ? "24px 20px" : "32px 28px",
+          background: "rgba(10,6,24,0.82)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(139,92,246,0.28)",
+          boxShadow: "0 12px 60px rgba(0,0,0,0.65), 0 0 40px rgba(139,92,246,0.12)",
+          // Enter animation
+          opacity:    mounted ? 1 : 0,
+          transform:  mounted ? "translateY(0) scale(1)" : "translateY(24px) scale(0.97)",
+          transition: "opacity 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.55s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-        <h2
-          className="character-title text-2xl md:text-3xl font-bold text-center mb-2"
+        {/* Top accent bar */}
+        <div style={{
+          position: "absolute",
+          top: 0, left: "10%", right: "10%",
+          height: 2,
+          borderRadius: "0 0 4px 4px",
+          background: "linear-gradient(90deg, transparent, #ec4899 30%, #a855f7 70%, transparent)",
+        }} />
+
+        {/* ── Avatar ── */}
+        <div
           style={{
-            background: "linear-gradient(135deg, #f9a8d4, #a5b4fc)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: isMobile ? 16 : 20,
+            opacity:   mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(12px)",
+            transition: "opacity 0.5s cubic-bezier(0.22,1,0.36,1) 0.1s, transform 0.5s cubic-bezier(0.22,1,0.36,1) 0.1s",
           }}
         >
-          4th November
-        </h2>
-        <p className="character-title text-center text-purple-400/80 mb-4 md:mb-6 text-xs md:text-sm">
-          Selamat datang! Masukkan nama karakter Anda
-        </p>
-
-        {/* Sprite */}
-        <div className="character-sprite flex justify-center mb-4 md:mb-6">
-          <CharacterSprite
-            compact
-            width={isMobile ? 120 : (isTablet ? 140 : 150)}
-            height={isMobile ? 160 : (isTablet ? 180 : 200)}
-            animated
-          />
+          <div style={{ position: "relative" }}>
+            {/* Glow ring */}
+            <div style={{
+              position: "absolute",
+              inset: -4,
+              borderRadius: "50%",
+              background: "conic-gradient(from 0deg, #ec4899, #a855f7, #6366f1, #ec4899)",
+              animation: "cni-spin 4s linear infinite",
+              zIndex: 0,
+            }} />
+            {/* White gap ring */}
+            <div style={{
+              position: "absolute",
+              inset: -1,
+              borderRadius: "50%",
+              background: "rgba(10,6,24,0.95)",
+              zIndex: 1,
+            }} />
+            {/* Avatar image */}
+            <div style={{
+              position: "relative",
+              zIndex: 2,
+              width: isMobile ? 80 : 96,
+              height: isMobile ? 80 : 96,
+              borderRadius: "50%",
+              overflow: "hidden",
+              border: "2px solid rgba(139,92,246,0.4)",
+            }}>
+              {!avatarError ? (
+                <img
+                  src="/Image/Player.jpg"
+                  alt="Player"
+                  onError={() => setAvatarError(true)}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    display: "block",
+                  }}
+                  draggable={false}
+                />
+              ) : (
+                // Fallback if image missing
+                <div style={{
+                  width: "100%", height: "100%",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.2))",
+                  fontSize: isMobile ? 28 : 34,
+                }}>
+                  👤
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Input */}
-        <div className="character-input mb-4 md:mb-6">
-          <label className="block text-xs md:text-sm font-semibold text-purple-300 mb-2">
+        {/* ── Title ── */}
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: isMobile ? 18 : 24,
+            opacity:   mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(10px)",
+            transition: "opacity 0.5s cubic-bezier(0.22,1,0.36,1) 0.15s, transform 0.5s cubic-bezier(0.22,1,0.36,1) 0.15s",
+          }}
+        >
+          <h2 style={{
+            margin: "0 0 6px",
+            fontSize: isMobile ? "1.35rem" : "1.6rem",
+            fontWeight: 900,
+            letterSpacing: "0.04em",
+            background: "linear-gradient(135deg, #f9a8d4, #c4b5fd)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}>
+            4th November
+          </h2>
+          <p style={{
+            margin: 0,
+            fontSize: isMobile ? "0.72rem" : "0.78rem",
+            color: "rgba(167,139,250,0.7)",
+            letterSpacing: "0.02em",
+          }}>
+            Selamat datang! Masukkan nama karaktermu
+          </p>
+        </div>
+
+        {/* ── Input ── */}
+        <div
+          style={{
+            marginBottom: isMobile ? 14 : 18,
+            opacity:   mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(10px)",
+            transition: "opacity 0.5s cubic-bezier(0.22,1,0.36,1) 0.22s, transform 0.5s cubic-bezier(0.22,1,0.36,1) 0.22s",
+          }}
+        >
+          <label style={{
+            display: "block",
+            marginBottom: 8,
+            fontSize: isMobile ? "0.7rem" : "0.75rem",
+            fontWeight: 700,
+            color: "rgba(196,181,253,0.8)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}>
             Nama Karakter
           </label>
           <input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSubmit()}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            placeholder="Masukkan nama Anda"
-            className={`w-full px-3 md:px-4 py-2 md:py-2.5 rounded-lg focus:outline-none 
-                       text-white placeholder-purple-600/70 transition-all duration-300
-                       ${isFocused ? 'input-focus' : ''}`}
-            style={{
-              background: "rgba(139,92,246,0.12)",
-              border: isFocused 
-                ? "2px solid rgba(236,72,153,0.6)" 
-                : "1px solid rgba(139,92,246,0.4)",
-              fontSize: isMobile ? "14px" : "16px",
-            }}
+            placeholder="Masukkan nama Anda..."
             disabled={isLoading}
-            autoFocus
+            autoFocus={!isMobile}        // avoid virtual keyboard jumping on mount
+            className="cni-input"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              padding: isMobile ? "10px 14px" : "11px 16px",
+              borderRadius: 10,
+              border: isFocused
+                ? "1.5px solid rgba(236,72,153,0.65)"
+                : "1px solid rgba(139,92,246,0.35)",
+              background: "rgba(139,92,246,0.1)",
+              color: "#fff",
+              fontSize: isMobile ? "0.9rem" : "0.95rem",
+              outline: "none",
+              transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+              boxShadow: isFocused
+                ? "0 0 0 3px rgba(236,72,153,0.12), 0 0 18px rgba(236,72,153,0.1)"
+                : "none",
+            }}
           />
-          {isFocused && (
-            <p className="text-[10px] md:text-xs text-purple-400/60 mt-1 ml-1">
-              Tekan Enter untuk melanjutkan
-            </p>
-          )}
+          <div style={{
+            height: 18,
+            marginTop: 5,
+            marginLeft: 4,
+            fontSize: "0.65rem",
+            color: "rgba(167,139,250,0.5)",
+            opacity: isFocused ? 1 : 0,
+            transform: isFocused ? "translateY(0)" : "translateY(-4px)",
+            transition: "opacity 0.2s ease, transform 0.2s ease",
+          }}>
+            Tekan Enter untuk melanjutkan
+          </div>
         </div>
 
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading || !inputValue.trim()}
-          className="character-button w-full text-white font-bold py-2.5 md:py-3 
-                     rounded-xl transition-all hover:scale-105 active:scale-95 
-                     disabled:opacity-40 disabled:hover:scale-100 relative overflow-hidden group"
+        {/* ── Button ── */}
+        <div
           style={{
-            background: "linear-gradient(135deg, #ec4899, #a855f7)",
-            boxShadow: "0 0 20px rgba(236,72,153,0.35)",
-            fontSize: isMobile ? "14px" : "16px",
+            opacity:   mounted ? 1 : 0,
+            transform: mounted ? "translateY(0)" : "translateY(10px)",
+            transition: "opacity 0.5s cubic-bezier(0.22,1,0.36,1) 0.3s, transform 0.5s cubic-bezier(0.22,1,0.36,1) 0.3s",
           }}
         >
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent 
-                        via-white/20 to-transparent -translate-x-full 
-                        group-hover:translate-x-full transition-transform 
-                        duration-700 ease-in-out" />
-          
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <svg className="animate-spin h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              <span>Setting...</span>
-            </span>
-          ) : (
-            "Mulai Game"
-          )}
-        </button>
-        
-        {/* Hint text */}
-        <p className="text-center text-[10px] md:text-xs text-purple-500/50 mt-4 
-                      animate-pulse">
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !inputValue.trim()}
+            className="cni-btn"
+            style={{
+              position: "relative",
+              width: "100%",
+              padding: isMobile ? "11px" : "13px",
+              borderRadius: 12,
+              border: "none",
+              background: "linear-gradient(135deg, #ec4899, #a855f7)",
+              color: "#fff",
+              fontSize: isMobile ? "0.88rem" : "0.95rem",
+              fontWeight: 800,
+              letterSpacing: "0.06em",
+              cursor: "pointer",
+              overflow: "hidden",
+              boxShadow: "0 0 24px rgba(236,72,153,0.3)",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease",
+              opacity: isLoading || !inputValue.trim() ? 0.42 : 1,
+            }}
+          >
+            {/* Shimmer */}
+            <span className="cni-shimmer" />
+
+            {isLoading ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                <svg style={{ animation: "cni-spin-slow 0.9s linear infinite", width: 16, height: 16 }} viewBox="0 0 24 24">
+                  <circle opacity=".25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path opacity=".8" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Setting...
+              </span>
+            ) : (
+              "Mulai Game"
+            )}
+          </button>
+        </div>
+
+        {/* ── Footer hint ── */}
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: 14,
+            marginBottom: 0,
+            fontSize: "0.62rem",
+            color: "rgba(139,92,246,0.4)",
+            letterSpacing: "0.12em",
+            opacity:   mounted ? 1 : 0,
+            transition: "opacity 0.5s ease 0.45s",
+          }}
+        >
           ✦ Nama ini akan terlihat oleh pemain lain ✦
         </p>
       </div>
-      
-      {/* Background decoration */}
-      <div className="absolute -bottom-20 -left-20 w-64 h-64 
-                    bg-gradient-to-r from-pink-500/20 to-purple-500/20 
-                    rounded-full blur-3xl animate-pulse" />
-      <div className="absolute -top-20 -right-20 w-64 h-64 
-                    bg-gradient-to-l from-purple-500/20 to-pink-500/20 
-                    rounded-full blur-3xl animate-pulse animation-delay-1000" />
+
+      {/* ── Decorative blobs ── */}
+      <div style={{
+        position: "absolute", bottom: -80, left: -80,
+        width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(236,72,153,0.18) 0%, transparent 70%)",
+        filter: "blur(30px)",
+        animation: "cni-blob 6s ease-in-out infinite alternate",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", top: -80, right: -80,
+        width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%)",
+        filter: "blur(30px)",
+        animation: "cni-blob 6s ease-in-out infinite alternate-reverse",
+        pointerEvents: "none",
+      }} />
+
+      <style>{`
+        /* ── Keyframes ── */
+        @keyframes cni-spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes cni-spin-slow {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes cni-blob {
+          from { transform: scale(1) translate(0,0); }
+          to   { transform: scale(1.12) translate(16px, -12px); }
+        }
+        @keyframes cni-shake {
+          0%,100% { transform: translateX(0); }
+          20%     { transform: translateX(-6px); }
+          40%     { transform: translateX(6px); }
+          60%     { transform: translateX(-4px); }
+          80%     { transform: translateX(4px); }
+        }
+
+        /* ── Input shake ── */
+        .cni-shake { animation: cni-shake 0.45s ease both; }
+
+        /* ── Input placeholder ── */
+        .cni-input::placeholder { color: rgba(139,92,246,0.45); }
+
+        /* ── Button hover / active ── */
+        .cni-btn:not(:disabled):hover {
+          transform: translateY(-1px) scale(1.01);
+          box-shadow: 0 0 34px rgba(236,72,153,0.45) !important;
+        }
+        .cni-btn:not(:disabled):active {
+          transform: scale(0.97);
+          box-shadow: 0 0 14px rgba(236,72,153,0.25) !important;
+        }
+
+        /* ── Shimmer ── */
+        .cni-shimmer {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%);
+          transform: translateX(-100%);
+          transition: none;
+        }
+        .cni-btn:not(:disabled):hover .cni-shimmer {
+          transform: translateX(100%);
+          transition: transform 0.6s ease;
+        }
+      `}</style>
     </div>
   );
 }

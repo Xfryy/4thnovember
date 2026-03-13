@@ -7,28 +7,20 @@
 }
 
 @keyframes menuWrapperAppear {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (min-width: 640px) {
-  .wrapper { 
-    text-align: left; 
-  }
+  .wrapper { text-align: left; }
 }
 
 /* ── Welcome text ── */
 .welcome {
   color: #a78bfa;
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.05em;
   font-weight: 400;
   opacity: 0;
   animation: welcomeSlide 0.5s ease-out 0.2s forwards;
@@ -36,30 +28,16 @@
 }
 
 @keyframes welcomeSlide {
-  from {
-    opacity: 0;
-    transform: translateX(-15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-15px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @media (min-width: 480px) {
-  .welcome {
-    font-size: 0.9rem;
-    margin-bottom: 1.8rem;
-    letter-spacing: 0.07em;
-  }
+  .welcome { font-size: 0.9rem; margin-bottom: 1.5rem; }
 }
 
 @media (min-width: 768px) {
-  .welcome {
-    font-size: 0.95rem;
-    margin-bottom: 2rem;
-    letter-spacing: 0.08em;
-  }
+  .welcome { font-size: 0.95rem; margin-bottom: 2rem; }
 }
 
 .welcomeName {
@@ -68,23 +46,6 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  position: relative;
-  display: inline-block;
-}
-
-.welcomeName::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #f9a8d4, #ec4899);
-  transition: width 0.3s ease;
-}
-
-.wrapper:hover .welcomeName::after {
-  width: 100%;
 }
 
 /* ── Button stack ── */
@@ -98,58 +59,34 @@
 }
 
 @media (min-width: 480px) {
-  .buttonStack {
-    gap: 10px;
-    max-width: 320px;
-  }
+  .buttonStack { gap: 10px; max-width: 340px; }
 }
 
 @media (min-width: 640px) {
-  .buttonStack {
-    margin: 0;
-    max-width: 350px;
-  }
+  .buttonStack { margin: 0; max-width: 360px; }
 }
 
 @media (min-width: 768px) {
-  .buttonStack {
-    gap: 12px;
-    max-width: 380px;
-  }
+  .buttonStack { gap: 12px; max-width: 400px; }
 }
 
 .secondaryRow {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 2px;
   width: 100%;
   opacity: 0;
   animation: secondaryRowAppear 0.5s ease-out 0.3s forwards;
 }
 
 @keyframes secondaryRowAppear {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (min-width: 480px) {
-  .secondaryRow {
-    flex-direction: row;
-    gap: 10px;
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (min-width: 768px) {
-  .secondaryRow {
-    gap: 12px;
-  }
+  .secondaryRow { gap: 12px; }
 }
 
 /* ════════════════════════════════════════
@@ -164,30 +101,20 @@
   overflow: hidden;
   cursor: pointer;
   transform: scale(1);
-  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), 
-              box-shadow 0.25s ease,
-              opacity 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, opacity 0.25s ease;
   box-shadow: 0 4px 20px rgba(236,72,153,0.2);
   opacity: 0;
   animation: buttonAppear 0.5s ease-out 0.1s forwards;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes buttonAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+  from { opacity: 0; transform: scale(0.9) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 @media (min-width: 768px) {
-  .startOuter {
-    border-radius: 14px;
-    box-shadow: 0 4px 24px rgba(236,72,153,0.25);
-  }
+  .startOuter { border-radius: 14px; }
 }
 
 .startOuter::before {
@@ -202,13 +129,10 @@
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
-  transition: opacity 0.3s ease;
 }
 
 @media (min-width: 768px) {
-  .startOuter::before {
-    border-radius: 14px;
-  }
+  .startOuter::before { border-radius: 14px; }
 }
 
 .startOuter:hover {
@@ -216,17 +140,9 @@
   box-shadow: 0 8px 28px rgba(236,72,153,0.4);
 }
 
-@media (min-width: 768px) {
-  .startOuter:hover {
-    transform: scale(1.03) translateY(-2px);
-    box-shadow: 0 8px 32px rgba(236,72,153,0.45);
-  }
-}
-
 .startOuter:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
   transition: transform 0.1s ease;
-  box-shadow: 0 2px 12px rgba(236,72,153,0.3);
 }
 
 .startInner {
@@ -235,30 +151,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 12px 14px;
   background: linear-gradient(135deg,
     rgba(236,72,153,0.9) 0%,
     rgba(168,85,247,0.9) 50%,
     rgba(99,102,241,0.9) 100%
   );
-  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  transition: background 0.25s ease, padding 0.2s ease;
+  transition: background 0.25s ease;
 }
 
 @media (min-width: 480px) {
-  .startInner {
-    gap: 12px;
-    padding: 14px 18px;
-  }
+  .startInner { gap: 12px; padding: 13px 16px; }
 }
 
 @media (min-width: 768px) {
-  .startInner {
-    gap: 14px;
-    padding: 16px 20px;
-    border-radius: 13px;
-  }
+  .startInner { gap: 14px; padding: 16px 20px; border-radius: 13px; }
 }
 
 .startOuter:hover .startInner {
@@ -269,17 +177,11 @@
   );
 }
 
-/* Shimmer sweep */
 .startShimmer {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(
-    105deg,
-    transparent 20%,
-    rgba(255,255,255,0.2) 50%,
-    transparent 80%
-  );
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.2) 50%, transparent 80%);
   animation: shimmer 0.8s ease forwards;
 }
 
@@ -288,7 +190,6 @@
   to   { transform: translateX(150%) skewX(-15deg); }
 }
 
-/* Play icon container */
 .startIconWrap {
   flex-shrink: 0;
   width: 32px;
@@ -299,21 +200,15 @@
   justify-content: center;
   background: rgba(255,255,255,0.2);
   border: 1px solid rgba(255,255,255,0.3);
-  transition: transform 0.2s ease, background 0.2s ease, width 0.2s ease, height 0.2s ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 @media (min-width: 480px) {
-  .startIconWrap {
-    width: 35px;
-    height: 35px;
-  }
+  .startIconWrap { width: 34px; height: 34px; }
 }
 
 @media (min-width: 768px) {
-  .startIconWrap {
-    width: 38px;
-    height: 38px;
-  }
+  .startIconWrap { width: 38px; height: 38px; }
 }
 
 .startOuter:hover .startIconWrap {
@@ -330,9 +225,7 @@
 }
 
 @media (min-width: 768px) {
-  .startIcon {
-    font-size: 1rem;
-  }
+  .startIcon { font-size: 1rem; }
 }
 
 .startOuter:hover .startIcon {
@@ -343,65 +236,50 @@
   position: relative;
   text-align: left;
   flex: 1;
+  min-width: 0;
 }
 
 .startLabel {
   display: block;
   color: white;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   text-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  transition: font-size 0.2s ease;
+  white-space: nowrap;
 }
 
 @media (min-width: 480px) {
-  .startLabel {
-    font-size: 0.9rem;
-    letter-spacing: 0.15em;
-  }
+  .startLabel { font-size: 0.88rem; letter-spacing: 0.12em; }
 }
 
 @media (min-width: 768px) {
-  .startLabel {
-    font-size: 1rem;
-    letter-spacing: 0.18em;
-  }
+  .startLabel { font-size: 1rem; letter-spacing: 0.18em; }
 }
 
 .startSub {
   display: block;
   color: rgba(255,255,255,0.7);
   font-size: 0.55rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   margin-top: 2px;
-  transition: font-size 0.2s ease;
+  white-space: nowrap;
 }
 
 @media (min-width: 480px) {
-  .startSub {
-    font-size: 0.6rem;
-    margin-top: 3px;
-  }
+  .startSub { font-size: 0.6rem; }
 }
 
 @media (min-width: 768px) {
-  .startSub {
-    font-size: 0.65rem;
-  }
+  .startSub { font-size: 0.65rem; }
 }
 
 .startArrow {
   color: rgba(255,255,255,0.6);
   font-size: 1.2rem;
-  transition: transform 0.2s ease, opacity 0.2s ease, font-size 0.2s ease;
-}
-
-@media (min-width: 768px) {
-  .startArrow {
-    font-size: 1.4rem;
-  }
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
 }
 
 .startOuter:hover .startArrow {
@@ -422,13 +300,12 @@
   cursor: pointer;
   text-align: left;
   transform: scale(1) translateY(0);
-  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), 
-              box-shadow 0.25s ease,
-              opacity 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease, opacity 0.25s ease;
   box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-  min-height: 70px;
+  min-height: 64px;
   opacity: 0;
   animation: cardAppear 0.5s ease-out forwards;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .cardOuter:nth-child(1) { animation-delay: 0.2s; }
@@ -436,27 +313,16 @@
 .cardOuter:nth-child(3) { animation-delay: 0.3s; }
 
 @keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(15px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @media (min-width: 480px) {
-  .cardOuter {
-    min-height: 80px;
-  }
+  .cardOuter { min-height: 72px; }
 }
 
 @media (min-width: 768px) {
-  .cardOuter {
-    border-radius: 14px;
-    min-height: 90px;
-  }
+  .cardOuter { border-radius: 14px; min-height: 90px; }
 }
 
 .cardOuter::before {
@@ -471,68 +337,42 @@
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   pointer-events: none;
-  transition: opacity 0.25s ease;
 }
 
 @media (min-width: 768px) {
-  .cardOuter::before {
-    border-radius: 14px;
-  }
+  .cardOuter::before { border-radius: 14px; }
 }
 
 .cardOuter:hover {
-  transform: scale(1.02) translateY(-2px);
+  transform: scale(1.03) translateY(-2px);
   box-shadow: 0 8px 24px rgba(139,92,246,0.3);
 }
 
-@media (min-width: 768px) {
-  .cardOuter:hover {
-    transform: scale(1.04) translateY(-3px);
-  }
-}
-
-.cardOuter:active { 
-  transform: scale(0.98);
+.cardOuter:active {
+  transform: scale(0.97);
   transition: transform 0.1s ease;
 }
 
 .cardInner {
   height: 100%;
   border-radius: 11px;
-  padding: 10px 12px;
+  padding: 10px 10px;
   display: flex;
   flex-direction: column;
   gap: 2px;
   background: rgba(8, 5, 20, 0.9);
-  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   position: relative;
   overflow: hidden;
-  transition: background 0.25s ease, padding 0.2s ease;
+  transition: background 0.25s ease;
 }
 
 @media (min-width: 480px) {
-  .cardInner {
-    padding: 12px 14px;
-    gap: 3px;
-  }
+  .cardInner { padding: 11px 12px; }
 }
 
 @media (min-width: 768px) {
-  .cardInner {
-    border-radius: 13px;
-    padding: 14px 16px;
-  }
-}
-
-/* Subtle top glow inside card */
-.cardInner::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 10%; right: 10%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(168,85,247,0.5), transparent);
-  transition: opacity 0.25s ease;
+  .cardInner { border-radius: 13px; padding: 14px 16px; }
 }
 
 .cardOuter:hover .cardInner {
@@ -543,31 +383,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-@media (min-width: 768px) {
-  .cardTopRow {
-    margin-bottom: 6px;
-  }
+  margin-bottom: 3px;
 }
 
 .cardIcon {
   font-size: 1rem;
   display: inline-block;
-  transition: filter 0.2s ease, transform 0.2s ease, font-size 0.2s ease;
-}
-
-@media (min-width: 480px) {
-  .cardIcon {
-    font-size: 1.1rem;
-  }
+  transition: filter 0.2s ease, transform 0.2s ease;
 }
 
 @media (min-width: 768px) {
-  .cardIcon {
-    font-size: 1.2rem;
-  }
+  .cardIcon { font-size: 1.2rem; }
 }
 
 .cardOuter:hover .cardIcon {
@@ -579,126 +405,73 @@
   height: 2px;
   border-radius: 99px;
   transition: width 0.3s ease, background 0.3s ease;
-  width: 20px;
-}
-
-@media (min-width: 480px) {
-  .cardBar {
-    width: 22px;
-  }
+  width: 18px;
 }
 
 @media (min-width: 768px) {
-  .cardBar {
-    width: 24px;
-  }
+  .cardBar { width: 24px; }
 }
 
 .cardOuter:hover .cardBar {
   width: 28px;
 }
 
-@media (min-width: 480px) {
-  .cardOuter:hover .cardBar {
-    width: 32px;
-  }
-}
-
 @media (min-width: 768px) {
-  .cardOuter:hover .cardBar {
-    width: 36px;
-  }
+  .cardOuter:hover .cardBar { width: 36px; }
 }
 
 .cardLabel {
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #c4b5fd;
-  transition: color 0.2s ease, font-size 0.2s ease;
-}
-
-@media (min-width: 480px) {
-  .cardLabel {
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
-  }
+  transition: color 0.2s ease;
+  white-space: nowrap;
 }
 
 @media (min-width: 768px) {
-  .cardLabel {
-    font-size: 0.75rem;
-    letter-spacing: 0.18em;
-  }
+  .cardLabel { font-size: 0.75rem; letter-spacing: 0.18em; }
 }
 
-.cardOuter:hover .cardLabel { 
-  color: #fff; 
-}
+.cardOuter:hover .cardLabel { color: #fff; }
 
 .cardSub {
-  font-size: 0.55rem;
-  letter-spacing: 0.05em;
+  font-size: 0.52rem;
+  letter-spacing: 0.04em;
   color: rgba(124,58,237,0.8);
-  transition: color 0.2s ease, font-size 0.2s ease;
-}
-
-@media (min-width: 480px) {
-  .cardSub {
-    font-size: 0.6rem;
-  }
+  transition: color 0.2s ease;
 }
 
 @media (min-width: 768px) {
-  .cardSub {
-    font-size: 0.65rem;
-    letter-spacing: 0.06em;
-  }
+  .cardSub { font-size: 0.65rem; }
 }
 
-.cardOuter:hover .cardSub { 
-  color: #c4b5fd; 
-}
+.cardOuter:hover .cardSub { color: #c4b5fd; }
 
 /* ── Footer ── */
 .footer {
-  font-size: 0.55rem;
-  color: rgba(196, 181, 253, 0.6);
-  margin-top: 1.5rem;
-  letter-spacing: 0.15em;
+  font-size: 0.52rem;
+  color: rgba(196, 181, 253, 0.5);
+  margin-top: 1.2rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0;
   animation: footerFade 0.5s ease-out 0.4s forwards;
   text-align: center;
-  padding: 0 10px;
 }
 
 @keyframes footerFade {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@media (min-width: 480px) {
-  .footer {
-    font-size: 0.6rem;
-    margin-top: 1.8rem;
-    letter-spacing: 0.2em;
-  }
+@media (min-width: 640px) {
+  .footer { text-align: left; }
 }
 
 @media (min-width: 768px) {
-  .footer {
-    font-size: 0.65rem;
-    margin-top: 2rem;
-    letter-spacing: 0.25em;
-  }
+  .footer { font-size: 0.6rem; margin-top: 1.8rem; }
 }
 
 /* Touch device optimizations */
@@ -707,33 +480,14 @@
   .cardOuter:hover {
     transform: none;
   }
-  
-  .startOuter:active,
-  .cardOuter:active {
-    transform: scale(0.98);
+
+  .startOuter:active {
+    transform: scale(0.97);
     transition: transform 0.1s ease;
   }
-  
-  .cardBar {
-    width: 20px !important;
-  }
-  
-  .welcomeName::after {
-    display: none;
-  }
-}
 
-/* Landscape orientation for mobile */
-@media (max-width: 768px) and (orientation: landscape) {
-  .buttonStack {
-    max-width: 280px;
-  }
-  
-  .startInner {
-    padding: 10px 14px;
-  }
-  
-  .cardInner {
-    padding: 8px 10px;
+  .cardOuter:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
   }
 }

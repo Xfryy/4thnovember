@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import GameBackground from "./GameBackground";
 import GameTitle from "./GameTitle";
-import CharacterSprite from "./Charactersprite";
 import { getAuth } from "firebase/auth";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface LoginScreenProps {
   isLoading: boolean;
@@ -13,17 +13,14 @@ interface LoginScreenProps {
 
 export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
   const [localLoading, setLocalLoading] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [hovered,      setHovered]      = useState(false);
+  const [mounted,      setMounted]      = useState(false);
+  const isMobile = useIsMobile();
 
-  // ── Pre-warm Firebase Auth on mount so the popup opens instantly ──────────
   useEffect(() => {
-    try {
-      // Just calling getAuth() forces Firebase to initialise the auth module
-      // and pre-fetch Google's OAuth endpoint in the background.
-      getAuth();
-    } catch {
-      // silently ignore — this is purely a performance hint
-    }
+    const t = setTimeout(() => setMounted(true), 30);
+    try { getAuth(); } catch { /* silent */ }
+    return () => clearTimeout(t);
   }, []);
 
   const busy = isLoading || localLoading;
@@ -34,8 +31,6 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
     try {
       await onLogin();
     } finally {
-      // Keep spinner until the parent flips isLoading to false
-      // (onLogin resolves → parent re-renders with isLoading=false)
       setLocalLoading(false);
     }
   };
@@ -43,45 +38,69 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
   return (
     <div style={{
       width: "100%",
-      height: "100vh",
+      height: "100dvh",
       position: "relative",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: 16,
+      padding: isMobile ? "16px 16px 24px" : "24px",
       overflow: "hidden",
     }}>
       <GameBackground />
 
-      {/* Content */}
+      {/* ── Layout: column on mobile, row on desktop ── */}
       <div style={{
         position: "relative",
         zIndex: 10,
         display: "flex",
-        flexDirection: "row",
+        flexDirection: isMobile ? "column" : "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 48,
+        gap: isMobile ? 0 : 48,
         width: "100%",
         maxWidth: 860,
-        flexWrap: "wrap",
       }}>
 
-        {/* Left — Title & CTA */}
+        {/* ── Title + CTA ── */}
         <div style={{
           flex: "1 1 280px",
           display: "flex",
           flexDirection: "column",
-          alignItems: "flex-start",
-          gap: 0,
-          animation: "ls-left 0.7s cubic-bezier(0.22,1,0.36,1) both",
+          alignItems: "center",
+          // Mobile: glass card wrapping the CTA area
+          background: isMobile ? "rgba(10,6,24,0.78)" : "transparent",
+          backdropFilter: isMobile ? "blur(20px)" : "none",
+          border: isMobile ? "1px solid rgba(139,92,246,0.22)" : "none",
+          borderRadius: isMobile ? 18 : 0,
+          padding: isMobile ? "28px 20px 24px" : 0,
+          boxShadow: isMobile ? "0 8px 40px rgba(0,0,0,0.5)" : "none",
+          opacity: mounted ? 1 : 0,
+          transform: mounted
+            ? "translateY(0)"
+            : isMobile ? "translateY(16px)" : "translateX(-20px)",
+          transition: [
+            "opacity 0.7s cubic-bezier(0.22,1,0.36,1) 0.05s",
+            "transform 0.7s cubic-bezier(0.22,1,0.36,1) 0.05s",
+          ].join(", "),
+          width: isMobile ? "100%" : "auto",
+          textAlign: "center",
         }}>
+          {/* Top accent bar (mobile only) */}
+          {isMobile && (
+            <div style={{
+              position: "absolute",
+              top: 0, left: "15%", right: "15%",
+              height: 2,
+              borderRadius: "0 0 4px 4px",
+              background: "linear-gradient(90deg, transparent, #ec4899 30%, #a855f7 70%, transparent)",
+            }} />
+          )}
+
           <GameTitle />
 
-          {/* Tagline */}
           <p style={{
-            margin: "16px 0 32px",
-            fontSize: "0.8rem",
+            margin: isMobile ? "10px 0 24px" : "16px 0 32px",
+            fontSize: isMobile ? "0.65rem" : "0.8rem",
             letterSpacing: "0.22em",
             textTransform: "uppercase",
             color: "rgba(167,139,250,0.55)",
@@ -102,7 +121,10 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
               alignItems: "center",
               justifyContent: "center",
               gap: 10,
-              padding: "13px 28px",
+              // Full width on mobile for easier tapping
+              width: isMobile ? "100%" : "auto",
+              minWidth: isMobile ? "unset" : 220,
+              padding: isMobile ? "13px 20px" : "13px 28px",
               borderRadius: 12,
               border: busy
                 ? "1px solid rgba(236,72,153,0.25)"
@@ -119,17 +141,16 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
                 : "0 4px 20px rgba(0,0,0,0.3)",
               color: busy ? "rgba(249,168,212,0.55)" : "#f9a8d4",
               fontWeight: 800,
-              fontSize: "0.8rem",
+              fontSize: isMobile ? "0.78rem" : "0.8rem",
               letterSpacing: "0.14em",
               cursor: busy ? "not-allowed" : "pointer",
               transition: "all 0.18s ease",
               transform: hovered && !busy ? "translateY(-1px)" : "none",
               backdropFilter: "blur(12px)",
-              minWidth: 220,
               overflow: "hidden",
             }}
           >
-            {/* Shimmer on hover */}
+            {/* Shimmer */}
             {hovered && !busy && (
               <div style={{
                 position: "absolute", inset: 0,
@@ -140,11 +161,9 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
             )}
 
             {busy ? (
-              /* Spinner */
               <>
                 <svg
-                  width="15" height="15"
-                  viewBox="0 0 24 24" fill="none"
+                  width="15" height="15" viewBox="0 0 24 24" fill="none"
                   style={{ animation: "ls-spin 0.75s linear infinite", flexShrink: 0 }}
                 >
                   <circle cx="12" cy="12" r="10" stroke="rgba(249,168,212,0.25)" strokeWidth="2.5" />
@@ -154,7 +173,6 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
               </>
             ) : (
               <>
-                {/* Google icon */}
                 <svg width="15" height="15" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                   <path fill="#f9a8d4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#f9a8d4" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity=".7"/>
@@ -166,10 +184,10 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
             )}
           </button>
 
-          {/* Sub-hint */}
           <p style={{
-            marginTop: 14,
-            fontSize: "0.62rem",
+            marginTop: 12,
+            marginBottom: 0,
+            fontSize: "0.6rem",
             letterSpacing: "0.1em",
             color: "rgba(167,139,250,0.38)",
             fontWeight: 500,
@@ -177,34 +195,37 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
             Sign in to save your progress
           </p>
         </div>
-
-        {/* Right — Character */}
-        <div style={{
-          flex: "0 0 auto",
-          display: "flex",
-          justifyContent: "center",
-          animation: "ls-right 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s both",
-          opacity: busy ? 0.6 : 1,
-          transition: "opacity 0.3s ease",
-        }}>
-          <CharacterSprite compact width={300} height={500} animated={false} />
-        </div>
-
       </div>
 
+      {/* Decorative blobs */}
+      <div style={{
+        position: "absolute", bottom: -80, left: -80,
+        width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%)",
+        filter: "blur(32px)",
+        animation: "ls-blob 7s ease-in-out infinite alternate",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "absolute", top: -80, right: -80,
+        width: 260, height: 260, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)",
+        filter: "blur(32px)",
+        animation: "ls-blob 7s ease-in-out infinite alternate-reverse",
+        pointerEvents: "none",
+      }} />
+
       <style>{`
-        @keyframes ls-left {
-          from { opacity:0; transform:translateX(-20px); }
-          to   { opacity:1; transform:none; }
+        @keyframes ls-spin {
+          to { transform: rotate(360deg); }
         }
-        @keyframes ls-right {
-          from { opacity:0; transform:translateX(20px); }
-          to   { opacity:1; transform:none; }
-        }
-        @keyframes ls-spin    { to { transform:rotate(360deg); } }
         @keyframes ls-shimmer {
-          from { transform:translateX(-100%); }
-          to   { transform:translateX(200%); }
+          from { transform: translateX(-100%); }
+          to   { transform: translateX(200%); }
+        }
+        @keyframes ls-blob {
+          from { transform: scale(1) translate(0,0); }
+          to   { transform: scale(1.15) translate(14px,-10px); }
         }
       `}</style>
     </div>

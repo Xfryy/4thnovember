@@ -1,34 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function SupportBanner() {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 640);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   return (
     <>
       {/* ── Bottom Strip Banner ── */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-30 flex items-center justify-between px-6"
         style={{
-          height: 40,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 30,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: isMobile ? "0 12px" : "0 24px",
+          height: isMobile ? 36 : 40,
           background: "linear-gradient(90deg, rgba(10,5,25,0.85) 0%, rgba(236,72,153,0.12) 40%, rgba(168,85,247,0.12) 60%, rgba(10,5,25,0.85) 100%)",
           borderTop: "1px solid rgba(236,72,153,0.15)",
           backdropFilter: "blur(12px)",
+          gap: 12,
         }}
       >
-        {/* Left — Made by */}
-        <p style={{
-          fontSize: "0.6rem",
-          color: "rgba(76,29,149,0.7)",
-          letterSpacing: "0.25em",
-          textTransform: "uppercase",
-        }}>
-          Made by Xfryy &nbsp;|&nbsp; 4th November Visual Novel
-        </p>
+        {/* Left — Made by (hidden on very small screens) */}
+        {!isMobile && (
+          <p style={{
+            fontSize: "0.55rem",
+            color: "rgba(76,29,149,0.7)",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}>
+            Made by Xfryy
+          </p>
+        )}
 
         {/* Center — scrolling marquee text */}
-        <div style={{ flex: 1, overflow: "hidden", margin: "0 24px", position: "relative" }}>
+        <div style={{
+          flex: 1,
+          overflow: "hidden",
+          position: "relative",
+          minWidth: 0,
+        }}>
           <div style={{
             display: "flex",
             alignItems: "center",
@@ -38,12 +64,12 @@ export default function SupportBanner() {
           }}>
             {[...Array(3)].map((_, i) => (
               <span key={i} style={{
-                fontSize: "0.62rem",
+                fontSize: isMobile ? "0.55rem" : "0.62rem",
                 color: "rgba(236,72,153,0.5)",
-                letterSpacing: "0.15em",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
               }}>
-                ✦ &nbsp; Support the author to keep this story alive &nbsp; ✦ &nbsp; Scan QR to donate &nbsp; ✦ &nbsp; Your support means everything &nbsp;
+                ✦ &nbsp; Support the author &nbsp; ✦ &nbsp; Scan QR to donate &nbsp; ✦ &nbsp; Your support means everything &nbsp;
               </span>
             ))}
           </div>
@@ -52,9 +78,11 @@ export default function SupportBanner() {
         {/* Right — Support button */}
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 transition-all active:scale-95"
           style={{
-            padding: "5px 14px",
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 4 : 6,
+            padding: isMobile ? "4px 10px" : "5px 14px",
             borderRadius: 20,
             background: "linear-gradient(135deg, rgba(236,72,153,0.25), rgba(168,85,247,0.25))",
             border: "1px solid rgba(236,72,153,0.45)",
@@ -62,19 +90,21 @@ export default function SupportBanner() {
             boxShadow: "0 0 12px rgba(236,72,153,0.2)",
             cursor: "pointer",
             animation: "support-glow 2.5s ease-in-out infinite",
+            flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: 12 }}>💖</span>
+          <span style={{ fontSize: isMobile ? 10 : 12 }}>💖</span>
           <span style={{
-            fontSize: "0.65rem",
+            fontSize: isMobile ? "0.55rem" : "0.65rem",
             fontWeight: 800,
-            letterSpacing: "0.15em",
+            letterSpacing: "0.1em",
             textTransform: "uppercase",
             background: "linear-gradient(135deg, #f9a8d4, #ec4899)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            whiteSpace: "nowrap",
           }}>
-            Support Author
+            {isMobile ? "Support" : "Support Author"}
           </span>
         </button>
       </div>
@@ -82,13 +112,26 @@ export default function SupportBanner() {
       {/* ── Modal ── */}
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)" }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.65)",
+            backdropFilter: "blur(8px)",
+            padding: 16,
+          }}
           onClick={() => setOpen(false)}
         >
           <div
-            className="relative w-full max-w-sm mx-4 rounded-3xl overflow-hidden"
             style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: 360,
+              borderRadius: 24,
+              overflow: "hidden",
               background: "rgba(12, 8, 28, 0.97)",
               border: "1px solid rgba(236,72,153,0.25)",
               boxShadow: "0 24px 64px rgba(0,0,0,0.7), 0 0 40px rgba(236,72,153,0.15)",
@@ -96,64 +139,99 @@ export default function SupportBanner() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top accent bar */}
-            <div className="h-1 w-full" style={{
-              background: "linear-gradient(90deg, #ec4899, #a855f7, #6366f1)"
+            <div style={{
+              height: 4,
+              background: "linear-gradient(90deg, #ec4899, #a855f7, #6366f1)",
             }} />
 
             {/* Header */}
-            <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b" style={{
-              borderColor: "rgba(236,72,153,0.1)"
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "16px 20px",
+              borderBottom: "1px solid rgba(236,72,153,0.1)",
             }}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 background: "rgba(236,72,153,0.12)",
                 border: "1px solid rgba(236,72,153,0.25)",
+                flexShrink: 0,
               }}>
                 <span style={{ fontSize: 18 }}>💖</span>
               </div>
               <div>
-                <p className="text-white font-black text-sm">Support Author</p>
-                <p className="text-purple-400 text-xs tracking-widest uppercase">4th November</p>
+                <p style={{ margin: 0, color: "#fff", fontWeight: 900, fontSize: "0.9rem" }}>Support Author</p>
+                <p style={{ margin: 0, color: "#a855f7", fontSize: "0.6rem", letterSpacing: "0.2em", textTransform: "uppercase" }}>4th November</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="ml-auto text-purple-400 hover:text-white transition-colors text-lg"
+                style={{
+                  marginLeft: "auto",
+                  background: "none",
+                  border: "none",
+                  color: "#a855f7",
+                  fontSize: "1.2rem",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                  padding: 4,
+                }}
               >✕</button>
             </div>
 
             {/* Body */}
-            <div className="px-6 py-6 flex flex-col gap-4">
-              {/* Description card */}
-              <div className="rounded-xl p-4 flex gap-3 items-start" style={{
+            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Description */}
+              <div style={{
+                borderRadius: 12,
+                padding: "12px 14px",
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
                 background: "rgba(236,72,153,0.06)",
                 border: "1px solid rgba(236,72,153,0.12)",
               }}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{
-                  background: "rgba(236,72,153,0.12)",
+                <span style={{ fontSize: 18, flexShrink: 0 }}>💖</span>
+                <p style={{
+                  margin: 0,
+                  fontSize: "0.75rem",
+                  lineHeight: 1.7,
+                  color: "rgba(167,139,250,0.85)",
                 }}>
-                  <span style={{ fontSize: 18 }}>💖</span>
-                </div>
-                <p className="text-xs leading-relaxed" style={{ color: "rgba(167,139,250,0.85)" }}>
                   Sponsorship supports the author's work. No real rewards, but you can
-                  leave feature requests in messages. The author will consider them.
+                  leave feature requests in messages.
                 </p>
               </div>
 
               {/* QR Code */}
               <div>
-                <p className="text-xs text-center mb-3 tracking-widest uppercase" style={{
-                  color: "rgba(167,139,250,0.5)"
+                <p style={{
+                  textAlign: "center",
+                  fontSize: "0.6rem",
+                  marginBottom: 12,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "rgba(167,139,250,0.5)",
                 }}>
                   Scan to support
                 </p>
 
-                <div className="flex justify-center">
-                  <div className="relative rounded-2xl p-4" style={{
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <div style={{
+                    position: "relative",
+                    borderRadius: 16,
+                    padding: 16,
                     background: "white",
                     boxShadow: "0 0 32px rgba(236,72,153,0.35), 0 0 64px rgba(168,85,247,0.15)",
                   }}>
-                    {/* Dummy QR */}
                     <div style={{
-                      width: 160, height: 160,
+                      width: 160,
+                      height: 160,
                       display: "grid",
                       gridTemplateColumns: "repeat(11, 1fr)",
                       gap: 1.5,
@@ -171,19 +249,19 @@ export default function SupportBanner() {
                           <div key={i} style={{
                             borderRadius: 1.5,
                             background: isCorner
-                              ? `linear-gradient(135deg, #ec4899, #a855f7)`
+                              ? "linear-gradient(135deg, #ec4899, #a855f7)"
                               : isData ? "#1a0a2e" : "transparent",
                           }} />
                         );
                       })}
                     </div>
-
-                    {/* Center heart */}
                     <div style={{
                       position: "absolute",
-                      top: "50%", left: "50%",
+                      top: "50%",
+                      left: "50%",
                       transform: "translate(-50%, -50%)",
-                      width: 34, height: 34,
+                      width: 34,
+                      height: 34,
                       borderRadius: 10,
                       background: "white",
                       display: "flex",
@@ -196,15 +274,26 @@ export default function SupportBanner() {
                   </div>
                 </div>
 
-                <p className="text-center text-xs mt-3" style={{ color: "rgba(236,72,153,0.45)" }}>
+                <p style={{
+                  textAlign: "center",
+                  fontSize: "0.7rem",
+                  marginTop: 10,
+                  color: "rgba(236,72,153,0.45)",
+                }}>
                   Scan me!!
                 </p>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="px-6 pb-5 text-center">
-              <p className="text-purple-800 text-xs tracking-widest uppercase">
+            <div style={{ padding: "0 20px 16px", textAlign: "center" }}>
+              <p style={{
+                fontSize: "0.6rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "rgba(107,70,193,0.5)",
+                margin: 0,
+              }}>
                 4th November Visual Novel
               </p>
             </div>

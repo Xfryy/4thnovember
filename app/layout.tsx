@@ -3,6 +3,7 @@ import "./globals.css";
 import SparkleProvider from "@/components/Sparkleprovider";
 import SettingsProvider from "@/components/Settingsprovider";
 import LandscapeGuard from "@/components/Landscapeguard";
+import GrokStarBackground from "@/components/StartMenu/components/AlwaysOnStarBackground";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -40,8 +41,10 @@ export default function RootLayout({
             {children}
           </LandscapeGuard>
         </SettingsProvider>
-        <SparkleProvider />
-      </body>
-    </html>
-  );
-}
+                <SparkleProvider />
+                <GrokStarBackground />
+              </body>
+            </html>
+          );
+        }
+        

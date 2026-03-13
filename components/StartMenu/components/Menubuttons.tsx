@@ -85,7 +85,7 @@ export default function MenuButtons({
 }: MenuButtonsProps) {
   return (
     <div className={styles.wrapper}>
-      <div className="mb-5"><GameTitle /></div>
+      <div className="mb-4 md:mb-5"><GameTitle /></div>
       <p className={styles.welcome}>
         Welcome back, <span className={styles.welcomeName}>{characterName}</span>!
       </p>
@@ -98,7 +98,7 @@ export default function MenuButtons({
           )}
           <CardButton icon="◈" label="Saves" sub=""
             accentFrom="#38bdf8" accentTo="#6366f1" onClick={onSaves} />
-          <CardButton icon="⚙" label="Config" sub=""
+          <CardButton icon="⚙" label="Settings" sub=""
             accentFrom="#a78bfa" accentTo="#ec4899" spinIcon onClick={onSettings} />
         </div>
       </div>

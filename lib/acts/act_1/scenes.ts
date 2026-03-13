@@ -1049,10 +1049,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1077,10 +1073,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1104,10 +1096,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
 
@@ -1132,10 +1120,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1159,10 +1143,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1196,10 +1176,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1235,10 +1211,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },
@@ -1262,10 +1234,6 @@ export const ACT_1_SCENES: Scene[] = [
         position: "left",
         size: "large",
         animation: "enter-bottom",
-        customSize: {         
-      width: 520,
-      height: 880,
-    },
     offsetY: -60,         
     offsetX: -20,         
       },

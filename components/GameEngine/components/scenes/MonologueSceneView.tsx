@@ -1,14 +1,19 @@
 "use client";
 
-import React, { useEffect, useCallback, useState } from "react";
+/**
+ * MonologueSceneView
+ * FIX: Pass isMobile ke getCharWrapperStyle agar ukuran karakter responsif
+ */
+
+import React, { useCallback } from "react";
 import type { Scene, MonologueScene, SceneCharacter } from "@/types/game";
 import DialogueBox from "../DialogueBox";
 import {
-  getPositionStyle,
-  getCharSizeStyle,
-  getAnimName,
+  getCharWrapperStyle,
+  getCharImgStyle,
   CHARACTER_KEYFRAMES,
 } from "@/lib/Characterlayout";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface MonologueSceneViewProps {
   scene: Scene;
@@ -20,87 +25,56 @@ export default function MonologueSceneView({
   scene: _scene,
   onAdvance,
 }: MonologueSceneViewProps) {
-  const scene = _scene as MonologueScene;
+  const scene      = _scene as MonologueScene;
+  const characters = (scene as any).characters as SceneCharacter[] | undefined;
+  const isMobile   = useIsMobile();
 
   const handleAdvance = useCallback(async () => {
     if (scene.next) await onAdvance(scene.next);
   }, [scene.next, onAdvance]);
 
-  const characters = (scene as any).characters as SceneCharacter[] | undefined;
-  // Di dalam komponen, tambahkan:
-const [, setIsMobile] = useState(false);
-
-useEffect(() => {
-  const checkMobile = () => {
-    setIsMobile(window.innerWidth <= 768);
-  };
-  checkMobile();
-  window.addEventListener("resize", checkMobile);
-  return () => window.removeEventListener("resize", checkMobile);
-}, []);
-
   return (
     <div
       style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        background: scene.bg?.color ?? "#000",
-        backgroundImage: scene.bg?.image ? `url(${scene.bg.image})` : undefined,
-        backgroundSize: "cover",
+        position:           "absolute",
+        inset:              0,
+        width:              "100%",
+        height:             "100%",
+        background:         scene.bg?.color ?? "#000",
+        backgroundImage:    scene.bg?.image ? `url(${scene.bg.image})` : undefined,
+        backgroundSize:     "cover",
         backgroundPosition: "center top",
-        overflow: "hidden",
+        overflow:           "hidden",
       }}
     >
       {scene.bg?.overlay && (
         <div
           style={{
-            position: "absolute", inset: 0,
-            background: scene.bg.overlay,
-            zIndex: 1,
+            position:      "absolute",
+            inset:         0,
+            background:    scene.bg.overlay,
+            zIndex:        1,
             pointerEvents: "none",
           }}
         />
       )}
 
+      {/* Characters */}
       {characters && characters.length > 0 && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, pointerEvents: "none" }}>
-          {characters.map((char) => {
-            const animName = getAnimName(char.animation);
-            return (
-              <div
-                key={`${char.id}-${char.sprite}`}
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  ...getPositionStyle(char.position),
-                  zIndex: char.zIndex ?? 4,
-                  opacity: char.dim ? 0.42 : 1,
-                  filter: char.dim
-                    ? "brightness(0.45) saturate(0.3)"
-                    : "drop-shadow(0 16px 48px rgba(0,0,0,0.55))",
-                  transition: "opacity 0.35s ease, filter 0.35s ease",
-                  transform: char.flip ? "scaleX(-1)" : undefined,
-                  animation: animName !== "none"
-                    ? `${animName} 0.45s cubic-bezier(0.22,1,0.36,1) both`
-                    : undefined,
-                }}
-              >
-                <img
-                  src={char.sprite}
-                  alt={char.id}
-                  style={{
-                    ...getCharSizeStyle(char),
-                    objectFit: "contain",
-                    objectPosition: "bottom",
-                    display: "block",
-                  }}
-                  draggable={false}
-                />
-              </div>
-            );
-          })}
+          {characters.map((char) => (
+            <div
+              key={`${char.id}-${char.sprite}`}
+              style={getCharWrapperStyle(char, isMobile)}
+            >
+              <img
+                src={char.sprite}
+                alt={char.id}
+                style={getCharImgStyle(char)}
+                draggable={false}
+              />
+            </div>
+          ))}
         </div>
       )}
 

@@ -42,7 +42,6 @@ export default function Home() {
       <GameEngine
         actNumber={targetAct}
         startSceneId={startSceneId}
-        characterName="Player" // Tambahkan ini
         onBackToMenu={handleBackToMenu}
       />
     );

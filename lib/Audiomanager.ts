@@ -262,6 +262,25 @@ class AudioManagerClass {
   }
 
   /**
+   * Immediately fade out and stop specifically the BGM track (if any)
+   */
+  async stopBGM(fadeOutDuration: number = 800): Promise<void> {
+    const bgmId = this.currentBgmId;
+    if (!bgmId) return;
+    
+    // Unset the ID so anything else trying to grab it fails cleanly
+    this.currentBgmId = null; 
+
+    try {
+      await this.fadeOutTrack(bgmId, fadeOutDuration);
+    } catch (e) {
+      console.warn("Failed to fade out BGM gracefully", e);
+    } finally {
+      this.stopTrack(bgmId);
+    }
+  }
+
+  /**
    * Stop and remove track from memory
    */
   stopTrack(trackId: string): void {

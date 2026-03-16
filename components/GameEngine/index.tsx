@@ -11,7 +11,7 @@ import React, {
   useState,
   useMemo,
 } from "react";
-import { getActForScene, getActFirstScene } from "@/lib/acts";
+import { getActForScene, getActFirstScene } from "@/components/Acts/acts";
 import { useSaveState } from "./components/Usesavestate";
 import { useSceneTransition } from "./components/Usescenetransition";
 import { audioManager } from "@/lib/Audiomanager";
@@ -25,8 +25,8 @@ import type {
   ActConfig,
   GameEngineContext,
 } from "@/components/Acts/BaseActConfig";
-import HistoryLog from "./components/scenes/Historylog ";
-import { useLocaleRegistry } from "@/lib/actRegistry";
+import HistoryLog from "./components/scenes/HistoryLog";
+import { useLocaleRegistry } from "@/components/Acts/actRegistry";
 import { useSettingsStore } from "@/store/Settingsstore";
 
 // ── Player name substitution ──────────────────────────────────────────────────

@@ -4,7 +4,7 @@
  * Preloads all assets for a given scene up to a certain depth in parallel.
  * Reports granular progress (0–100) via a callback.
  */
-import { getReachableScenes } from "@/lib/sceneGraph";
+import { getReachableScenes } from "@/components/Acts/sceneGraph";
 import { extractAudioForScenes, extractImagesForScenes } from "@/lib/assetManifest";
 
 export interface LoadProgress {

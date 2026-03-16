@@ -7,10 +7,19 @@ export default function SupportBanner() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 640);
+    const calculateEffectiveWidth = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return h > w ? h : w;
+    };
+    const update = () => setIsMobile(calculateEffectiveWidth() < 640);
     update();
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
   }, []);
 
   return (

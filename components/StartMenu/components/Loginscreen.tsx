@@ -18,9 +18,28 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
   const isMobile = useIsMobile();
 
   useEffect(() => {
+    const calculateEffectiveHeight = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return h > w ? w : h;
+    };
+    
+    const setVh = () => {
+      document.documentElement.style.setProperty("--vh", `${calculateEffectiveHeight() * 0.01}px`);
+    };
+    
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+    
     const t = setTimeout(() => setMounted(true), 30);
     try { getAuth(); } catch { /* silent */ }
-    return () => clearTimeout(t);
+    
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+    };
   }, []);
 
   const busy = isLoading || localLoading;
@@ -38,7 +57,7 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
   return (
     <div style={{
       width: "100%",
-      height: "100dvh",
+      height: "calc(var(--vh, 1dvh) * 100)",
       position: "relative",
       display: "flex",
       alignItems: "center",
@@ -217,15 +236,15 @@ export default function LoginScreen({ isLoading, onLogin }: LoginScreenProps) {
 
       <style>{`
         @keyframes ls-spin {
-          to { transform: rotate(360deg); }
+          to { transform: rotate(360deg) translateZ(0); }
         }
         @keyframes ls-shimmer {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(200%); }
+          from { transform: translate3d(-100%, 0, 0); }
+          to   { transform: translate3d(200%, 0, 0); }
         }
         @keyframes ls-blob {
-          from { transform: scale(1) translate(0,0); }
-          to   { transform: scale(1.15) translate(14px,-10px); }
+          from { transform: scale3d(1,1,1) translate3d(0,0,0); }
+          to   { transform: scale3d(1.15,1.15,1) translate3d(14px,-10px,0); }
         }
       `}</style>
     </div>

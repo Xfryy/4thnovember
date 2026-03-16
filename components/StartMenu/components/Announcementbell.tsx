@@ -33,7 +33,7 @@ export default function AnnouncementBell() {
 
   return (
     <div
-      className="relative flex items-center" style={{ position: "relative", zIndex: 500 }}
+      className="relative flex items-center" style={{ position: "relative", zIndex: 40 }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
     >
@@ -107,7 +107,7 @@ export default function AnnouncementBell() {
           top: "calc(100% + 10px)",
           right: 0,
           width: 340,
-          zIndex: 9999,
+          zIndex: 45,
           opacity: open ? 1 : 0,
           transform: open ? "translateY(0) scale(1)" : "translateY(-5px) scale(0.98)",
           pointerEvents: open ? "auto" : "none",

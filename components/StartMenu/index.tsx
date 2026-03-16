@@ -285,12 +285,16 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
 
   /** Start brand-new game */
   const handleStartNewGame = () => {
+    // Fade out main menu BGM over 0.5s before transitioning into game
+    audioManager.stopBGM(500);
     audioManager.resume();
     onGameStart?.(1, undefined);
   };
 
   /** Continue from auto-save (slot 0) */
   const handleContinue = () => {
+    // Fade out main menu BGM over 0.5s before transitioning into game
+    audioManager.stopBGM(500);
     audioManager.resume();
     if (autoSaveSlot) {
       onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
@@ -303,6 +307,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
 
   /** Load from a specific manual save slot */
   const handleLoadSlot = (slot: SaveSlot) => {
+    // Fade out main menu BGM over 0.5s before transitioning into game
+    audioManager.stopBGM(500);
     audioManager.resume();
     onGameStart?.(slot.currentAct, slot.currentSceneId);
   };

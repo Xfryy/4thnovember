@@ -1548,7 +1548,7 @@ export const ACT_1_SCENES: Scene[] = [
     type: "ending",
     act: 1,
     sceneNumber: 71,
-    endingType: "good",
+    endingType: "act",
     title: "目覚め — Awakening",
     subtitle: "Seseorang menunggumu. Bahkan ketika kamu tidak ingat kenapa.",
     bg: { color: "#06020f" },

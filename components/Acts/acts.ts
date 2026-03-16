@@ -1,5 +1,5 @@
-import { ACT_1_SCENES } from "./acts/act_1/scenes";
-// import { ACT_2_SCENES } from "./acts/act_2/scenes"; ← uncomment saat act_2 siap
+import { ACT_1_SCENES } from "@/lib/acts/act_1/scenes";
+// import { ACT_2_SCENES } from "@/lib/acts/act_2/scenes"; ← uncomment saat act_2 siap
 import { Scene } from "@/types/game";
 
 export interface ActManifest {

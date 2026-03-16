@@ -18,13 +18,7 @@ const SNOW = [
   { id:10, x:80,  size:2.5, opacity:0.45, duration:7,  delay:3.5, drift:35  },
   { id:11, x:88,  size:1.5, opacity:0.4,  duration:9,  delay:1.5, drift:-30 },
   { id:12, x:95,  size:2,   opacity:0.5,  duration:6,  delay:4.5, drift:15  },
-  { id:13, x:8,   size:1,   opacity:0.3,  duration:12, delay:2,   drift:45  },
-  { id:14, x:23,  size:1.5, opacity:0.45, duration:8,  delay:5,   drift:-10 },
-  { id:15, x:38,  size:2,   opacity:0.55, duration:7,  delay:0.7, drift:30  },
-  { id:16, x:52,  size:1,   opacity:0.35, duration:10, delay:3.8, drift:-45 },
-  { id:17, x:68,  size:2.5, opacity:0.5,  duration:6,  delay:1.8, drift:20  },
-  { id:18, x:83,  size:1.5, opacity:0.4,  duration:9,  delay:0.2, drift:-20 },
-  { id:19, x:15,  size:2,   opacity:0.45, duration:8,  delay:6,   drift:40  },
+  // Removed a few particles to improve paint time on weak hardware
 ];
 
 const DIAMONDS = [
@@ -46,9 +40,12 @@ const STARS = [
   { id:4,  x:60, y:9,  size:1.5, opacity:0.7, blink:6  },
   { id:5,  x:75, y:6,  size:1,   opacity:0.5, blink:4  },
   { id:6,  x:88, y:11, size:2,   opacity:0.8, blink:5  },
-  { id:7,  x:15, y:18, size:1,   opacity:0.4, blink:7  },
-  { id:8,  x:30, y:22, size:1.5, opacity:0.6, blink:3  },
-  { id:9,  x:52, y:17, size:1,   opacity:0.5, blink:4  },
+];
+
+const SHOOTING_STARS = [
+  { id:0, delay: 2,  duration: 4, top: 10, left: 80, angle: 45 },
+  { id:1, delay: 7,  duration: 6, top: 25, left: 90, angle: 35 },
+  { id:2, delay: 15, duration: 5, top: 5,  left: 60, angle: 50 },
 ];
 
 const CAPSULES = [
@@ -118,13 +115,15 @@ export default function GameBackground() {
             height:       cap.height,
             borderRadius: "40px",
             border:       `${cap.borderWidth}px solid ${cap.borderColor}`,
-            boxShadow:    `0 0 ${cap.borderWidth * 4}px ${cap.borderColor}`,
+            boxShadow:    `0 0 ${cap.borderWidth * 3}px ${cap.borderColor}`, // Reduced box-shadow size
             animationName:      "gb-capsule-spin",
             animationDuration:  `${cap.duration}s`,
             animationDelay:     `${cap.delay}s`,
             animationDirection: cap.direction,
             animationTimingFunction: "linear",
             animationIterationCount: "infinite",
+            willChange: "transform",
+            transform: "translateZ(0)",
           }}
         />
       ))}
@@ -147,6 +146,31 @@ export default function GameBackground() {
             animationDirection:      "alternate",
             animationIterationCount: "infinite",
             animationTimingFunction: "ease-in-out",
+            willChange: "opacity",
+            transform: "translateZ(0)",
+          }}
+        />
+      ))}
+
+      {/* ── Shooting Stars ── */}
+      {SHOOTING_STARS.map((s) => (
+        <div
+          key={`shooting-${s.id}`}
+          className="absolute pointer-events-none"
+          style={{
+            left: `${s.left}%`,
+            top: `${s.top}%`,
+            width: "100px",
+            height: "2px",
+            background: "linear-gradient(90deg, rgba(255,255,255,0.8), transparent)",
+            transform: `rotate(-${s.angle}deg) translateX(200px) translateZ(0)`,
+            opacity: 0,
+            animationName: "gb-shooting-star",
+            animationDuration: `${s.duration}s`,
+            animationDelay: `${s.delay}s`,
+            animationIterationCount: "infinite",
+            animationTimingFunction: "linear",
+            willChange: "transform, opacity",
           }}
         />
       ))}
@@ -171,21 +195,25 @@ export default function GameBackground() {
             animationDirection:      "alternate",
             animationIterationCount: "infinite",
             animationTimingFunction: "ease-in-out",
+            willChange: "transform",
+            transform: "translateZ(0)",
           }}
         >
           <div style={{
             width: d.size * 1.6, height: d.size * 1.6,
             position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%,-50%) rotate(45deg)",
-            background: d.color, opacity: d.opacity * 0.3,
-            filter: `blur(${d.size * 0.5}px)`,
+            transform: "translate(-50%,-50%) rotate(45deg) translateZ(0)",
+            background: d.color, opacity: d.opacity * 0.2, // Reduced base opacity slightly
+            filter: `blur(${d.size * 0.3}px)`, // Reduced blur dramatically for performance
+            willChange: "transform",
           }}/>
           <div style={{
             width: d.size, height: d.size,
             background: `linear-gradient(135deg, ${d.color}cc, ${d.color}44)`,
-            opacity: d.opacity, transform: "rotate(45deg)",
+            opacity: d.opacity, 
+            transform: "rotate(45deg) translateZ(0)",
             border: `1px solid ${d.color}88`,
-            boxShadow: `0 0 ${d.size * 0.6}px ${d.color}66`,
+            boxShadow: `0 0 ${d.size * 0.4}px ${d.color}66`, // Reduced shadow size
           }}/>
         </div>
       ))}
@@ -208,6 +236,8 @@ export default function GameBackground() {
             animationIterationCount: "infinite",
             animationTimingFunction: "linear",
             "--drift": `${f.drift}px`,
+            willChange: "transform",
+            transform: "translateZ(0)",
           } as React.CSSProperties}
         />
       ))}

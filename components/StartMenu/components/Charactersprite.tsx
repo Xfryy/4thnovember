@@ -26,17 +26,35 @@ export default function CharacterSprite({
 }: CharacterSpriteProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [, setIsVisible] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [windowWidth, setWindowWidth] = useState(1200);
+  const [windowHeight, setWindowHeight] = useState(800);
 
   useEffect(() => {
     setIsVisible(true);
     
+    // Calculate effective screen dimensions (compensating for LandscapeGuard 90deg rotation in portrait mode)
+    const calculateEffectiveDims = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return {
+        width: h > w ? h : w, // Effective Width
+        height: h > w ? w : h // Effective Height
+      };
+    };
+
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
+      const { width, height } = calculateEffectiveDims();
+      setWindowWidth(width);
+      setWindowHeight(height);
     };
     
+    handleResize(); // trigger once immediately
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
 
   useEffect(() => {
@@ -106,63 +124,65 @@ export default function CharacterSprite({
     <>
       <style>{`
         @keyframes breathing {
-          0%   { transform: translateY(0px) scaleX(1); }
-          30%  { transform: translateY(-8px) scaleX(0.998); }
-          60%  { transform: translateY(-12px) scaleX(0.995); }
-          100% { transform: translateY(0px) scaleX(1); }
+          0%   { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
+          30%  { transform: translate3d(0, -8px, 0) scale3d(0.998, 1, 1); }
+          60%  { transform: translate3d(0, -12px, 0) scale3d(0.995, 1, 1); }
+          100% { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
         }
         @keyframes ground-pulse {
           0%, 100% { 
             opacity: 0.4; 
-            transform: translateX(-50%) scaleX(1);
+            transform: translate3d(-50%, 0, 0) scale3d(1, 1, 1);
           }
           50% { 
             opacity: 0.8; 
-            transform: translateX(-50%) scaleX(1.1);
+            transform: translate3d(-50%, 0, 0) scale3d(1.1, 1, 1);
           }
         }
         @keyframes name-badge-glow {
           0%, 100% { 
-            box-shadow: 0 0 8px rgba(236,72,153,0.3);
+            box-shadow: 0 0 6px rgba(236,72,153,0.3);
             border-color: rgba(236,72,153,0.4);
           }
           50% { 
-            box-shadow: 0 0 18px rgba(236,72,153,0.6);
+            box-shadow: 0 0 12px rgba(236,72,153,0.6);
             border-color: rgba(236,72,153,0.7);
           }
         }
         @keyframes spriteAppear {
           from {
             opacity: 0;
-            transform: translateY(30px) scale(0.9);
+            transform: translate3d(0, 30px, 0) scale3d(0.9, 0.9, 1);
           }
           to {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
           }
         }
         
         .sprite-wrapper {
           animation: spriteAppear 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
+          will-change: transform, opacity;
         }
         
         .name-badge {
           animation: name-badge-glow 3s ease-in-out infinite;
+          will-change: box-shadow;
         }
         
         @media (max-width: 768px) {
           @keyframes breathing {
-            0%   { transform: translateY(0px) scaleX(1); }
-            30%  { transform: translateY(-5px) scaleX(0.998); }
-            60%  { transform: translateY(-8px) scaleX(0.995); }
-            100% { transform: translateY(0px) scaleX(1); }
+            0%   { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
+            30%  { transform: translate3d(0, -5px, 0) scale3d(0.998, 1, 1); }
+            60%  { transform: translate3d(0, -8px, 0) scale3d(0.995, 1, 1); }
+            100% { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
           }
         }
       `}</style>
 
       <div
         className="sprite-wrapper relative w-full h-full pointer-events-none"
-        style={{ minHeight: isMobile ? "40vh" : "60vh" }}
+        style={{ minHeight: isMobile ? windowHeight * 0.4 : windowHeight * 0.6 }}
       >
         {/* Ground glow */}
         <div

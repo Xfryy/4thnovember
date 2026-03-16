@@ -12,7 +12,7 @@
  *   if (bgm) audioManager.playBgm(bgm);
  */
 
-import { SCENE_REGISTRY } from "@/lib/acts";
+import { SCENE_REGISTRY } from "@/components/Acts/acts";
 import { Scene } from "@/types/game";
 
 type AudioField = {

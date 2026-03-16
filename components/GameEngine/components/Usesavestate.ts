@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { SCENE_REGISTRY, getActForScene } from "@/lib/acts";
+import { SCENE_REGISTRY, getActForScene } from "@/components/Acts/acts";
 import {
   saveProgress,
   registerUnloadSave,

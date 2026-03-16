@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useLocaleRegistry } from "@/lib/actRegistry";
+import { useLocaleRegistry } from "@/components/Acts/actRegistry";
 import { useSettingsStore } from "@/store/Settingsstore";
 import { Scene } from "@/types/game";
 

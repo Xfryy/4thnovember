@@ -1,4 +1,4 @@
-import { SCENE_REGISTRY } from "@/lib/acts";
+import { SCENE_REGISTRY } from "./acts";
 import { Scene } from "@/types/game";
 
 /**

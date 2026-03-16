@@ -172,7 +172,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 50,
+            zIndex: 100, // Background overlay
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -213,7 +213,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
               alignItems: "flex-end",
               justifyContent: "center",
               padding: 0,
-              zIndex: 51,
+              zIndex: 101, // Panel itself
             }}
             onClick={() => setOpen(false)}
           >

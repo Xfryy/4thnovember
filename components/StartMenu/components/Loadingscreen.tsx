@@ -1,60 +1,89 @@
+import { useEffect } from "react";
 import GameBackground from "./GameBackground";
 
 export default function LoadingScreen() {
+
+  useEffect(() => {
+    const calculateEffectiveHeight = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return h > w ? w : h;
+    };
+    
+    const setVh = () => {
+      document.documentElement.style.setProperty("--vh", `${calculateEffectiveHeight() * 0.01}px`);
+    };
+    
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+    
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+    };
+  }, []);
+
   return (
-    <div className="w-full h-screen relative flex items-center justify-center overflow-hidden">
+    <div 
+      className="w-full relative flex items-center justify-center overflow-hidden"
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+    >
       <style jsx>{`
         @keyframes loadingPulse {
           0%, 100% {
             opacity: 0.8;
-            transform: scale(1);
+            transform: scale3d(1, 1, 1);
           }
           50% {
             opacity: 1;
-            transform: scale(1.1);
+            transform: scale3d(1.1, 1.1, 1);
           }
         }
         
         @keyframes loadingSpin {
           from {
-            transform: rotate(0deg);
+            transform: rotate(0deg) translateZ(0);
           }
           to {
-            transform: rotate(360deg);
+            transform: rotate(360deg) translateZ(0);
           }
         }
         
         @keyframes loadingFadeIn {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translate3d(0, 20px, 0);
           }
           to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
           }
         }
         
         @keyframes loadingGlow {
           0%, 100% {
-            filter: drop-shadow(0 0 8px rgba(236,72,153,0.6));
+            filter: drop-shadow(0 0 6px rgba(236,72,153,0.6));
           }
           50% {
-            filter: drop-shadow(0 0 20px rgba(236,72,153,0.9));
+            filter: drop-shadow(0 0 16px rgba(236,72,153,0.9));
           }
         }
         
         .loading-container {
           animation: loadingFadeIn 0.5s ease-out forwards;
+          will-change: transform, opacity;
         }
         
         .loading-spinner {
           animation: loadingSpin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          will-change: transform;
         }
         
         .loading-pulse {
           animation: loadingPulse 1.5s ease-in-out infinite,
                      loadingGlow 2s ease-in-out infinite;
+          will-change: transform, filter, opacity;
         }
       `}</style>
       

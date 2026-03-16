@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { SaveData } from "@/types/game";
 import type { SaveSlot } from "@/lib/saveSlots";
 import GameBackground from "./GameBackground";
@@ -41,25 +42,60 @@ export default function MainMenu({
   onLogout,
   onNameChange,
 }: MainMenuProps) {
+  const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showSaves,    setShowSaves]    = useState(false);
   const [displayName,  setDisplayName]  = useState(characterName);
   const [windowWidth,  setWindowWidth]  = useState(1200);
+  const [windowHeight, setWindowHeight] = useState(800);
   const [mounted,      setMounted]      = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    setWindowWidth(window.innerWidth);
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    
+    // We need to calculate the *effective* width because if the user is in portrait
+    // and LandscapeGuard forces rotation, the effective width is actually the window's height.
+    const calculateEffectiveWidth = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return h > w ? h : w; // If portrait, width becomes height due to 90deg rotation
+    };
+
+    const calculateEffectiveHeight = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      return h > w ? w : h; // If portrait, height becomes width
+    };
+
+    const updateDimensions = () => {
+      setWindowWidth(calculateEffectiveWidth());
+      setWindowHeight(calculateEffectiveHeight());
+      document.documentElement.style.setProperty("--vh", `${calculateEffectiveHeight() * 0.01}px`);
+    };
+    
+    updateDimensions(); // trigger once to set --vh
+
+    window.addEventListener("resize", updateDimensions);
+    window.addEventListener("orientationchange", updateDimensions);
+    return () => {
+      window.removeEventListener("resize", updateDimensions);
+      window.removeEventListener("orientationchange", updateDimensions);
+    };
   }, []);
 
   const hasPlayed = !!autoSaveSlot;
   const isAdmin   = email === ADMIN_EMAIL;
 
-  const isMobile  = windowWidth < 768;
-  const isTablet  = windowWidth >= 768 && windowWidth < 1024;
+  // LAYOUT LOGIC BASED ON ASPECT RATIO
+  // True Mobile (Portrait) only if effectiveHeight > effectiveWidth
+  // But wait! LandscapeGuard already forces effectiveWidth > effectiveHeight.
+  // So 'isMobile' (vertical stack) should ONLY trigger if the user's screen is somehow
+  // still physically tall, OR if they are on a very tiny resolution.
+  // Let's ensure that if w > h (landscape), we NEVER use the vertical mobile layout.
+  
+  const isLandscape = windowWidth > windowHeight;
+  const isMobile = !isLandscape || windowWidth < 600; // Only true mobile if portrait or extremely tiny
+  const isTablet = isLandscape && windowWidth < 1024 && windowWidth >= 600;
 
   const handleSettingsClick = () => {
     setShowSettings(true);
@@ -69,7 +105,10 @@ export default function MainMenu({
   if (!mounted) return null;
 
   return (
-    <div className="w-full h-screen relative overflow-hidden">
+    <div 
+      className="w-full relative overflow-hidden" 
+      style={{ height: "calc(var(--vh, 1vh) * 100)" }}
+    >
       <GameBackground />
 
       {/* Top-right: Announcement + Profile Card + Admin Button */}
@@ -101,7 +140,7 @@ export default function MainMenu({
 
         {isAdmin && (
           <button
-            onClick={() => console.log("Admin page — implement navigation here")}
+            onClick={() => router.push("/admin")}
             style={{
               display: "flex",
               alignItems: "center",
@@ -150,7 +189,7 @@ export default function MainMenu({
             display: "flex",
             justifyContent: "flex-end",
             paddingRight: 16,
-            height: "35vh",
+            height: "calc(var(--vh, 1vh) * 35)",
             flexShrink: 0,
           }}>
             <div style={{ position: "relative", width: 140, height: "100%" }}>
@@ -180,7 +219,7 @@ export default function MainMenu({
         </div>
       )}
 
-      {/* ── TABLET LAYOUT ── */}
+      {/* ── TABLET LAYOUT (Also used for Rotated Phones) ── */}
       {isTablet && (
         <div
           style={{
@@ -189,7 +228,7 @@ export default function MainMenu({
             zIndex: 20,
             display: "flex",
             alignItems: "stretch",
-            paddingBottom: 44,
+            paddingBottom: windowWidth < 768 ? 20 : 44,
           }}
         >
           {/* LEFT — Menu Buttons (50%) */}
@@ -198,7 +237,7 @@ export default function MainMenu({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "0 24px",
+            padding: windowWidth < 768 ? "0 16px" : "0 24px",
           }}>
             <div style={{ width: "100%" }}>
               <MenuButtons
@@ -219,7 +258,7 @@ export default function MainMenu({
             alignItems: "flex-end",
             justifyContent: "center",
           }}>
-            <div style={{ position: "relative", width: "100%", height: "85vh" }}>
+            <div style={{ position: "relative", width: "100%", height: "calc(var(--vh, 1vh) * 85)", maxWidth: windowWidth < 768 ? 300 : "100%" }}>
               <CharacterSprite animated />
             </div>
           </div>
@@ -280,7 +319,7 @@ export default function MainMenu({
             alignItems: "flex-end",
             justifyContent: "center",
           }}>
-            <div style={{ position: "relative", width: "100%", height: "90vh" }}>
+            <div style={{ position: "relative", width: "100%", height: "calc(var(--vh, 1vh) * 90)" }}>
               <CharacterSprite animated />
             </div>
           </div>

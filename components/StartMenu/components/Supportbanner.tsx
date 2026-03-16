@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function SupportBanner() {
   const [open, setOpen] = useState(false);
@@ -239,57 +240,64 @@ export default function SupportBanner() {
                     boxShadow: "0 0 32px rgba(236,72,153,0.35), 0 0 64px rgba(168,85,247,0.15)",
                   }}>
                     <div style={{
-                      width: 160,
-                      height: 160,
-                      display: "grid",
-                      gridTemplateColumns: "repeat(11, 1fr)",
-                      gap: 1.5,
+                      position: "relative",
+                      width: 200,
+                      height: 200,
+                      borderRadius: 12,
+                      overflow: "hidden"
                     }}>
-                      {Array.from({ length: 121 }).map((_, i) => {
-                        const row = Math.floor(i / 11);
-                        const col = i % 11;
-                        const topLeft = (row <= 3 && col <= 3) || (row === 4 && col <= 2) || (col === 4 && row <= 2);
-                        const topRight = (row <= 3 && col >= 7) || (row === 4 && col >= 8) || (col === 6 && row <= 2);
-                        const bottomLeft = (row >= 7 && col <= 3) || (row === 6 && col <= 2) || (col === 4 && row >= 8);
-                        const isCorner = topLeft || topRight || bottomLeft;
-                        const seed = (row * 11 + col) * 2654435761;
-                        const isData = !isCorner && ((seed % 100) > 45);
-                        return (
-                          <div key={i} style={{
-                            borderRadius: 1.5,
-                            background: isCorner
-                              ? "linear-gradient(135deg, #ec4899, #a855f7)"
-                              : isData ? "#1a0a2e" : "transparent",
-                          }} />
-                        );
-                      })}
-                    </div>
-                    <div style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: 34,
-                      height: 34,
-                      borderRadius: 10,
-                      background: "white",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    }}>
-                      <span style={{ fontSize: 18 }}>💖</span>
+                      <Image
+                        src="/My_QRCODE.jpeg"
+                        alt="Support QR Code"
+                        fill
+                        unoptimized
+                        style={{ objectFit: "contain" }}
+                      />
                     </div>
                   </div>
                 </div>
 
+                <div style={{ display: "flex", justifyContent: "center", marginTop: 12 }}>
+                  <a
+                    href="/My_QRCODE.jpeg"
+                    download="Support_4thNovember_QR.jpeg"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.2))",
+                      border: "1px solid rgba(236,72,153,0.4)",
+                      color: "#f9a8d4",
+                      padding: "8px 16px",
+                      borderRadius: 20,
+                      fontSize: "0.75rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      boxShadow: "0 4px 12px rgba(236,72,153,0.15)",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.35), rgba(168,85,247,0.35))";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = "linear-gradient(135deg, rgba(236,72,153,0.2), rgba(168,85,247,0.2))";
+                      e.currentTarget.style.color = "#f9a8d4";
+                    }}
+                  >
+                    <span>📥</span> Download QR Code
+                  </a>
+                </div>
+
                 <p style={{
                   textAlign: "center",
-                  fontSize: "0.7rem",
+                  fontSize: "0.6rem",
                   marginTop: 10,
                   color: "rgba(236,72,153,0.45)",
                 }}>
-                  Scan me!!
+                  Thank you for playing!
                 </p>
               </div>
             </div>

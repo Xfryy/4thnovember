@@ -190,7 +190,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
               }
               .profile-modal-panel {
                 border-radius: 24px !important;
-                max-height: calc(100vh - 48px) !important;
+                max-height: calc(100% - 48px) !important;
               }
             }
             @keyframes slideUp {
@@ -223,7 +223,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
               style={{
                 width: "100%",
                 maxWidth: 480,
-                maxHeight: "90vh",
+                maxHeight: "90%",
                 overflowY: "auto",
                 background: "rgba(12, 8, 28, 0.98)",
                 border: "1px solid rgba(236,72,153,0.2)",

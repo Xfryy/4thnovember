@@ -495,8 +495,8 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
           top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
           zIndex: 201,
-          width: "min(600px, calc(100vw - 24px))",
-          maxHeight: "min(700px, calc(100vh - 40px))",
+          width: "min(600px, calc(100% - 24px))",
+          maxHeight: "min(700px, calc(100% - 40px))",
           /* No animation here — transform must never be overridden */
         }}
       >
@@ -505,7 +505,7 @@ export default function SaveSlotsModal({ isOpen, onClose, onSave, onLoad }: Save
         style={{
           width: "100%",
           height: "100%",
-          maxHeight: "min(700px, calc(100vh - 40px))",
+          maxHeight: "min(700px, calc(100% - 40px))",
           display: "flex",
           flexDirection: "column",
           borderRadius: 14,

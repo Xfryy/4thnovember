@@ -13,6 +13,8 @@ export interface CachedProfile {
   uid: string;
   email: string;
   characterName: string;
+  unlockedCharacters?: string[];
+  unlockedCGs?: string[];
 }
 
 // ─── Storage keys ─────────────────────────────────────────────────────────────

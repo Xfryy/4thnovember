@@ -13,33 +13,17 @@ import { useEffect, useState } from "react";
  * - Hanya block jika benar-benar portrait dan layar terlalu kecil
  */
 
-// Minimal lebar untuk landscape mode di HP
-const MIN_LANDSCAPE_WIDTH = 600;
-
 export default function LandscapeGuard({ children }: { children: React.ReactNode }) {
-  const [blocked, setBlocked] = useState(false);
+  const [isMobilePortrait, setIsMobilePortrait] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
     
     const check = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      
-      // Logika baru:
-      // 1. Jika landscape (lebar > tinggi) DAN lebar cukup → OK
-      // 2. Jika lebar >= 900 (desktop) → OK
-      // 3. Jika portrait (tinggi > lebar) DAN lebar kecil → BLOCK
-      
-      const isPortrait = h > w;
-      const isLandscapeButTooSmall = !isPortrait && w < MIN_LANDSCAPE_WIDTH;
-      const isPortraitAndTooSmall = isPortrait && w < MIN_LANDSCAPE_WIDTH;
-      
-      // Block jika:
-      // - Portrait dan layar kecil
-      // - Landscape tapi layar terlalu kecil (jarang terjadi)
-      setBlocked(isPortraitAndTooSmall || isLandscapeButTooSmall);
+      // Simply rotate if the device is held vertically (height > width)
+      // This synchronizes perfectly with MainMenu and GameEngine effective dimension calculations
+      setIsMobilePortrait(window.innerHeight > window.innerWidth);
     };
 
     check();
@@ -55,12 +39,12 @@ export default function LandscapeGuard({ children }: { children: React.ReactNode
 
   // Pengecekan agar tidak SSR issue
   if (!isClient) {
-    return <>{children}</>;
+    return (
+      <div style={{ width: "100%", height: "100vh", position: "relative" }}>
+        {children}
+      </div>
+    );
   }
-
-  // Jika portrait dan layar sempit (seperti di HP vertikal),
-  // kita ingin memaksanya rotate 90 derajat jadi seperti HP sedang horizontal
-  const isMobilePortrait = blocked;
 
   return (
     <div

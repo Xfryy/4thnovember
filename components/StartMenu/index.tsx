@@ -99,6 +99,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
             uid,
             email: cachedProfile.email || email,
             characterName: cachedProfile.characterName,
+            unlockedCharacters: cachedProfile.unlockedCharacters || [],
+            unlockedCGs: cachedProfile.unlockedCGs || [],
             createdAt: Date.now(),
             lastPlayed: Date.now(),
           });
@@ -139,6 +141,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
             uid,
             email,
             characterName: characterNameFromDB,
+            unlockedCharacters: profile?.unlockedCharacters || [],
+            unlockedCGs: profile?.unlockedCGs || [],
             createdAt: profile?.createdAt || Date.now(),
             lastPlayed: profile?.lastPlayed || Date.now(),
           };
@@ -174,7 +178,13 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
           }
 
           // Keep profile cache fresh
-          setCachedProfile(uid, { uid, email, characterName: characterNameFromDB });
+          setCachedProfile(uid, { 
+            uid, 
+            email, 
+            characterName: characterNameFromDB,
+            unlockedCharacters: profile?.unlockedCharacters || [],
+            unlockedCGs: profile?.unlockedCGs || []
+          });
 
           // ── Load settings from Firestore and sync ─────────────────────
           // This loads Firestore settings into Zustand store
@@ -376,6 +386,8 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     <MainMenu
       characterName={characterName}
       email={user.email}
+      unlockedCharacters={user.unlockedCharacters}
+      unlockedCGs={user.unlockedCGs}
       isLoading={isLoading}
       saveData={saveData}
       autoSaveSlot={autoSaveSlot}

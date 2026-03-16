@@ -2,6 +2,8 @@ export interface GameUser {
   uid: string;
   email: string;
   characterName: string;
+  unlockedCharacters?: string[];
+  unlockedCGs?: string[];
   createdAt: number;
   lastPlayed: number;
 }
@@ -13,6 +15,7 @@ export interface SaveData {
   choices: Record<string, string>;
   affection: Record<string, number>;
   unlockedCharacters?: string[];
+  unlockedCGs?: string[];
   playTimeSeconds: number;
   lastSaved: number;
 }

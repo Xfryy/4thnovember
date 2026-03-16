@@ -63,6 +63,8 @@ const handleUserAfterAuth = async (user: any) => {
       characterName: "",
       createdAt: Date.now(),
       lastPlayed: Date.now(),
+      unlockedCharacters: [],
+      unlockedCGs: [],
       totalPlayTime: 0,        // seconds
       totalPlays: 0,           // count of saves
     });
@@ -106,6 +108,44 @@ export const updateCharacterName = async (uid: string, characterName: string) =>
   await updateDoc(userDocRef, {
     characterName,
   });
+};
+
+export const unlockCharacterGlobally = async (uid: string, characterId: string) => {
+  try {
+    const userDocRef = doc(db, "users", uid);
+    const snap = await getDoc(userDocRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const currentUnlocks = Array.isArray(data.unlockedCharacters) ? data.unlockedCharacters : [];
+    
+    if (!currentUnlocks.includes(characterId)) {
+      await updateDoc(userDocRef, {
+        unlockedCharacters: [...currentUnlocks, characterId],
+      });
+    }
+  } catch (error) {
+    console.error("Error globally unlocking character:", error);
+  }
+};
+
+export const unlockCGGlobally = async (uid: string, cgUrl: string) => {
+  try {
+    const userDocRef = doc(db, "users", uid);
+    const snap = await getDoc(userDocRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const currentUnlocks = Array.isArray(data.unlockedCGs) ? data.unlockedCGs : [];
+    
+    if (!currentUnlocks.includes(cgUrl)) {
+      await updateDoc(userDocRef, {
+        unlockedCGs: [...currentUnlocks, cgUrl],
+      });
+    }
+  } catch (error) {
+    console.error("Error globally unlocking CG:", error);
+  }
 };
 
 export const updateUserPlaytime = async (uid: string, totalPlayTimeMinutes: number, totalPlays: number) => {

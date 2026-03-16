@@ -11,6 +11,7 @@ interface MenuButtonsProps {
   onContinue: () => void;
   onSaves: () => void;
   onSettings: () => void;
+  onGallery: () => void;
 }
 
 function ContinueButton({ onClick }: { onClick: () => void }) {
@@ -81,7 +82,7 @@ function CardButton({ icon, label, sub, accentFrom, accentTo, spinIcon, onClick 
 }
 
 export default function MenuButtons({
-  characterName, hasPlayed, onStart, onContinue, onSaves, onSettings,
+  characterName, hasPlayed, onStart, onContinue, onSaves, onSettings, onGallery,
 }: MenuButtonsProps) {
   return (
     <div className={styles.wrapper}>
@@ -98,6 +99,8 @@ export default function MenuButtons({
           )}
           <CardButton icon="◈" label="Saves" sub=""
             accentFrom="#38bdf8" accentTo="#6366f1" onClick={onSaves} />
+          <CardButton icon="⌘" label="Gallery" sub=""
+            accentFrom="#10b981" accentTo="#059669" onClick={onGallery} />
           <CardButton icon="⚙" label="Settings" sub=""
             accentFrom="#a78bfa" accentTo="#ec4899" spinIcon onClick={onSettings} />
         </div>

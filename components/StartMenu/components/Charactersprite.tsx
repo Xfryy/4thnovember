@@ -16,6 +16,7 @@ interface CharacterSpriteProps {
   compact?: boolean;
   width?: number;
   height?: number;
+  isRinUnlocked?: boolean;
 }
 
 export default function CharacterSprite({
@@ -23,6 +24,7 @@ export default function CharacterSprite({
   compact = false,
   width = 260,
   height = 420,
+  isRinUnlocked = false,
 }: CharacterSpriteProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [, setIsVisible] = useState(false);
@@ -247,7 +249,7 @@ export default function CharacterSprite({
               WebkitTextFillColor: "transparent",
             }}
           >
-            -???????-
+            {isRinUnlocked ? "-Rin Fuyutsuki-hime-" : "-???????-"}
           </span>
           <span style={{ fontSize: isMobile ? 6 : 8, color: "#a78bfa" }}>◆</span>
         </div>

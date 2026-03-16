@@ -87,6 +87,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     choices: {},
     affection: {},
     unlockedCharacters: [],
+    unlockedCGs: [],
     sessionStartMs: Date.now(),
     savedPlayTime: 0,
   });
@@ -99,6 +100,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
         saveStateRef.current.choices            = save.choices   ?? {};
         saveStateRef.current.affection          = save.affection ?? {};
         saveStateRef.current.unlockedCharacters = save.unlockedCharacters ?? [];
+        saveStateRef.current.unlockedCGs        = save.unlockedCGs ?? [];
       }
     });
   }, []);
@@ -124,6 +126,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       choices:         { ...saveStateRef.current.choices },
       affection:       { ...saveStateRef.current.affection },
       unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
+      unlockedCGs:        [...(saveStateRef.current.unlockedCGs || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
@@ -144,6 +147,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       choices:         { ...saveStateRef.current.choices },
       affection:       { ...saveStateRef.current.affection },
       unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
+      unlockedCGs:        [...(saveStateRef.current.unlockedCGs || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
@@ -160,9 +164,63 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       const newAct = getActForScene(nextSceneId);
       
       const unlocked = new Set(saveStateRef.current.unlockedCharacters || []);
+      const unlockedCGTracker = new Set(saveStateRef.current.unlockedCGs || []);
+      
       // If player reaches the scene where Rin introduces herself, unlock her name
       if (nextSceneId === "act1_s32" || nextSceneId === "act1_s33" || nextSceneId === "act1_s34") {
-         unlocked.add("rin");
+         if (!unlocked.has("rin")) {
+           unlocked.add("rin");
+           const user = auth.currentUser;
+           if (user) {
+             import("@/lib/firebase").then(({ unlockCharacterGlobally }) => {
+               unlockCharacterGlobally(user.uid, "rin");
+             });
+             import("@/store/gameStore").then(({ useGameStore }) => {
+               useGameStore.getState().unlockCharacter("rin");
+             });
+             import("@/lib/Sessioncache").then(({ getCachedProfile, setCachedProfile }) => {
+               const p = getCachedProfile(user.uid);
+               if (p) {
+                 setCachedProfile(user.uid, { ...p, unlockedCharacters: Array.from(unlocked) });
+               }
+             });
+           }
+         }
+      }
+
+      // Check current scene for CG unlocks
+      const currentSceneConfig = SCENE_REGISTRY[nextSceneId];
+      if (currentSceneConfig) {
+        let cgToUnlock: string | null = null;
+        
+        // Match Background Images
+        if ((currentSceneConfig as any).bg?.image) {
+          cgToUnlock = (currentSceneConfig as any).bg.image;
+        }
+        
+        // Match standalone CG Scenes
+        if (currentSceneConfig.type === "cg" && (currentSceneConfig as any).image) {
+           cgToUnlock = (currentSceneConfig as any).image;
+        }
+
+        if (cgToUnlock && !unlockedCGTracker.has(cgToUnlock)) {
+           unlockedCGTracker.add(cgToUnlock);
+           const user = auth.currentUser;
+           if (user) {
+             import("@/lib/firebase").then(({ unlockCGGlobally }) => {
+               unlockCGGlobally(user.uid, cgToUnlock!);
+             });
+             import("@/store/gameStore").then(({ useGameStore }) => {
+               useGameStore.getState().unlockCG(cgToUnlock!);
+             });
+             import("@/lib/Sessioncache").then(({ getCachedProfile, setCachedProfile }) => {
+               const p = getCachedProfile(user.uid);
+               if (p) {
+                 setCachedProfile(user.uid, { ...p, unlockedCGs: Array.from(unlockedCGTracker) });
+               }
+             });
+           }
+        }
       }
 
       saveStateRef.current = {
@@ -170,6 +228,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
         actNumber: newAct,
         sceneId:   nextSceneId,
         unlockedCharacters: Array.from(unlocked),
+        unlockedCGs: Array.from(unlockedCGTracker),
         choices: choiceSceneId && choiceId
           ? { ...saveStateRef.current.choices, [choiceSceneId]: choiceId }
           : saveStateRef.current.choices,
@@ -195,6 +254,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     choices?:      Record<string, string>;
     affection?:    Record<string, number>;
     unlockedCharacters?: string[];
+    unlockedCGs?: string[];
   }) => {
     setIsLoading(true);
     saveStateRef.current = {
@@ -204,6 +264,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       choices:   slot.choices   ?? {},
       affection: slot.affection ?? {},
       unlockedCharacters: slot.unlockedCharacters ?? [],
+      unlockedCGs: slot.unlockedCGs ?? [],
     };
     // isLoading cleared once scene actually transitions (caller's responsibility)
     setIsLoading(false);

@@ -53,19 +53,49 @@ function SliderRow({
 function Section({
   icon,
   title,
+  isExpanded,
+  onToggle,
   children,
 }: {
   icon: string;
   title: string;
+  isExpanded?: boolean;
+  onToggle?: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className="stg-section">
-      <div className="stg-section__hd">
-        <span className="stg-section__icon">{icon}</span>
-        <span className="stg-section__title">{title}</span>
+    <div className={`stg-section ${isExpanded ? "stg-section--expanded" : ""}`}>
+      <div 
+        className="stg-section__hd"
+        onClick={onToggle}
+        style={{ cursor: "pointer", justifyContent: "space-between" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span className="stg-section__icon">{icon}</span>
+          <span className="stg-section__title">{title}</span>
+        </div>
+        <span style={{ 
+          fontSize: "0.6rem", 
+          color: "rgba(236,72,153,0.5)", 
+          transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", 
+          transition: "transform 0.3s ease" 
+        }}>
+          ▼
+        </span>
       </div>
-      <div className="stg-section__body">{children}</div>
+      <div 
+        className="stg-section__body-wrap"
+        style={{ 
+          display: "grid",
+          gridTemplateRows: isExpanded ? "1fr" : "0fr",
+          transition: "grid-template-rows 0.3s ease, opacity 0.3s ease",
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
+        <div style={{ overflow: "hidden" }}>
+          <div className="stg-section__body">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -78,6 +108,7 @@ export default function SettingsModal({
   isOpen,
   onClose,
 }: SettingsModalProps) {
+  const [expandedSection, setExpandedSection] = React.useState<string>("Language");
   const language = useSettingsStore((s) => s.language);
   const masterVolume = useSettingsStore((s) => s.masterVolume);
   const bgmVolume = useSettingsStore((s) => s.bgmVolume);
@@ -123,7 +154,12 @@ export default function SettingsModal({
           </div>
 
           <div className="stg-body">
-            <Section icon="🌐" title="Language">
+            <Section 
+              icon="🌐" 
+              title="Language"
+              isExpanded={expandedSection === "Language"}
+              onToggle={() => setExpandedSection(expandedSection === "Language" ? "" : "Language")}
+            >
               <div className="stg-lang">
                 {(["id", "en"] as const).map((lang) => (
                   <button
@@ -141,7 +177,12 @@ export default function SettingsModal({
               </div>
             </Section>
 
-            <Section icon="🎵" title="Audio">
+            <Section 
+              icon="🎵" 
+              title="Audio"
+              isExpanded={expandedSection === "Audio"}
+              onToggle={() => setExpandedSection(expandedSection === "Audio" ? "" : "Audio")}
+            >
               <SliderRow
                 label="Master Volume"
                 value={masterVolume}
@@ -191,7 +232,12 @@ export default function SettingsModal({
               </Chip>
             </Section>
 
-            <Section icon="🖥" title="Display">
+            <Section 
+              icon="🖥" 
+              title="Display"
+              isExpanded={expandedSection === "Display"}
+              onToggle={() => setExpandedSection(expandedSection === "Display" ? "" : "Display")}
+            >
               <SliderRow
                 label="Brightness"
                 value={brightness}
@@ -217,7 +263,12 @@ export default function SettingsModal({
               </div>
             </Section>
 
-            <Section icon="💬" title="Text & Story">
+            <Section 
+              icon="💬" 
+              title="Text & Story"
+              isExpanded={expandedSection === "Text & Story"}
+              onToggle={() => setExpandedSection(expandedSection === "Text & Story" ? "" : "Text & Story")}
+            >
               <SliderRow
                 label="Text Speed"
                 value={textSpeed}
@@ -268,14 +319,14 @@ export default function SettingsModal({
           position:fixed; top:50%; left:50%;
           transform:translate(-50%,-50%);
           z-index:1001;
-          width:min(480px,calc(100vw - 32px));
-          max-height:min(85vh,680px);
+          width:min(480px,calc(100% - 32px));
+          max-height:min(85%,680px);
           display:flex; flex-direction:column;
         }
 
         .stg-panel {
           display:flex; flex-direction:column;
-          max-height:min(85vh,680px);
+          max-height:min(85%,680px);
           border-radius:14px; overflow:hidden;
           background:rgba(8,4,20,0.98);
           border:1px solid rgba(255,255,255,.07);

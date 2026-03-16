@@ -54,6 +54,8 @@ interface GameStore {
   loadSettings: (settings: GameSettings) => void;
   setGameProgress: (act: number, scene: number, choices: Record<string, any>) => void;
   setCharacterAffection: (characterId: string, affection: number) => void;
+  unlockCharacter: (characterId: string) => void;
+  unlockCG: (cgUrl: string) => void;
   resetGameState: () => void;
 }
 
@@ -131,6 +133,26 @@ export const useGameStore = create<GameStore>((set) => {
         characters: state.characters.map((char) =>
           char.id === characterId ? { ...char, affection } : char
         ),
+      })),
+
+    unlockCharacter: (characterId) =>
+      set((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              unlockedCharacters: Array.from(new Set([...(state.user.unlockedCharacters || []), characterId])),
+            }
+          : null,
+      })),
+
+    unlockCG: (cgUrl) =>
+      set((state) => ({
+        user: state.user
+          ? {
+              ...state.user,
+              unlockedCGs: Array.from(new Set([...(state.user.unlockedCGs || []), cgUrl])),
+            }
+          : null,
       })),
 
     resetGameState: () =>

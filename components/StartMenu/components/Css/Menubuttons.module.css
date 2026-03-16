@@ -29,7 +29,8 @@
 @media (min-width: 640px) {
   .wrapper { 
     text-align: left; 
-    overflow-x: visible;
+    overflow: visible;
+    max-height: none;
   }
 }
 

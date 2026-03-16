@@ -13,12 +13,15 @@ import AnnouncementBell from "../components/Announcementbell";
 import SupportBanner from "../components/Supportbanner";
 import SettingsModal from "../components/SettingsModal";
 import SaveSlotsModal from "../components/SaveslotsModal";
+import GalleryModal from "../components/GalleryModal";
 
 const ADMIN_EMAIL = "faricandra5@gmail.com";
 
 interface MainMenuProps {
   characterName: string;
   email: string;
+  unlockedCharacters?: string[];
+  unlockedCGs?: string[];
   isLoading: boolean;
   saveData: SaveData | null;
   autoSaveSlot: SaveSlot | null;
@@ -33,6 +36,8 @@ interface MainMenuProps {
 export default function MainMenu({
   characterName,
   email,
+  unlockedCharacters = [],
+  unlockedCGs = [],
   isLoading,
   autoSaveSlot,
   onStartNew,
@@ -45,6 +50,7 @@ export default function MainMenu({
   const router = useRouter();
   const [showSettings, setShowSettings] = useState(false);
   const [showSaves,    setShowSaves]    = useState(false);
+  const [showGallery,  setShowGallery]  = useState(false);
   const [displayName,  setDisplayName]  = useState(characterName);
   const [windowWidth,  setWindowWidth]  = useState(1200);
   const [windowHeight, setWindowHeight] = useState(800);
@@ -85,6 +91,9 @@ export default function MainMenu({
 
   const hasPlayed = !!autoSaveSlot;
   const isAdmin   = email === ADMIN_EMAIL;
+  
+  // Ambil state 'unlockedCharacters' dari profil global (System Save)
+  const isRinUnlocked = unlockedCharacters.includes("rin");
 
   // LAYOUT LOGIC BASED ON ASPECT RATIO
   // True Mobile (Portrait) only if effectiveHeight > effectiveWidth
@@ -193,7 +202,7 @@ export default function MainMenu({
             flexShrink: 0,
           }}>
             <div style={{ position: "relative", width: 140, height: "100%" }}>
-              <CharacterSprite animated />
+              <CharacterSprite animated isRinUnlocked={isRinUnlocked} />
             </div>
           </div>
 
@@ -212,6 +221,7 @@ export default function MainMenu({
                 onStart={onStartNew}
                 onContinue={onContinue}
                 onSaves={() => setShowSaves(true)}
+                onGallery={() => setShowGallery(true)}
                 onSettings={handleSettingsClick}
               />
             </div>
@@ -246,6 +256,7 @@ export default function MainMenu({
                 onStart={onStartNew}
                 onContinue={onContinue}
                 onSaves={() => setShowSaves(true)}
+                onGallery={() => setShowGallery(true)}
                 onSettings={handleSettingsClick}
               />
             </div>
@@ -259,7 +270,7 @@ export default function MainMenu({
             justifyContent: "center",
           }}>
             <div style={{ position: "relative", width: "100%", height: "calc(var(--vh, 1vh) * 85)", maxWidth: windowWidth < 768 ? 300 : "100%" }}>
-              <CharacterSprite animated />
+              <CharacterSprite animated isRinUnlocked={isRinUnlocked} />
             </div>
           </div>
         </div>
@@ -291,6 +302,7 @@ export default function MainMenu({
                 onStart={onStartNew}
                 onContinue={onContinue}
                 onSaves={() => setShowSaves(true)}
+                onGallery={() => setShowGallery(true)}
                 onSettings={handleSettingsClick}
               />
             </div>
@@ -320,7 +332,7 @@ export default function MainMenu({
             justifyContent: "center",
           }}>
             <div style={{ position: "relative", width: "100%", height: "calc(var(--vh, 1vh) * 90)" }}>
-              <CharacterSprite animated />
+              <CharacterSprite animated isRinUnlocked={isRinUnlocked} />
             </div>
           </div>
         </div>
@@ -334,6 +346,12 @@ export default function MainMenu({
         isOpen={showSaves}
         onClose={() => setShowSaves(false)}
         onLoad={(slot) => { setShowSaves(false); onLoadSlot(slot); }}
+      />
+      
+      <GalleryModal
+        isOpen={showGallery}
+        onClose={() => setShowGallery(false)}
+        unlockedCGs={unlockedCGs}
       />
     </div>
   );

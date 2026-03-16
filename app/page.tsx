@@ -26,7 +26,7 @@ export default function Home() {
     }
     setTimeout(() => {
       setPhase("menu");
-    }, 500); // match fade out duration
+    }, 100); // reduced delay for better UX
   };
 
   const handleGameStart = (act = 1, sceneId?: string) => {
@@ -43,12 +43,14 @@ export default function Home() {
   if (phase === "interaction") {
     return (
       <main
-        className="w-full h-screen flex flex-col items-center justify-center cursor-pointer select-none"
+        className="w-full h-full flex flex-col items-center justify-center cursor-pointer select-none"
         onClick={handleInteractionStart}
         style={{
           background: "linear-gradient(160deg, #03030d 0%, #090515 50%, #110420 100%)",
           opacity: isTransitioning ? 0 : 1,
-          transition: "opacity 0.5s ease",
+          transition: "opacity 0.15s ease",
+          position: "absolute",
+          inset: 0
         }}
       >
         <div style={{
@@ -58,8 +60,8 @@ export default function Home() {
           pointerEvents: "none",
         }} />
         <h1 style={{
-          fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 900, fontStyle: "italic",
-          letterSpacing: "0.2em", marginBottom: 40, textAlign: "center",
+          fontSize: "clamp(1.75rem, 6vmin, 3rem)", fontWeight: 900, fontStyle: "italic",
+          letterSpacing: "0.15em", marginBottom: 40, textAlign: "center", width: "100%", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis",
           background: "linear-gradient(135deg, #fce7f3 0%, #ec4899 40%, #6366f1 100%)",
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         }}>

@@ -86,6 +86,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     sceneId: startSceneId,
     choices: {},
     affection: {},
+    unlockedCharacters: [],
     sessionStartMs: Date.now(),
     savedPlayTime: 0,
   });
@@ -94,9 +95,10 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
   useEffect(() => {
     loadProgress().then((save) => {
       if (save) {
-        saveStateRef.current.savedPlayTime = save.playTimeSeconds;
-        saveStateRef.current.choices       = save.choices   ?? {};
-        saveStateRef.current.affection     = save.affection ?? {};
+        saveStateRef.current.savedPlayTime      = save.playTimeSeconds;
+        saveStateRef.current.choices            = save.choices   ?? {};
+        saveStateRef.current.affection          = save.affection ?? {};
+        saveStateRef.current.unlockedCharacters = save.unlockedCharacters ?? [];
       }
     });
   }, []);
@@ -113,7 +115,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
   const writeAutoSave = useCallback(async (nextSceneId: string) => {
     const user = auth.currentUser;
     if (!user) return;
-    const preview = await buildSlotPreviewWithScreenshot(nextSceneId);
+    const preview = buildSlotPreview(nextSceneId);
     const slot: SaveSlot = {
       slotId:          AUTO_SAVE_SLOT,
       uid:             user.uid,
@@ -121,6 +123,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       currentSceneId:  nextSceneId,
       choices:         { ...saveStateRef.current.choices },
       affection:       { ...saveStateRef.current.affection },
+      unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
@@ -140,6 +143,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       currentSceneId:  saveStateRef.current.sceneId,
       choices:         { ...saveStateRef.current.choices },
       affection:       { ...saveStateRef.current.affection },
+      unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
@@ -154,10 +158,18 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
   const onSceneAdvance = useCallback(
     (nextSceneId: string, choiceSceneId?: string, choiceId?: string) => {
       const newAct = getActForScene(nextSceneId);
+      
+      const unlocked = new Set(saveStateRef.current.unlockedCharacters || []);
+      // If player reaches the scene where Rin introduces herself, unlock her name
+      if (nextSceneId === "act1_s32" || nextSceneId === "act1_s33" || nextSceneId === "act1_s34") {
+         unlocked.add("rin");
+      }
+
       saveStateRef.current = {
         ...saveStateRef.current,
         actNumber: newAct,
         sceneId:   nextSceneId,
+        unlockedCharacters: Array.from(unlocked),
         choices: choiceSceneId && choiceId
           ? { ...saveStateRef.current.choices, [choiceSceneId]: choiceId }
           : saveStateRef.current.choices,
@@ -165,8 +177,8 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       sceneAdvanceCountRef.current += 1;
       if (sceneAdvanceCountRef.current % AUTOSAVE_EVERY_N_SCENES === 0) {
         saveProgress(saveStateRef.current);
+        writeAutoSave(nextSceneId);
       }
-      writeAutoSave(nextSceneId);
     },
     [writeAutoSave],
   );
@@ -182,6 +194,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     currentSceneId: string;
     choices?:      Record<string, string>;
     affection?:    Record<string, number>;
+    unlockedCharacters?: string[];
   }) => {
     setIsLoading(true);
     saveStateRef.current = {
@@ -190,6 +203,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       sceneId:   slot.currentSceneId,
       choices:   slot.choices   ?? {},
       affection: slot.affection ?? {},
+      unlockedCharacters: slot.unlockedCharacters ?? [],
     };
     // isLoading cleared once scene actually transitions (caller's responsibility)
     setIsLoading(false);

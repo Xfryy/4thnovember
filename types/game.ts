@@ -12,6 +12,7 @@ export interface SaveData {
   currentSceneId: string;
   choices: Record<string, string>;
   affection: Record<string, number>;
+  unlockedCharacters?: string[];
   playTimeSeconds: number;
   lastSaved: number;
 }

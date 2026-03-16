@@ -41,13 +41,8 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
     };
   }, [scene, onComplete]);
 
-  const handleClick = async () => {
-    if (skippedRef.current || !scene.next) return;
-    skippedRef.current = true;
-    setPhase("fade-out");
-    await new Promise((r) => setTimeout(r, FADE_MS));
-    await onComplete(scene.next);
-  };
+  // Skip transition disabled based on user preference
+  // Transition scenes are meant to be unskippable delays.
 
   // Efek transisi yang lebih smooth - menggunakan opacity dengan easing yang tepat
   const getOpacity = () => {
@@ -61,7 +56,6 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
 
   return (
     <div
-      onClick={handleClick}
       style={{
         position: "absolute",
         inset: 0,
@@ -70,7 +64,6 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
         backgroundSize: "cover",
         backgroundPosition: "center",
         overflow: "hidden",
-        cursor: "pointer",
         opacity: getOpacity(),
         transition: phase === "fade-out" ? `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
         animation: phase === "fade-in" 

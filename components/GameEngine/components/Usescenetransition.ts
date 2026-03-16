@@ -10,7 +10,7 @@ import { Scene } from "@/types/game";
 const FADE_MS = 280;
 
 // Lock singkat untuk mencegah double-advance tanpa bikin layar gelap
-const ADVANCE_LOCK_MS = 60;
+const ADVANCE_LOCK_MS = 15;
 
 interface UseSceneTransitionOptions {
   initialSceneId: string;

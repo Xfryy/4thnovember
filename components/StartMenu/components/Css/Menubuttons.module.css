@@ -27,7 +27,10 @@
 }
 
 @media (min-width: 640px) {
-  .wrapper { text-align: left; }
+  .wrapper { 
+    text-align: left; 
+    overflow-x: visible;
+  }
 }
 
 /* ── Welcome text ── */

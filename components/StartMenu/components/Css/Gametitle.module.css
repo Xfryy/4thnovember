@@ -4,6 +4,8 @@
   -webkit-user-select: none;
   user-select: none;
   width: 100%;
+  padding: 12px 20px;
+  margin: -12px -20px;
   animation: titleAppear 0.6s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
 }
 
@@ -78,7 +80,7 @@
 .letterRow {
   display: flex;
   justify-content: center;
-  line-height: 1;
+  line-height: 1.1;
   /* Mobile-first: smaller font */
   font-size: clamp(2.2rem, 10vw, 3.5rem);
   gap: 2px;
@@ -121,6 +123,8 @@
   font-weight: 900;
   font-style: italic;
   line-height: 1;
+  padding: 0.2em;
+  margin: -0.2em;
   cursor: default;
   -webkit-user-select: none;
   user-select: none;

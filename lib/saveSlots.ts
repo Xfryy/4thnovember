@@ -21,6 +21,7 @@ export interface SaveSlot {
   currentSceneId: string;   // scene to resume AT
   choices: Record<string, string>;
   affection: Record<string, number>;
+  unlockedCharacters?: string[];
   playTimeSeconds: number;
   lastSaved: number;        // timestamp ms
   cleared?: boolean;        // tombstone flag — slot was soft-deleted

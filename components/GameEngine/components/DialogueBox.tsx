@@ -94,7 +94,7 @@ export default function DialogueBox({
     if (!finished) return;
     logEntry();
     if (autoPlay || skipMode) {
-      const delay = skipMode ? 80 : autoPlayDelay;
+      const delay = skipMode ? 10 : autoPlayDelay;
       autoPlayTimer.current = setTimeout(onAdvance, delay);
     }
     return () => {

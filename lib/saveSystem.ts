@@ -9,6 +9,7 @@ export interface GameStateSnapshot {
   sceneId: string;
   choices: Record<string, string>;
   affection: Record<string, number>;
+  unlockedCharacters?: string[];
   sessionStartMs: number;
   savedPlayTime: number;
 }

@@ -234,6 +234,7 @@ export default function GameEngine({
 
     switch (effectName) {
       case "screenShake":
+      case "shake":
         await runAnimation(el, "fx-screen-shake 0.5s ease-in-out", 500);
         return;
       case "fadeIn":
@@ -553,6 +554,8 @@ export default function GameEngine({
         inset: 0,
         background: "#000",
         overflow: "hidden",
+        userSelect: "none",
+        WebkitUserSelect: "none",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}

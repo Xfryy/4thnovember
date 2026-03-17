@@ -8,9 +8,10 @@
 import React, { useCallback, useState } from "react";
 import type { Scene, ChoiceScene, ChoiceOption, SceneCharacter } from "@/types/game";
 import type { GameEngineContext } from "@/components/Acts/BaseActConfig";
+import SceneBackground from "../SceneBackground";
+import SceneCharacterSprite from "../SceneCharacterSprite";
 import {
   getCharWrapperStyle,
-  getCharImgStyle,
   CHARACTER_KEYFRAMES,
 } from "@/lib/Characterlayout";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -47,21 +48,9 @@ export default function ChoiceSceneView({
     <div style={{
       position:        "absolute",
       inset:           0,
-      background:      scene.bg?.color || "#0e0a1a",
-      backgroundImage: scene.bg?.image ? `url(${scene.bg.image})` : undefined,
-      backgroundSize:  "cover",
-      backgroundPosition: "center",
       overflow:        "hidden",
     }}>
-      {scene.bg?.overlay && (
-        <div style={{
-          position:      "absolute",
-          inset:         0,
-          background:    scene.bg.overlay,
-          zIndex:        1,
-          pointerEvents: "none",
-        }} />
-      )}
+      <SceneBackground bg={scene.bg} />
 
       {/* Characters */}
       {scene.characters && scene.characters.length > 0 && (
@@ -69,15 +58,15 @@ export default function ChoiceSceneView({
           {scene.characters.map((char: SceneCharacter) => (
             <div
               key={char.id}
-              style={getCharWrapperStyle(char, isMobile)}
+              style={{
+                ...getCharWrapperStyle(char, isMobile),
+                willChange: "transform, opacity",
+                transition:
+                  "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease",
+              }}
               onClick={() => onCharacterClick(char.id)}
             >
-              <img
-                src={char.sprite}
-                alt={char.id}
-                style={getCharImgStyle(char)}
-                draggable={false}
-              />
+              <SceneCharacterSprite char={char} />
             </div>
           ))}
         </div>

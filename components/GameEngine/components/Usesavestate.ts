@@ -88,6 +88,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     affection: {},
     unlockedCharacters: [],
     unlockedCGs: [],
+    inventory: [],
     sessionStartMs: Date.now(),
     savedPlayTime: 0,
   });
@@ -101,6 +102,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
         saveStateRef.current.affection          = save.affection ?? {};
         saveStateRef.current.unlockedCharacters = save.unlockedCharacters ?? [];
         saveStateRef.current.unlockedCGs        = save.unlockedCGs ?? [];
+        saveStateRef.current.inventory          = save.inventory ?? [];
       }
     });
   }, []);
@@ -117,22 +119,37 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
   const writeAutoSave = useCallback(async (nextSceneId: string) => {
     const user = auth.currentUser;
     if (!user) return;
-    const preview = buildSlotPreview(nextSceneId);
+
+    // Update state FIRST before saving
+    const newAct = getActForScene(nextSceneId);
+    saveStateRef.current = {
+      ...saveStateRef.current,
+      actNumber: newAct,
+      sceneId:   nextSceneId,
+    };
+
+    // Use screenshot for auto-save just like manual save
+    const preview = await buildSlotPreviewWithScreenshot(nextSceneId);
     const slot: SaveSlot = {
       slotId:          AUTO_SAVE_SLOT,
       uid:             user.uid,
-      currentAct:      getActForScene(nextSceneId),
+      currentAct:      newAct,
       currentSceneId:  nextSceneId,
       choices:         { ...saveStateRef.current.choices },
       affection:       { ...saveStateRef.current.affection },
       unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
       unlockedCGs:        [...(saveStateRef.current.unlockedCGs || [])],
+      inventory:          [...(saveStateRef.current.inventory || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
     };
+    
+    // Update cache AND save to Firestore
     setCachedAutoSlot(user.uid, slot);
     await writeSlot(slot);
+    
+    console.log(`💾 Auto-saved: Act ${newAct} - Scene ${nextSceneId}`);
   }, [getPlayTime]);
 
   const handleManualSave = useCallback(async (slotId: number): Promise<void> => {
@@ -148,6 +165,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       affection:       { ...saveStateRef.current.affection },
       unlockedCharacters: [...(saveStateRef.current.unlockedCharacters || [])],
       unlockedCGs:        [...(saveStateRef.current.unlockedCGs || [])],
+      inventory:          [...(saveStateRef.current.inventory || [])],
       playTimeSeconds: Math.floor(getPlayTime()),
       lastSaved:       Date.now(),
       ...preview,
@@ -162,6 +180,7 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
   const onSceneAdvance = useCallback(
     (nextSceneId: string, choiceSceneId?: string, choiceId?: string) => {
       const newAct = getActForScene(nextSceneId);
+      const prevAct = saveStateRef.current.actNumber;
       
       const unlocked = new Set(saveStateRef.current.unlockedCharacters || []);
       const unlockedCGTracker = new Set(saveStateRef.current.unlockedCGs || []);
@@ -223,18 +242,30 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
         }
       }
 
+      // Reset counter when act changes to prevent sync issues
+      if (newAct !== prevAct) {
+        sceneAdvanceCountRef.current = 0;
+        console.log(`🔄 Act changed from ${prevAct} to ${newAct}, reset auto-save counter`);
+      }
+
+      // Update state IMMEDIATELY
       saveStateRef.current = {
         ...saveStateRef.current,
         actNumber: newAct,
         sceneId:   nextSceneId,
         unlockedCharacters: Array.from(unlocked),
         unlockedCGs: Array.from(unlockedCGTracker),
+        inventory: [...(saveStateRef.current.inventory || [])],
         choices: choiceSceneId && choiceId
           ? { ...saveStateRef.current.choices, [choiceSceneId]: choiceId }
           : saveStateRef.current.choices,
       };
+      
       sceneAdvanceCountRef.current += 1;
+      
+      // Auto-save every N scenes
       if (sceneAdvanceCountRef.current % AUTOSAVE_EVERY_N_SCENES === 0) {
+        console.log(`⏰ Auto-save triggered (scene count: ${sceneAdvanceCountRef.current})`);
         saveProgress(saveStateRef.current);
         writeAutoSave(nextSceneId);
       }
@@ -255,8 +286,13 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     affection?:    Record<string, number>;
     unlockedCharacters?: string[];
     unlockedCGs?: string[];
+    inventory?: string[];
   }) => {
     setIsLoading(true);
+    
+    // Reset scene counter when loading a save to prevent auto-save sync issues
+    sceneAdvanceCountRef.current = 0;
+    
     saveStateRef.current = {
       ...saveStateRef.current,
       actNumber: slot.currentAct,
@@ -265,8 +301,13 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
       affection: slot.affection ?? {},
       unlockedCharacters: slot.unlockedCharacters ?? [],
       unlockedCGs: slot.unlockedCGs ?? [],
+      inventory: slot.inventory ?? [],
     };
-    // isLoading cleared once scene actually transitions (caller's responsibility)
+    
+    console.log(`📥 Loaded save: Act ${slot.currentAct} - Scene ${slot.currentSceneId}`);
+  }, []);
+
+  const clearLoading = useCallback(() => {
     setIsLoading(false);
   }, []);
 
@@ -275,9 +316,11 @@ export function useSaveState({ actNumber, startSceneId }: UseSaveStateOptions) {
     savedFlash,
     isSaving,
     isLoading,
+    setIsLoading,
     handleManualSave,
     onSceneAdvance,
     exitSave,
     loadSlotIntoState,
+    clearLoading,
   };
 }

@@ -52,24 +52,6 @@ export function useSceneTransition({
     };
   }, []);
 
-  // Auto-advance untuk transition scene (pakai fade karena memang efek khusus)
-  useEffect(() => {
-    if (!currentScene) return;
-
-    if (currentScene.type === "transition" && currentScene.duration) {
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-      autoAdvanceRef.current = setTimeout(
-        () => goToSceneWithFade(currentScene.next),
-        currentScene.duration
-      );
-    }
-
-    return () => {
-      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentId, language]);
-
   /**
    * goToScene — pindah scene TANPA fade.
    * Dipakai untuk advance dialog/monolog normal supaya tidak ada layar gelap.
@@ -149,6 +131,31 @@ export function useSceneTransition({
     }, FADE_MS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onSceneAdvance, onNoNextScene, sceneRegistry]);
+
+  // Auto-advance untuk transition scene (pakai fade karena memang efek khusus)
+  useEffect(() => {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
+
+    if (!currentScene) return;
+
+    // HANYA transition scene yang auto-advance dengan fade.
+    // Ini penting supaya dialog/monolog normal tidak ikut "kedip hitam".
+    if (currentScene.type === "transition" && currentScene.duration) {
+      autoAdvanceRef.current = setTimeout(() => {
+        goToSceneWithFade(currentScene.next);
+      }, currentScene.duration);
+    }
+
+    return () => {
+      if (autoAdvanceRef.current) {
+        clearTimeout(autoAdvanceRef.current);
+        autoAdvanceRef.current = null;
+      }
+    };
+  }, [currentScene, goToSceneWithFade]);
 
   return {
     currentId,

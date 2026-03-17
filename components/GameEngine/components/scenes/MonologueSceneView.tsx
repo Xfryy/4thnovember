@@ -8,9 +8,10 @@
 import React, { useCallback } from "react";
 import type { Scene, MonologueScene, SceneCharacter } from "@/types/game";
 import DialogueBox from "../DialogueBox";
+import SceneBackground from "../SceneBackground";
+import SceneCharacterSprite from "../SceneCharacterSprite";
 import {
   getCharWrapperStyle,
-  getCharImgStyle,
   CHARACTER_KEYFRAMES,
 } from "@/lib/Characterlayout";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -40,39 +41,25 @@ export default function MonologueSceneView({
         inset:              0,
         width:              "100%",
         height:             "100%",
-        background:         scene.bg?.color ?? "#000",
-        backgroundImage:    scene.bg?.image ? `url(${scene.bg.image})` : undefined,
-        backgroundSize:     "cover",
-        backgroundPosition: "center top",
         overflow:           "hidden",
       }}
     >
-      {scene.bg?.overlay && (
-        <div
-          style={{
-            position:      "absolute",
-            inset:         0,
-            background:    scene.bg.overlay,
-            zIndex:        1,
-            pointerEvents: "none",
-          }}
-        />
-      )}
+      <SceneBackground bg={scene.bg} />
 
       {/* Characters */}
       {characters && characters.length > 0 && (
         <div style={{ position: "absolute", inset: 0, zIndex: 5, pointerEvents: "none" }}>
           {characters.map((char) => (
             <div
-              key={`${char.id}-${char.sprite}`}
-              style={getCharWrapperStyle(char, isMobile)}
+              key={char.id}
+              style={{
+                ...getCharWrapperStyle(char, isMobile),
+                willChange: "transform, opacity",
+                transition:
+                  "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease",
+              }}
             >
-              <img
-                src={char.sprite}
-                alt={char.id}
-                style={getCharImgStyle(char)}
-                draggable={false}
-              />
+              <SceneCharacterSprite char={char} />
             </div>
           ))}
         </div>

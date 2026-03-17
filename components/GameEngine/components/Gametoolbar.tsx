@@ -14,6 +14,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useVNControls } from "@/store/Usevncontrols";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { auth } from "@/lib/firebase";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 interface GameToolbarProps {
   actNumber: number;
@@ -21,11 +23,18 @@ interface GameToolbarProps {
   isSaving: boolean;
   isLoading?: boolean;
   savedFlash: boolean;
+  characterName?: string;
   onMenu: () => void;
   onQuickSave: () => void;
   onSave: () => void;
   onLoad: () => void;
   onSettings: () => void;
+  onInventory?: () => void;
+  isAdminMode?: boolean;
+  onToggleAdminMode?: () => void;
+  onAdminNavigate?: (direction: 'prev' | 'next') => void;
+  onActChange?: (actNumber: number) => void;
+  currentSceneId?: string;
 }
 
 export default function GameToolbar({
@@ -34,11 +43,18 @@ export default function GameToolbar({
   isSaving,
   isLoading,
   savedFlash,
+  characterName = "",
   onMenu,
   onQuickSave,
   onSave,
   onLoad,
   onSettings,
+  onInventory,
+  isAdminMode = false,
+  onToggleAdminMode,
+  onAdminNavigate,
+  onActChange,
+  currentSceneId = '',
 }: GameToolbarProps) {
   const {
     autoPlay, skipMode, hideUI,
@@ -48,6 +64,42 @@ export default function GameToolbar({
   const isMobile = useIsMobile();
   // On mobile the extended save/config buttons are hidden behind a collapsed state
   const [expanded, setExpanded] = useState(false);
+  const [showActSelector, setShowActSelector] = useState(false);
+  const [selectedAct, setSelectedAct] = useState<number>(actNumber);
+  const [sceneInput, setSceneInput] = useState<string>("");
+  const [stats, setStats] = useState<{ totalPlays: number; totalPlayTime: number }>({
+    totalPlays: 0,
+    totalPlayTime: 0,
+  });
+
+  const formatPlaytime = (minutes: number): string => {
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  };
+
+  const fetchStats = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const snap = await getDoc(doc(getFirestore(), "users", user.uid));
+      if (!snap.exists()) return;
+      const d = snap.data() as any;
+      setStats({
+        totalPlays: d.totalPlays ?? 0,
+        totalPlayTime: d.totalPlayTime ?? 0,
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+    const t = setInterval(fetchStats, 60000);
+    return () => clearInterval(t);
+  }, [fetchStats]);
 
   // Collapse when switching to desktop
   useEffect(() => {
@@ -63,16 +115,40 @@ export default function GameToolbar({
       if (e.code === "KeyA" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleAutoPlay(); }
       if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleSkip(); }
       if (e.code === "KeyV" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleHideUI(); }
+      if (e.code === "KeyI" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); onInventory?.(); }
+      // Admin mode toggle: Ctrl+Shift+A
+      if (e.code === "KeyA" && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        onToggleAdminMode?.();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggleAutoPlay, toggleSkip, toggleHideUI, toggleLog]);
+  }, [toggleAutoPlay, toggleSkip, toggleHideUI, toggleLog, onToggleAdminMode, onInventory]);
 
   const handleToggleExpand = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     // stopPropagation so the tap doesn't also fire dialogue advance
     e.stopPropagation();
     setExpanded((p) => !p);
   }, []);
+
+  const handleActSelect = () => {
+    if (!onActChange) return;
+    
+    // If scene number is specified, jump to that scene
+    if (sceneInput.trim()) {
+      const sceneNum = parseInt(sceneInput.trim(), 10);
+      if (!isNaN(sceneNum) && sceneNum > 0) {
+        const sceneId = `act${selectedAct}_s${sceneNum}`;
+        // Store scene ID in sessionStorage for GameEngine to pick up
+        sessionStorage.setItem("jumpToScene", sceneId);
+      }
+    }
+    
+    onActChange(selectedAct);
+    setShowActSelector(false);
+    setSceneInput("");
+  };
 
   // ── Hidden UI mode ────────────────────────────────────────────────────────
   if (hideUI) {
@@ -95,6 +171,7 @@ export default function GameToolbar({
             { key: "F", label: "Skip",    color: "#f59e0b", action: toggleSkip    },
             { key: "H", label: "History", color: "#a5b4fc", action: toggleLog     },
             { key: "V", label: "Show UI", color: "#94a3b8", action: toggleHideUI  },
+            { key: "I", label: "Items",   color: "#3b82f6", action: onInventory || (() => {}) },
           ] as const).map(({ key, label, color, action }, i) => (
             <div key={key} style={{ display: "flex", alignItems: "center", gap: isMobile ? 3 : 5 }}>
               {i > 0 && <span style={{ color: "rgba(255,255,255,0.1)", fontSize: "0.5rem" }}>·</span>}
@@ -175,6 +252,144 @@ export default function GameToolbar({
         <ToolbarBtn onClick={toggleSkip}     accent="#f59e0b" icon="⏩" label="Skip" tooltip="Skip [F]" active={skipMode} compact={isMobile} />
         <ToolbarBtn onClick={toggleLog}      accent="#a5b4fc" icon="📜" label="Log"  tooltip="History [H]" compact={isMobile} />
         <ToolbarBtn onClick={toggleHideUI}   accent="#94a3b8" icon="👁" label="Hide" tooltip="Hide [V]" compact={isMobile} />
+        <ToolbarBtn onClick={() => onInventory?.()} accent="#3b82f6" icon="🎒" label="Items" tooltip="Inventory [I]" compact={isMobile} />
+
+        {/* Spacer */}
+        <div style={{ marginLeft: "auto" }} />
+
+        {/* Player status pill (nama + trophy + playtime) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 6 : 10,
+            borderRadius: 16,
+            padding: isMobile ? "6px 10px" : "8px 14px",
+            background: "rgba(15, 10, 35, 0.55)",
+            border: "1px solid rgba(236,72,153,0.22)",
+            boxShadow: "0 6px 26px rgba(0,0,0,0.35)",
+            backdropFilter: "blur(12px)",
+            flexShrink: 0,
+            minWidth: isMobile ? 0 : 240,
+          }}
+          title="Player status"
+        >
+          <div
+            style={{
+              width: isMobile ? 28 : 34,
+              height: isMobile ? 28 : 34,
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 900,
+              color: "white",
+              fontSize: isMobile ? "0.85rem" : "0.95rem",
+              background: "linear-gradient(135deg, #ec4899, #a855f7)",
+              boxShadow: "0 0 12px rgba(236,72,153,0.35)",
+              flexShrink: 0,
+            }}
+          >
+            {(characterName?.charAt(0) || "?").toUpperCase()}
+          </div>
+
+          {!isMobile && (
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontWeight: 900,
+                  fontSize: "0.85rem",
+                  lineHeight: 1.15,
+                  color: "#fff",
+                  maxWidth: 180,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {characterName || "Player"}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.65rem",
+                  color: "rgba(167,139,250,0.7)",
+                  letterSpacing: "0.04em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                🏆 {stats.totalPlays} · ⏱ {formatPlaytime(stats.totalPlayTime)}
+              </div>
+            </div>
+          )}
+
+          {isMobile && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "rgba(255,255,255,0.85)",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span>🏆 {stats.totalPlays}</span>
+              <span>⏱ {formatPlaytime(stats.totalPlayTime)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Admin Navigation */}
+        {isAdminMode && (
+          <>
+            <Divider compact={isMobile} />
+            <ToolbarBtn
+              onClick={() => onAdminNavigate?.('prev')}
+              accent="#ef4444"
+              icon="◀"
+              label="Prev"
+              tooltip="Previous Scene [←]"
+              compact={isMobile}
+            />
+            <ToolbarBtn
+              onClick={() => onAdminNavigate?.('next')}
+              accent="#22c55e"
+              icon="▶"
+              label="Next"
+              tooltip="Next Scene [→]"
+              compact={isMobile}
+            />
+          </>
+        )}
+
+        <Divider compact={isMobile} />
+
+        {/* Admin Mode Toggle */}
+        <ToolbarBtn
+          onClick={() => onToggleAdminMode?.()}
+          accent={isAdminMode ? "#f97316" : "#6b7280"}
+          icon="⚡"
+          label="Admin"
+          tooltip="Toggle Admin Mode [Ctrl+Shift+A]"
+          active={isAdminMode}
+          compact={isMobile}
+        />
+
+        {/* Admin Act Selector */}
+        {isAdminMode && (
+          <>
+            <Divider compact={isMobile} />
+            <ToolbarBtn
+              onClick={() => setShowActSelector(true)}
+              accent="#8b5cf6"
+              icon="📖"
+              label="Act"
+              tooltip="Select Act"
+              compact={isMobile}
+            />
+          </>
+        )}
 
         <Divider compact={isMobile} />
 
@@ -215,6 +430,23 @@ export default function GameToolbar({
             {sceneNumber}
           </span>
         </div>
+
+        {/* Admin Mode - Scene ID Display */}
+        {isAdminMode && currentSceneId && (
+          <div style={{
+            padding: isMobile ? "2px 6px" : "3px 10px",
+            borderRadius: 6,
+            background: "rgba(249,115,22,0.1)",
+            border: "1px solid rgba(249,115,22,0.3)",
+            marginRight: 4,
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: isMobile ? "0.5rem" : "0.55rem", color: "#f97316", letterSpacing: "0.1em", fontWeight: 600 }}>
+              ID: {currentSceneId}
+            </span>
+          </div>
+        )}
 
         <Divider compact={isMobile} />
 
@@ -275,6 +507,174 @@ export default function GameToolbar({
           100% { opacity: 0; }
         }
       `}</style>
+      {/* Act Selector Modal */}
+      {showActSelector && (
+        <div
+          onClick={() => setShowActSelector(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "rgba(0,0,0,0.7)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(135deg, rgba(17,10,38,0.95), rgba(4,2,12,0.98))",
+              border: "1px solid rgba(139,92,246,0.3)",
+              borderRadius: 16,
+              padding: 24,
+              minWidth: 320,
+              boxShadow: "0 20px 60px rgba(139,92,246,0.3)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#fff", letterSpacing: "0.1em" }}>
+                📖 Select Act & Scene
+              </h3>
+              <button
+                onClick={() => setShowActSelector(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#9ca3af",
+                  fontSize: 20,
+                  cursor: "pointer",
+                  padding: "0 4px",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+    
+            {/* Act Selection */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 12, color: "#9ca3af", marginBottom: 8, letterSpacing: "0.05em" }}>
+                SELECT ACT
+              </label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[1, 2].map((actNum) => (
+                  <button
+                    key={actNum}
+                    onClick={() => setSelectedAct(actNum)}
+                    style={{
+                      padding: "12px 16px",
+                      background: selectedAct === actNum
+                        ? "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2))"
+                        : "rgba(255,255,255,0.05)",
+                      border: selectedAct === actNum
+                        ? "1px solid rgba(139,92,246,0.5)"
+                        : "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 8,
+                      color: selectedAct === actNum ? "#a78bfa" : "#d1d5db",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = selectedAct === actNum
+                        ? "linear-gradient(135deg, rgba(139,92,246,0.4), rgba(168,85,247,0.3))"
+                        : "rgba(255,255,255,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = selectedAct === actNum
+                        ? "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2))"
+                        : "rgba(255,255,255,0.05)";
+                    }}
+                  >
+                    {actNum === 1 ? "Act 1 — The Beginning" : "Act 2 — 帰還 (Homecoming)"}
+                    {selectedAct === actNum && (
+                      <span style={{ float: "right", fontSize: 12, opacity: 0.7 }}>✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+    
+            {/* Scene Number Input */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 12, color: "#9ca3af", marginBottom: 8, letterSpacing: "0.05em" }}>
+                SCENE NUMBER (optional)
+              </label>
+              <input
+                type="number"
+                min="1"
+                value={sceneInput}
+                onChange={(e) => setSceneInput(e.target.value)}
+                placeholder="e.g., 20 for scene 20"
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8,
+                  color: "#fff",
+                  fontSize: 14,
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(139,92,246,0.5)";
+                  e.currentTarget.style.background = "rgba(139,92,246,0.1)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }}
+              />
+              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 6 }}>
+                Leave empty to start from first scene
+              </p>
+            </div>
+    
+            {/* Action Buttons */}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  setShowActSelector(false);
+                  setSceneInput("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 8,
+                  color: "#9ca3af",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleActSelect}
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(168,85,247,0.2))",
+                  border: "1px solid rgba(139,92,246,0.5)",
+                  borderRadius: 8,
+                  color: "#a78bfa",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Jump to Act {selectedAct}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

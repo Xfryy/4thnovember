@@ -19,6 +19,7 @@ import GameToolbar from "./components/Gametoolbar";
 import SceneRenderer from "./components/SceneRenderer";
 import SaveSlotsModal from "../StartMenu/components/SaveslotsModal";
 import SettingsModal from "../StartMenu/components/SettingsModal";
+import InventoryModal from "./components/InventoryModal";
 import type { SceneAudio } from "@/types/game";
 import type { SaveSlot } from "@/lib/saveSlots";
 import type {
@@ -26,7 +27,7 @@ import type {
   GameEngineContext,
 } from "@/components/Acts/BaseActConfig";
 import HistoryLog from "./components/scenes/HistoryLog";
-import { useLocaleRegistry } from "@/components/Acts/actRegistry";
+import { useLocaleRegistry, ALL_REGISTRIES } from "@/components/Acts/actRegistry";
 import { useSettingsStore } from "@/store/Settingsstore";
 
 // ── Player name substitution ──────────────────────────────────────────────────
@@ -78,6 +79,10 @@ export default function GameEngine({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showInventoryModal, setShowInventoryModal] = useState(false);
+
+  // Admin navigation state
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   // ── Locale-aware scene registry ───────────────────────────────────────────
   const SCENE_REGISTRY = useLocaleRegistry(actNumber);
@@ -100,6 +105,30 @@ export default function GameEngine({
     exitSave,
     loadSlotIntoState,
   } = useSaveState({ actNumber, startSceneId: initialSceneId });
+
+  // If we came from Main Menu "Continue/Load", hydrate full slot state (incl inventory).
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("resumeSlot");
+      if (!raw) return;
+      sessionStorage.removeItem("resumeSlot");
+      const slot = JSON.parse(raw) as {
+        currentAct: number;
+        currentSceneId: string;
+        choices?: Record<string, string>;
+        affection?: Record<string, number>;
+        unlockedCharacters?: string[];
+        unlockedCGs?: string[];
+        inventory?: string[];
+      };
+      if (slot?.currentAct && slot?.currentSceneId) {
+        loadSlotIntoState(slot);
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Scene transition hook ──────────────────────────────────────────────────
   const {
@@ -180,6 +209,16 @@ export default function GameEngine({
 
       loadAsset: async (path) => path,
       preloadAssets: async () => {},
+
+      addToInventory: (itemId: string) => {
+        saveStateRef.current.inventory = [
+          ...(saveStateRef.current.inventory || []),
+          itemId,
+        ];
+      },
+      hasItem: (itemId: string) => {
+        return (saveStateRef.current.inventory || []).includes(itemId);
+      },
     }),
     // sengaja kosong: semua data dibaca dari ref
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,6 +302,22 @@ export default function GameEngine({
         overlay.remove();
         return;
       }
+      case "fadeBlack":
+      case "blink": {
+        const overlay = document.createElement("div");
+        overlay.style.cssText =
+          "position:fixed;inset:0;background:#000;z-index:99999;pointer-events:none;opacity:0;transition:opacity 0.4s ease-in-out;";
+        document.body.appendChild(overlay);
+        void overlay.offsetHeight;
+        // Fade in (hitam penuh)
+        overlay.style.opacity = "1";
+        await new Promise((r) => setTimeout(r, 400));
+        // Fade out (kembali transparan)
+        overlay.style.opacity = "0";
+        await new Promise((r) => setTimeout(r, 400));
+        overlay.remove();
+        return;
+      }
       case "textEffect":
         await runAnimation(
           el,
@@ -307,8 +362,9 @@ export default function GameEngine({
     ) => {
       if (isTransitioning) return;
 
-      // pakai registry ref (ikut bahasa terbaru)
-      const nextScene = sceneRegistryRef.current[nextSceneId];
+      // Use ALL_REGISTRIES for cross-act scene lookup
+      const allScenes = ALL_REGISTRIES[language] ?? ALL_REGISTRIES["id"];
+      const nextScene = allScenes[nextSceneId];
       if (!nextScene) {
         console.error(`❌ Scene not found: ${nextSceneId}`);
         return;
@@ -331,7 +387,7 @@ export default function GameEngine({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isTransitioning, goToScene, goToSceneWithChoice]
+    [isTransitioning, goToScene, goToSceneWithChoice, language]
   );
 
   useEffect(() => {
@@ -340,30 +396,55 @@ export default function GameEngine({
 
   // ── Act change ─────────────────────────────────────────────────────────────
   const handleActChange = useCallback(
-    async (newActNumber: number, firstSceneId: string) => {
+    async (newActNumber: number, firstSceneId?: string) => {
       if (actConfigRef.current?.onActEnd) {
         await actConfigRef.current.onActEnd(gameContext, "complete");
       }
       audioManager.stopAll();
 
       try {
-        const module = await import(
-          `@/components/Acts/Act${newActNumber}/config`
-        );
+        // Use explicit dynamic imports for better chunk loading
+        let module;
+        if (newActNumber === 1) {
+          module = await import(`@/components/Acts/Act1/config`);
+        } else if (newActNumber === 2) {
+          module = await import(`@/components/Acts/Act2/config`);
+        } else {
+          throw new Error(`Act ${newActNumber} not found`);
+        }
+
         const newCfg = module.default as ActConfig;
         actConfigRef.current = newCfg;
         actDataRef.current = {};
         setActConfig(newCfg);
 
+        // Check for jumpToScene from sessionStorage (admin act selector)
+        const jumpToSceneId = sessionStorage.getItem("jumpToScene");
+        let targetSceneId = firstSceneId;
+        
+        if (jumpToSceneId) {
+          // Verify the scene exists in the new act
+          const allScenes = ALL_REGISTRIES[language] ?? ALL_REGISTRIES["id"];
+          if (allScenes[jumpToSceneId]) {
+            targetSceneId = jumpToSceneId;
+          }
+          sessionStorage.removeItem("jumpToScene");
+        }
+        
+        // Default to first scene of the act
+        if (!targetSceneId) {
+          targetSceneId = getActFirstScene(newActNumber);
+        }
+
         if (newCfg.onActStart) await newCfg.onActStart(gameContext);
         onActComplete?.(newActNumber);
-        jumpToScene(firstSceneId);
+        jumpToScene(targetSceneId);
       } catch (err) {
         console.error("❌ Failed to load new act:", err);
         setError(String(err));
       }
     },
-    [gameContext, jumpToScene, onActComplete]
+    [gameContext, jumpToScene, onActComplete, language]
   );
 
   // ── Initial act load ───────────────────────────────────────────────────────
@@ -416,6 +497,65 @@ export default function GameEngine({
     onBackToMenu();
   }, [gameContext, exitSave, onBackToMenu]);
 
+  // ── Admin Navigation ───────────────────────────────────────────────────────
+  const handleAdminNavigate = useCallback((direction: 'prev' | 'next') => {
+    const allScenes = ALL_REGISTRIES[language] ?? ALL_REGISTRIES["id"];
+    const sceneKeys = Object.keys(allScenes).sort((a, b) => {
+      // Sort by scene number within act
+      const aNum = parseInt(a.split('_s')[1] || '0');
+      const bNum = parseInt(b.split('_s')[1] || '0');
+      const aAct = parseInt(a.split('_')[0].replace('act', ''));
+      const bAct = parseInt(b.split('_')[0].replace('act', ''));
+      if (aAct !== bAct) return aAct - bAct;
+      return aNum - bNum;
+    });
+
+    const currentIndex = sceneKeys.indexOf(currentSceneId);
+    if (currentIndex === -1) return;
+
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= sceneKeys.length) return; // End of all scenes
+    } else {
+      nextIndex = currentIndex - 1;
+      if (nextIndex < 0) return; // Start of all scenes
+    }
+
+    const nextSceneId = sceneKeys[nextIndex];
+    const nextScene = allScenes[nextSceneId];
+    
+    if (!nextScene) return;
+
+    // Check if crossing act boundaries
+    const nextAct = getActForScene(nextSceneId);
+    if (nextAct !== saveStateRef.current.actNumber) {
+      handleActChange(nextAct, nextSceneId);
+    } else {
+      jumpToScene(nextSceneId);
+    }
+  }, [currentSceneId, language, handleActChange, jumpToScene, saveStateRef]);
+
+  // Admin keyboard shortcuts
+  useEffect(() => {
+    if (!isAdminMode) return;
+    
+    const handleAdminKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === "INPUT") return;
+      if (e.code === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        handleAdminNavigate('next');
+      }
+      if (e.code === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        handleAdminNavigate('prev');
+      }
+    };
+    
+    window.addEventListener("keydown", handleAdminKey);
+    return () => window.removeEventListener("keydown", handleAdminKey);
+  }, [isAdminMode, handleAdminNavigate]);
+
   // ── Character click ────────────────────────────────────────────────────────
   const handleCharacterClick = useCallback(
     async (characterId: string) => {
@@ -435,6 +575,8 @@ export default function GameEngine({
       } else {
         jumpToScene(slot.currentSceneId);
       }
+      // Clear loading state after scene transition completes
+      // Note: loadSlotIntoState already handles isLoading internally
     },
     [handleActChange, jumpToScene, loadSlotIntoState, saveStateRef]
   );
@@ -566,8 +708,6 @@ export default function GameEngine({
           position: "relative",
           width: "100%",
           height: "100%",
-          opacity: visible ? 1 : 0,
-          transition: `opacity ${TRANSITION_MS}ms ease`,
           pointerEvents: isTransitioning ? "none" : "auto",
         }}
       >
@@ -581,17 +721,42 @@ export default function GameEngine({
         />
       </div>
 
+      {/* 
+        Fade overlay untuk transisi "jump"/transition.
+        Supaya scene tidak tiba-tiba hilang ke background hitam (terasa kaku / kedip),
+        kita pakai overlay yang halus di atas scene.
+      */}
+      <div
+        aria-hidden
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 40, // di atas scene, di bawah toolbar (50)
+          pointerEvents: "none",
+          background: "#000",
+          opacity: visible ? 0 : 1,
+          transition: `opacity ${TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        }}
+      />
+
       <GameToolbar
         actNumber={saveStateRef.current.actNumber}
         sceneNumber={currentScene.sceneNumber}
         isSaving={isSaving}
         isLoading={isActLoading}
         savedFlash={savedFlash}
+        characterName={characterName}
         onMenu={handleBackToMenu}
         onQuickSave={() => handleManualSave(1)}
         onSave={() => setShowSaveModal(true)}
         onLoad={() => setShowLoadModal(true)}
         onSettings={() => setShowSettingsModal(true)}
+        onInventory={() => setShowInventoryModal(true)}
+        isAdminMode={isAdminMode}
+        onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
+        onAdminNavigate={handleAdminNavigate}
+        onActChange={handleActChange}
+        currentSceneId={currentSceneId}
       />
 
       {showSaveModal && (
@@ -619,6 +784,12 @@ export default function GameEngine({
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+      />
+
+      <InventoryModal
+        isOpen={showInventoryModal}
+        onClose={() => setShowInventoryModal(false)}
+        inventoryIds={saveStateRef.current.inventory || []}
       />
 
       <HistoryLog />

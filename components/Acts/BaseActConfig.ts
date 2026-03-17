@@ -40,6 +40,10 @@ export interface GameEngineContext {
   // Utilities
   loadAsset: (path: string) => Promise<string>;
   preloadAssets: (paths: string[]) => Promise<void>;
+
+  // Inventory
+  addToInventory: (itemId: string) => void;
+  hasItem: (itemId: string) => boolean;
 }
 
 /**

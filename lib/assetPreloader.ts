@@ -34,7 +34,10 @@ export async function getAllPublicAssets(): Promise<string[]> {
   return [
     // Backgrounds
     '/Image/GameBG/Bg-1.jpg',
-    
+    '/Image/GameBG/Exit.png',
+    '/Image/GameBG/Hallway.png',
+    '/Image/GameBG/road.jpg',
+
     // Character sprites - Rin
     '/Image/Rinn/defal-smile-Photoroom.png',
     '/Image/Rinn/eye-close-smile.png',
@@ -49,15 +52,22 @@ export async function getAllPublicAssets(): Promise<string[]> {
     '/Image/Rinn/pointing.png',
     '/Image/Rinn/hai.png',
     '/Image/Rinn/menguap.png',
-    
+
     // NPCs
     '/Image/NPC/doctor/doctor.png',
-    
-    // Scene images
+    '/Image/NPC/doctor/Reception.png',
+
+    // Scene images - Act 1
     '/Image/scenes/Act_1/scene_1.jpeg',
     '/Image/scenes/Act_1/scene_1-2.jpeg',
     '/Image/scenes/Act_1/scene-doctor.jpeg',
-    
+
+    // Scene images - Act 2
+    '/Image/scenes/Act_2/scene_1.png',
+    '/Image/scenes/Act_2/scene_2.png',
+    '/Image/scenes/Act_2/scene_3.png',
+    '/Image/scenes/Act_2/scene_4.png',
+
     // Audio files (optional - audio bisa di-preload atau tidak)
     // '/audio/sfx/knocking-door.mp3',
   ];

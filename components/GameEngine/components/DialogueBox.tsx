@@ -30,21 +30,24 @@ export default function DialogueBox({
   const getTextSpeedMs = useSettingsStore((s) => s.getTextSpeedMs);
   const isMobile       = useIsMobile();
 
-  const { autoPlay, autoPlayDelay, skipMode, hideUI, addLogEntry } = useVNControls();
+  const { autoPlay, autoPlayDelay, skipMode, hideUI, addLogEntry, toggleSkip, toggleAutoPlay } = useVNControls();
 
   const resolvedSpeaker = speaker ? resolveTokens(speaker, characterName) : undefined;
   const resolvedText    = resolveTokens(text, characterName);
 
   const [displayed, setDisplayed] = useState("");
   const [finished,  setFinished]  = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
   const intervalRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const autoPlayTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loggedRef      = useRef(false);
   const indexRef       = useRef(0);
+  const advanceLockRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimers = useCallback(() => {
     if (intervalRef.current)   { clearInterval(intervalRef.current);  intervalRef.current = null; }
     if (autoPlayTimer.current) { clearTimeout(autoPlayTimer.current); autoPlayTimer.current = null; }
+    if (advanceLockRef.current) { clearTimeout(advanceLockRef.current); advanceLockRef.current = null; }
   }, []);
 
   const showInstant = useCallback(() => {
@@ -64,6 +67,7 @@ export default function DialogueBox({
     clearTimers();
     setDisplayed("");
     setFinished(false);
+    setIsAdvancing(false);
     indexRef.current = 0;
     loggedRef.current = false;
 
@@ -103,9 +107,18 @@ export default function DialogueBox({
   }, [finished, autoPlay, skipMode, autoPlayDelay, onAdvance, logEntry]);
 
   const handleAdvance = useCallback(() => {
+    if (isAdvancing) return;
+    if (skipMode) toggleSkip();
+    if (autoPlay) toggleAutoPlay();
     if (!finished) showInstant();
-    else { clearTimers(); onAdvance(); }
-  }, [finished, showInstant, clearTimers, onAdvance]);
+    else {
+      // Anti spam-click: lock singkat biar animasi UI nggak kepotong dan terasa lebih smooth.
+      setIsAdvancing(true);
+      clearTimers();
+      advanceLockRef.current = setTimeout(() => setIsAdvancing(false), 140);
+      onAdvance();
+    }
+  }, [isAdvancing, finished, showInstant, clearTimers, onAdvance, skipMode, autoPlay, toggleSkip, toggleAutoPlay]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -217,6 +230,11 @@ export default function DialogueBox({
         backdropFilter: "blur(20px)",
         boxShadow: "0 -2px 40px rgba(236,72,153,0.05), inset 0 1px 0 rgba(255,255,255,0.04)",
         overflow: "hidden",
+        transform: finished ? "translateY(0)" : "translateY(2px)",
+        opacity: isAdvancing ? 0.92 : 1,
+        filter: isAdvancing ? "blur(0.3px)" : "none",
+        transition:
+          "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease, filter 180ms ease",
       }}>
         {/* Left accent bar */}
         <div style={{

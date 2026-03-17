@@ -12,12 +12,14 @@ export interface TransitionSceneViewProps {
 type TransitionPhase = "fade-in" | "hold" | "fade-out";
 
 const FADE_MS = 400; // Lebih cepat untuk efek kedip
+const FADE_OUT_MS = 1200; // Lebih lambat untuk efek bangun tidur
 
 const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
   scene,
   onComplete,
 }) => {
   const [phase, setPhase] = useState<TransitionPhase>("fade-in");
+  const [darkenOpacity, setDarkenOpacity] = useState(0);
   const skippedRef = useRef(false);
 
   useEffect(() => {
@@ -26,10 +28,14 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
 
   useEffect(() => {
     skippedRef.current = false;
-    const duration = Math.max(scene.duration ?? 800, FADE_MS * 2);
+    const duration = Math.max(scene.duration ?? 800, FADE_MS + FADE_OUT_MS);
 
-    const t1 = setTimeout(() => setPhase("hold"), FADE_MS);
-    const t2 = setTimeout(() => setPhase("fade-out"), duration - FADE_MS);
+    const t1 = setTimeout(() => {
+      setPhase("hold");
+      // Start darkening effect during hold phase - fade to black
+      setDarkenOpacity(1);
+    }, FADE_MS);
+    const t2 = setTimeout(() => setPhase("fade-out"), duration - FADE_OUT_MS);
     const t3 = setTimeout(async () => {
       if (scene.next) await onComplete(scene.next);
     }, duration);
@@ -65,12 +71,25 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
         backgroundPosition: "center",
         overflow: "hidden",
         opacity: getOpacity(),
-        transition: phase === "fade-out" ? `opacity ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
-        animation: phase === "fade-in" 
-          ? `tsv-fadein ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1) forwards` 
+        transition: phase === "fade-out" ? `opacity ${FADE_OUT_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` : "none",
+        animation: phase === "fade-in"
+          ? `tsv-fadein ${FADE_MS}ms cubic-bezier(0.4, 0, 0.2, 1) forwards`
           : "none",
       }}
     >
+      {/* Darken overlay with smooth transition - fade to black */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "#000000",
+          opacity: darkenOpacity,
+          pointerEvents: "none",
+          zIndex: 1,
+          transition: `opacity ${FADE_MS * 2}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+        }}
+      />
+
       {scene.bg?.overlay && (
         <div
           style={{
@@ -96,9 +115,9 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
         >
           <p
             style={{
-              color: "rgba(255,255,255,0.88)",
+              color: "#ffffff",
               fontSize: "clamp(1rem, 2.5vw, 1.5rem)",
-              fontWeight: 300,
+              fontWeight: 400,
               letterSpacing: "0.22em",
               textAlign: "center",
               whiteSpace: "pre-line",
@@ -106,6 +125,16 @@ const TransitionSceneView: React.FC<TransitionSceneViewProps> = ({
               opacity: phase === "hold" ? 1 : 0,
               transform: phase === "hold" ? "none" : "translateY(8px)",
               transition: "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              // Text shadow untuk kontras maksimal pada background gelap
+              textShadow: `
+                0 0 10px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 0, 0, 0.6),
+                0 0 30px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3)
+              `,
+              // Fallback stroke untuk keterbacaan ekstra
+              WebkitTextStroke: "1px rgba(0, 0, 0, 0.5)",
             }}
           >
             {scene.text}

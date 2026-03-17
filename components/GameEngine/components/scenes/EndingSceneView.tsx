@@ -39,7 +39,12 @@ export default function EndingSceneView({ scene, onAdvance }: EndingSceneViewPro
   }, []);
 
   const handleContinue = useCallback(async () => {
-    if (!canContinue || !scene.next) return;
+    if (!canContinue) return;
+    if (!scene.next) {
+      console.warn("⚠️ EndingScene has no 'next' property:", scene.id, scene);
+      return;
+    }
+    console.log("🎬 EndingScene advancing to:", scene.next);
     await onAdvance(scene.next);
   }, [canContinue, scene, onAdvance]);
 

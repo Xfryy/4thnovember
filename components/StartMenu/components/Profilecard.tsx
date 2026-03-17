@@ -94,6 +94,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
       {/* ── Profile pill ── */}
       <button
         onClick={() => setOpen(true)}
+        className="profile-pill-btn"
         style={{
           display: "flex",
           alignItems: "center",
@@ -106,6 +107,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
           boxShadow: "0 4px 20px rgba(236,72,153,0.15)",
           cursor: "pointer",
           transition: "all 0.2s ease",
+          minWidth: 54,
         }}
         onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; }}
         onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
@@ -126,7 +128,7 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
             background: "linear-gradient(135deg, #f9a8d4, #ec4899)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            maxWidth: 120,
+            maxWidth: 140,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -155,13 +157,37 @@ export default function ProfileCard({ characterName, email, onLogout, isLoading,
           flexShrink: 0,
           background: "linear-gradient(135deg, #ec4899, #a855f7)",
           boxShadow: "0 0 12px rgba(236,72,153,0.5)",
-        }}>{initial}</div>
+        }} className="profile-pill-avatar">{initial}</div>
       </button>
 
       {/* ── Inline style to show pill text on sm+ ── */}
       <style>{`
         @media (min-width: 480px) {
           .profile-pill-text { display: block !important; }
+        }
+        @media (min-width: 768px) {
+          .profile-pill-btn {
+            padding: 8px 12px !important;
+            gap: 10px !important;
+          }
+          .profile-pill-avatar {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1rem !important;
+          }
+        }
+        @media (min-width: 1024px) {
+          /* Desktop polish: make pill roomier and easier to read */
+          .profile-pill-text p:first-child { max-width: 220px !important; }
+          .profile-pill-btn {
+            padding: 10px 14px !important;
+            gap: 12px !important;
+          }
+          .profile-pill-avatar {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 1.05rem !important;
+          }
         }
       `}</style>
 

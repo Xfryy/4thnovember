@@ -40,6 +40,10 @@ export const ACT_1_CONFIG: ActConfig = {
     if (sceneId === "act1_s32") {
       engine.setActData("rin_name_revealed", true);
     }
+
+    if (sceneId === "act1_s57") {
+      engine.addToInventory("medicine");
+    }
   },
 
   // ── Character Interactions ───────────────────────────────────────

@@ -11,6 +11,7 @@ export interface GameStateSnapshot {
   affection: Record<string, number>;
   unlockedCharacters?: string[];
   unlockedCGs?: string[];
+  inventory?: string[];
   sessionStartMs: number;
   savedPlayTime: number;
 }
@@ -41,6 +42,9 @@ export async function saveProgress(snapshot: GameStateSnapshot): Promise<void> {
     currentSceneId: snapshot.sceneId,
     choices: snapshot.choices,
     affection: snapshot.affection,
+    unlockedCharacters: snapshot.unlockedCharacters ?? [],
+    unlockedCGs: snapshot.unlockedCGs ?? [],
+    inventory: snapshot.inventory ?? [],
     playTimeSeconds: Math.floor(playTimeSeconds),
     lastSaved: Date.now(),
   };

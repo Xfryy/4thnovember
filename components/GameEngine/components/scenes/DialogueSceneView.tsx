@@ -8,9 +8,10 @@
 import React, { useCallback } from "react";
 import type { Scene, DialogueScene, SceneCharacter } from "@/types/game";
 import DialogueBox from "../DialogueBox";
+import SceneBackground from "../SceneBackground";
+import SceneCharacterSprite from "../SceneCharacterSprite";
 import {
   getCharWrapperStyle,
-  getCharImgStyle,
   CHARACTER_KEYFRAMES,
 } from "@/lib/Characterlayout";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -40,25 +41,10 @@ export default function DialogueSceneView({
         inset:              0,
         width:              "100%",
         height:             "100%",
-        background:         scene.bg?.color || "#000",
-        backgroundImage:    scene.bg?.image ? `url(${scene.bg.image})` : undefined,
-        backgroundSize:     scene.bg?.size ?? "cover",
-        backgroundPosition: scene.bg?.position ?? "center top",
         overflow:           "hidden",
       }}
     >
-      {/* Overlay */}
-      {scene.bg?.overlay && (
-        <div
-          style={{
-            position:      "absolute",
-            inset:         0,
-            background:    scene.bg.overlay,
-            zIndex:        1,
-            pointerEvents: "none",
-          }}
-        />
-      )}
+      <SceneBackground bg={scene.bg} />
 
       {/* Characters */}
       {scene.characters?.map((char: SceneCharacter) => {
@@ -71,16 +57,16 @@ export default function DialogueSceneView({
 
         return (
           <div
-            key={`${char.id}-${char.sprite}`}
-            style={getCharWrapperStyle(charWithDim, isMobile)}
+            key={char.id}
+            style={{
+              ...getCharWrapperStyle(charWithDim, isMobile),
+              willChange: "transform, opacity",
+              transition:
+                "transform 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease",
+            }}
             onClick={() => onCharacterClick(char.id)}
           >
-            <img
-              src={char.sprite}
-              alt={char.id}
-              style={getCharImgStyle(charWithDim)}
-              draggable={false}
-            />
+            <SceneCharacterSprite char={charWithDim} />
           </div>
         );
       })}

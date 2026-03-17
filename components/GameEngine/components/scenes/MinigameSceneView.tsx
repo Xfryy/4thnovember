@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { MinigameScene } from "@/types/game";
 import type { ActConfig, GameEngineContext } from "@/components/Acts/BaseActConfig";
+import SceneBackground from "../SceneBackground";
 
 interface MinigameSceneViewProps {
   scene: MinigameScene;
@@ -74,12 +75,10 @@ export default function MinigameSceneView({
         left: 0,
         right: 0,
         bottom: 0,
-        background: scene.bg?.color || "rgba(0,0,0,0.95)",
-        backgroundImage: scene.bg?.image ? `url(${scene.bg.image})` : undefined,
-        backgroundSize: "cover",
         zIndex: 50,
       }}
     >
+      <SceneBackground bg={scene.bg} />
       <GameComponent
         title={scene.title}
         description={scene.description}

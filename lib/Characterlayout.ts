@@ -139,10 +139,10 @@ export function getCharWrapperStyle(
     opacity: char.dim ? 0.45 : 1,
     filter:  char.dim ? "brightness(0.45) saturate(0.6)" : "none",
 
-    // Animasi masuk
+    // Animasi masuk/keluar
     animation:
       char.animation && char.animation !== "none"
-        ? `${getAnimName(char.animation)} 0.45s cubic-bezier(0.22,1,0.36,1) both`
+        ? `${getAnimName(char.animation)} ${char.animation === "fade-out" ? "0.6s" : "0.45s"} cubic-bezier(0.22,1,0.36,1) both`
         : undefined,
   };
 }
@@ -170,8 +170,8 @@ export function getAnimName(animation?: SceneCharacter["animation"]): string {
     case "enter-right": return "char-from-right";
     case "fade":
     case "fade-in":     return "char-fade";
-    case "none":
-    case "fade-out":    return "none";
+    case "fade-out":    return "char-fade-out";
+    case "none":        return "none";
     default:            return "char-from-bottom";
   }
 }
@@ -192,5 +192,9 @@ export const CHARACTER_KEYFRAMES = `
   @keyframes char-fade {
     from { opacity: 0; }
     to   { opacity: 1; }
+  }
+  @keyframes char-fade-out {
+    from { opacity: 1; }
+    to   { opacity: 0; }
   }
 `;

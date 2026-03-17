@@ -307,8 +307,42 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     audioManager.stopBGM(500);
     audioManager.resume();
     if (autoSaveSlot) {
+      // Pass full state (incl. inventory) to GameEngine via sessionStorage
+      try {
+        sessionStorage.setItem(
+          "resumeSlot",
+          JSON.stringify({
+            currentAct: autoSaveSlot.currentAct,
+            currentSceneId: autoSaveSlot.currentSceneId,
+            choices: autoSaveSlot.choices,
+            affection: autoSaveSlot.affection,
+            unlockedCharacters: autoSaveSlot.unlockedCharacters ?? [],
+            unlockedCGs: autoSaveSlot.unlockedCGs ?? [],
+            inventory: autoSaveSlot.inventory ?? [],
+          })
+        );
+      } catch {
+        // ignore
+      }
       onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
     } else if (saveData) {
+      // Fallback: use merged "saves" document
+      try {
+        sessionStorage.setItem(
+          "resumeSlot",
+          JSON.stringify({
+            currentAct: saveData.currentAct,
+            currentSceneId: saveData.currentSceneId,
+            choices: saveData.choices,
+            affection: saveData.affection,
+            unlockedCharacters: saveData.unlockedCharacters ?? [],
+            unlockedCGs: saveData.unlockedCGs ?? [],
+            inventory: saveData.inventory ?? [],
+          })
+        );
+      } catch {
+        // ignore
+      }
       onGameStart?.(saveData.currentAct, saveData.currentSceneId);
     } else {
       handleStartNewGame();
@@ -320,6 +354,22 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     // Fade out main menu BGM over 0.5s before transitioning into game
     audioManager.stopBGM(500);
     audioManager.resume();
+    try {
+      sessionStorage.setItem(
+        "resumeSlot",
+        JSON.stringify({
+          currentAct: slot.currentAct,
+          currentSceneId: slot.currentSceneId,
+          choices: slot.choices,
+          affection: slot.affection,
+          unlockedCharacters: slot.unlockedCharacters ?? [],
+          unlockedCGs: slot.unlockedCGs ?? [],
+          inventory: slot.inventory ?? [],
+        })
+      );
+    } catch {
+      // ignore
+    }
     onGameStart?.(slot.currentAct, slot.currentSceneId);
   };
 

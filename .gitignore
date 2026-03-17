@@ -40,6 +40,9 @@ Thumbs.db
 # Custom
 .kombai
 .qodo
+.cursor
+install.ps1
+
 
 # Asset files (optional - comment out if you want to version control them)
 # /public

@@ -23,6 +23,7 @@ export interface SaveSlot {
   affection: Record<string, number>;
   unlockedCharacters?: string[];
   unlockedCGs?: string[];
+  inventory?: string[];
   playTimeSeconds: number;
   lastSaved: number;        // timestamp ms
   cleared?: boolean;        // tombstone flag — slot was soft-deleted

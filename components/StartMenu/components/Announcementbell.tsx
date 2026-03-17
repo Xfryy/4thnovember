@@ -14,7 +14,7 @@ const ANNOUNCEMENTS = [
     items: [
       "⚠️ Ini versi demo awal — masih banyak bug & lag, mohon dimaklumi",
       "🐢 Performa belum optimal, developer sedang terus improve",
-      "🎭 Act 1 & Act 2 tersedia — tapi ini masih dummy story, bukan cerita aslinya",
+      "🎭 Act 1 & Act 2 tersedia — masih cerita pertimbangan",
       "📝 Cerita, karakter, dan aset final masih dalam proses pengerjaan",
       "🔮 Versi lengkap akan hadir dengan cerita asli dan semua fitur",
     ],

@@ -16,6 +16,7 @@ export interface SaveData {
   affection: Record<string, number>;
   unlockedCharacters?: string[];
   unlockedCGs?: string[];
+  inventory?: string[];
   playTimeSeconds: number;
   lastSaved: number;
 }
@@ -116,7 +117,7 @@ export type SceneEffect = string;
 
 export type SceneType =
   | "dialogue" | "monologue" | "choice"
-  | "transition" | "cg" | "ending" | "minigame";
+  | "transition" | "cg" | "ending" | "minigame" | "examine";
 
 export interface BaseScene {
   id: string;
@@ -188,6 +189,7 @@ export interface EndingScene extends BaseScene {
   bg?: SceneBg;
   audio?: SceneAudio;
   effect?: SceneEffect;
+  next?: string;
 }
 
 export interface MinigameScene extends BaseScene {
@@ -201,6 +203,16 @@ export interface MinigameScene extends BaseScene {
   onWinNext?: string;
 }
 
+export interface ExamineScene extends BaseScene {
+  type: "examine";
+  image: string;
+  caption?: string;
+  characters?: SceneCharacter[];
+  bg?: SceneBg;
+  audio?: SceneAudio;
+  effect?: SceneEffect;
+}
+
 export type Scene =
   | DialogueScene
   | MonologueScene
@@ -208,7 +220,8 @@ export type Scene =
   | TransitionScene
   | CgScene
   | EndingScene
-  | MinigameScene;
+  | MinigameScene
+  | ExamineScene;
 
 export interface Act {
   actNumber: number;

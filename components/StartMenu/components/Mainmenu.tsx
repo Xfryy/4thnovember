@@ -14,6 +14,7 @@ import SupportBanner from "../components/Supportbanner";
 import SettingsModal from "../components/SettingsModal";
 import SaveSlotsModal from "../components/SaveslotsModal";
 import GalleryModal from "../components/GalleryModal";
+import LegalWarningModal from "../components/LegalWarningModal";
 
 const ADMIN_EMAIL = "faricandra5@gmail.com";
 
@@ -103,8 +104,9 @@ export default function MainMenu({
   // Let's ensure that if w > h (landscape), we NEVER use the vertical mobile layout.
   
   const isLandscape = windowWidth > windowHeight;
-  const isMobile = !isLandscape || windowWidth < 600; // Only true mobile if portrait or extremely tiny
-  const isTablet = isLandscape && windowWidth < 1024 && windowWidth >= 600;
+  const isPhoneLandscape = isLandscape && windowHeight < 640;
+  const isMobile = !isLandscape && windowWidth < 600 && !isPhoneLandscape;
+  const isTablet = (isLandscape && windowWidth < 1024) || isPhoneLandscape;
 
   const handleSettingsClick = () => {
     setShowSettings(true);
@@ -119,13 +121,14 @@ export default function MainMenu({
       style={{ height: "calc(var(--vh, 1vh) * 100)" }}
     >
       <GameBackground />
+      <LegalWarningModal />
 
       {/* Top-right: Announcement + Profile Card + Admin Button */}
       <div
         style={{
           position: "absolute",
-          top: isMobile ? 10 : 20,
-          right: isMobile ? 10 : 20,
+          top: isMobile ? "calc(10px + env(safe-area-inset-top))" : "calc(20px + env(safe-area-inset-top))",
+          right: isMobile ? "calc(10px + env(safe-area-inset-right))" : "calc(20px + env(safe-area-inset-right))",
           zIndex: 30,
           display: "flex",
           flexDirection: "column",
@@ -133,7 +136,7 @@ export default function MainMenu({
           gap: 8,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 12 }}>
           <AnnouncementBell />
           <ProfileCard
             characterName={characterName}

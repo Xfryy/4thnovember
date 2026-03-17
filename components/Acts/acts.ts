@@ -1,5 +1,5 @@
 import { ACT_1_SCENES } from "@/lib/acts/act_1/scenes";
-// import { ACT_2_SCENES } from "@/lib/acts/act_2/scenes"; ← uncomment saat act_2 siap
+import { ACT_2_SCENES } from "@/lib/acts/act_2/scenes";
 import { Scene } from "@/types/game";
 
 export interface ActManifest {
@@ -13,7 +13,7 @@ export interface ActManifest {
 
 const ALL_SCENES = [
   ...ACT_1_SCENES,
-  // ...ACT_2_SCENES, ← uncomment saat act_2 siap
+  ...ACT_2_SCENES,
 ];
 
 export const SCENE_REGISTRY: Record<string, Scene> = ALL_SCENES.reduce(

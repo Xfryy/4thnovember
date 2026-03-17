@@ -10,7 +10,8 @@ import {
   ChoiceScene,
   CgScene,
   EndingScene,
-  ChoiceOption
+  ChoiceOption,
+  ExamineScene
 } from "@/types/game";
 
 export class StoryBuilder {
@@ -72,7 +73,7 @@ export class StoryBuilder {
     }
     if (this.currentAudio) {
       base.audio = { ...this.currentAudio };
-      
+
       // Cleanup one-track triggers so they don't persist to subsequent scenes
       delete this.currentAudio.sfx;
       delete this.currentAudio.voice;
@@ -88,7 +89,7 @@ export class StoryBuilder {
     }
     if (this.currentCharacters) base.characters = [...this.currentCharacters];
 
-    // Merge in the specific overrides (text, speaker, effect, etc)
+    // Merge in the specific overrides (text, speaker, effect, next, etc)
     Object.assign(base, overrides);
 
     // Link previous scene "next" pointer to this scene
@@ -97,6 +98,11 @@ export class StoryBuilder {
       if (!prev.next && prev.type !== "choice" && prev.type !== "ending") {
         prev.next = id;
       }
+    }
+
+    // Debug: log ending scenes to verify next property
+    if (type === "ending") {
+      console.log(`[StoryBuilder] Ending scene created:`, { id, type, next: overrides.next, baseNext: base.next });
     }
 
     this.scenes.push(base as Scene);
@@ -163,6 +169,13 @@ export class StoryBuilder {
    */
   public cg(image: string, caption: string = "", overrides: Partial<Omit<CgScene, "type">> = {}): this {
     return this.addScene("cg", { image, caption, ...overrides });
+  }
+
+  /**
+   * Add an Examine Scene (Pop-up item inspection)
+   */
+  public examine(image: string, caption: string = "", overrides: Partial<Omit<ExamineScene, "type">> = {}): this {
+    return this.addScene("examine", { image, caption, ...overrides });
   }
 
   /**

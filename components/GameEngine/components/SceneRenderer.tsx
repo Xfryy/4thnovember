@@ -10,6 +10,7 @@ import type {
   CgScene,
   EndingScene,
   MinigameScene,
+  ExamineScene,
 } from "@/types/game";
 import type { ActConfig, GameEngineContext } from "@/components/Acts/BaseActConfig";
 
@@ -20,6 +21,7 @@ import TransitionSceneView from "./scenes/TransitionSceneView";
 import CgSceneView         from "./scenes/CgSceneView";
 import EndingSceneView     from "./scenes/EndingSceneView";
 import MinigameSceneView   from "./scenes/MinigameSceneView";
+import ExamineSceneView    from "./scenes/ExamineSceneView";
 
 interface SceneRendererProps {
   scene:            Scene;
@@ -122,6 +124,15 @@ export default function SceneRenderer({
         actConfig={actConfig}
         context={context}
         onResult={choose}
+      />
+    );
+  }
+
+  if (scene.type === "examine") {
+    return (
+      <ExamineSceneView
+        scene={scene as ExamineScene}
+        onAdvance={advance}
       />
     );
   }

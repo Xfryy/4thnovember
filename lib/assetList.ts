@@ -3,10 +3,17 @@
 
 export const ASSET_LIST = [
   '/audio/bgm/act_1.mp3',
+  '/audio/sfx/bag.mp3',
   '/audio/sfx/knocking-door.mp3',
+  '/audio/sfx/page-turn.mp3',
+  '/audio/sfx/zipper.mp3',
   '/audio/start-menu.mp3',
   '/audio/voice/act_1/act1_s3.mp3',
   '/Image/GameBG/Bg-1.jpg',
+  '/Image/GameBG/Exit.png',
+  '/Image/GameBG/Hallway.png',
+  '/Image/GameBG/road.jpg',
+  '/Image/NPC/doctor/Reception.png',
   '/Image/NPC/doctor/doctor.png',
   '/Image/Rinn/akward-Photoroom.png',
   '/Image/Rinn/anoo.png',
@@ -45,7 +52,11 @@ export const ASSET_LIST = [
   '/Image/Rinn/sombong.png',
   '/Image/scenes/Act_1/scene-doctor.jpeg',
   '/Image/scenes/Act_1/scene_1-2.jpeg',
-  '/Image/scenes/Act_1/scene_1.jpeg'
+  '/Image/scenes/Act_1/scene_1.jpeg',
+  '/Image/scenes/Act_2/scene_1.png',
+  '/Image/scenes/Act_2/scene_2.png',
+  '/Image/scenes/Act_2/scene_3.png',
+  '/Image/scenes/Act_2/scene_4.png'
 ];
 
-export const ASSET_COUNT = 44;
+export const ASSET_COUNT = 56;

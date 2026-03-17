@@ -24,6 +24,13 @@ export default function Home() {
       const ctx = new AudioContext();
       ctx.resume().then(() => ctx.close());
     }
+    
+    // Attempt Fullscreen
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.log("Fullscreen request failed or denied:", err);
+      });
+    }
     setTimeout(() => {
       setPhase("menu");
     }, 100); // reduced delay for better UX

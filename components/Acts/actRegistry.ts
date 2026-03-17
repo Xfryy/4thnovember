@@ -25,12 +25,14 @@ import type { Scene } from "@/types/game";
 // ── Import semua scene files ───────────────────────────────────────────────────
 
 import { ACT_1_SCENES }    from "@/lib/acts/act_1/scenes";
+import { ACT_2_SCENES }    from "@/lib/acts/act_2/scenes";
 
 import { ACT_1_SCENES_EN } from "@/lib/acts/act_1/scenes.en";
+import { ACT_2_SCENES_EN } from "@/lib/acts/act_2/scenes.en";
 
 // Tambah act baru di sini:
-// import { ACT_2_SCENES }    from "@/lib/acts/act_2/scenes";
-// import { ACT_2_SCENES_EN } from "@/lib/acts/act_2/scenes.en";
+// import { ACT_3_SCENES }    from "@/lib/acts/act_3/scenes";
+// import { ACT_3_SCENES_EN } from "@/lib/acts/act_3/scenes.en";
 
 // ── Registry map ──────────────────────────────────────────────────────────────
 
@@ -43,16 +45,16 @@ function buildRegistry(scenes: Scene[]): SceneRegistry {
 const REGISTRIES: Record<number, Record<string, SceneRegistry>> = {
   1: {
     id: buildRegistry(ACT_1_SCENES),
-    en: buildRegistry(ACT_1_SCENES_EN), // ganti ke ACT_1_SCENES_EN setelah translate
+    en: buildRegistry(ACT_1_SCENES_EN),
   },
-  // 2: {
-  //   id: buildRegistry(ACT_2_SCENES),
-  //   en: buildRegistry(ACT_2_SCENES_EN),
-  // },
+  2: {
+    id: buildRegistry(ACT_2_SCENES),
+    en: buildRegistry(ACT_2_SCENES_EN),
+  },
 };
 
 // Gabungan semua act — untuk akses global tanpa tahu act number
-const ALL_REGISTRIES: Record<string, Record<string, Scene>> = {
+export const ALL_REGISTRIES: Record<string, Record<string, Scene>> = {
   id: Object.assign({}, ...Object.values(REGISTRIES).map((r) => r.id)),
   en: Object.assign({}, ...Object.values(REGISTRIES).map((r) => r.en ?? r.id)),
 };

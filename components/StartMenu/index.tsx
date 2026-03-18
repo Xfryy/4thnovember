@@ -33,7 +33,7 @@ import CharacterNameInput from "../StartMenu/components/Characternameinput";
 import MainMenu           from "../StartMenu/components/Mainmenu";
 
 interface StartMenuProps {
-  onGameStart?: (act?: number, sceneId?: string) => void | Promise<void>;
+  onGameStart?: (act?: number, sceneId?: string, email?: string) => void | Promise<void>;
 }
 
 export default function StartMenu({ onGameStart }: StartMenuProps) {
@@ -298,7 +298,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     // Fade out main menu BGM over 0.5s before transitioning into game
     audioManager.stopBGM(500);
     audioManager.resume();
-    onGameStart?.(1, undefined);
+    onGameStart?.(1, undefined, user?.email);
   };
 
   /** Continue from auto-save (slot 0) */
@@ -324,7 +324,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
       } catch {
         // ignore
       }
-      onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId);
+      onGameStart?.(autoSaveSlot.currentAct, autoSaveSlot.currentSceneId, user?.email);
     } else if (saveData) {
       // Fallback: use merged "saves" document
       try {
@@ -343,7 +343,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
       } catch {
         // ignore
       }
-      onGameStart?.(saveData.currentAct, saveData.currentSceneId);
+      onGameStart?.(saveData.currentAct, saveData.currentSceneId, user?.email);
     } else {
       handleStartNewGame();
     }
@@ -370,7 +370,7 @@ export default function StartMenu({ onGameStart }: StartMenuProps) {
     } catch {
       // ignore
     }
-    onGameStart?.(slot.currentAct, slot.currentSceneId);
+    onGameStart?.(slot.currentAct, slot.currentSceneId, user?.email);
   };
 
   const handleSettings = () => {};

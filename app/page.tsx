@@ -15,6 +15,7 @@ export default function Home() {
   const [targetAct, setTargetAct] = useState(1);
   const [startSceneId, setStartSceneId] = useState<string | undefined>(undefined);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | undefined>(undefined);
 
   const handleInteractionStart = () => {
     setIsTransitioning(true);
@@ -36,9 +37,10 @@ export default function Home() {
     }, 100); // reduced delay for better UX
   };
 
-  const handleGameStart = (act = 1, sceneId?: string) => {
+  const handleGameStart = (act = 1, sceneId?: string, email?: string) => {
     setTargetAct(act);
     setStartSceneId(sceneId ?? getActFirstScene(act));
+    setUserEmail(email);
     setPhase("preloading");
   };
 
@@ -100,6 +102,7 @@ export default function Home() {
       <GameEngine
         actNumber={targetAct}
         startSceneId={startSceneId}
+        email={userEmail}
         onBackToMenu={handleBackToMenu}
       />
     );

@@ -35,6 +35,7 @@ interface GameToolbarProps {
   onAdminNavigate?: (direction: 'prev' | 'next') => void;
   onActChange?: (actNumber: number) => void;
   currentSceneId?: string;
+  isAdmin?: boolean;
 }
 
 export default function GameToolbar({
@@ -43,7 +44,6 @@ export default function GameToolbar({
   isSaving,
   isLoading,
   savedFlash,
-  characterName = "",
   onMenu,
   onQuickSave,
   onSave,
@@ -55,6 +55,7 @@ export default function GameToolbar({
   onAdminNavigate,
   onActChange,
   currentSceneId = '',
+  isAdmin = false,
 }: GameToolbarProps) {
   const {
     autoPlay, skipMode, hideUI,
@@ -67,17 +68,11 @@ export default function GameToolbar({
   const [showActSelector, setShowActSelector] = useState(false);
   const [selectedAct, setSelectedAct] = useState<number>(actNumber);
   const [sceneInput, setSceneInput] = useState<string>("");
-  const [stats, setStats] = useState<{ totalPlays: number; totalPlayTime: number }>({
+  const [, setStats] = useState<{ totalPlays: number; totalPlayTime: number }>({
     totalPlays: 0,
     totalPlayTime: 0,
   });
 
-  const formatPlaytime = (minutes: number): string => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
 
   const fetchStats = useCallback(async () => {
     const user = auth.currentUser;
@@ -116,15 +111,15 @@ export default function GameToolbar({
       if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleSkip(); }
       if (e.code === "KeyV" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); toggleHideUI(); }
       if (e.code === "KeyI" && !e.ctrlKey && !e.metaKey) { e.preventDefault(); onInventory?.(); }
-      // Admin mode toggle: Ctrl+Shift+A
-      if (e.code === "KeyA" && e.ctrlKey && e.shiftKey) {
+      // Admin mode toggle: Ctrl+Shift+A - Only for admin users
+      if (e.code === "KeyA" && e.ctrlKey && e.shiftKey && isAdmin) {
         e.preventDefault();
         onToggleAdminMode?.();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggleAutoPlay, toggleSkip, toggleHideUI, toggleLog, onToggleAdminMode, onInventory]);
+  }, [toggleAutoPlay, toggleSkip, toggleHideUI, toggleLog, onToggleAdminMode, onInventory, isAdmin]);
 
   const handleToggleExpand = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     // stopPropagation so the tap doesn't also fire dialogue advance
@@ -257,91 +252,8 @@ export default function GameToolbar({
         {/* Spacer */}
         <div style={{ marginLeft: "auto" }} />
 
-        {/* Player status pill (nama + trophy + playtime) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: isMobile ? 6 : 10,
-            borderRadius: 16,
-            padding: isMobile ? "6px 10px" : "8px 14px",
-            background: "rgba(15, 10, 35, 0.55)",
-            border: "1px solid rgba(236,72,153,0.22)",
-            boxShadow: "0 6px 26px rgba(0,0,0,0.35)",
-            backdropFilter: "blur(12px)",
-            flexShrink: 0,
-            minWidth: isMobile ? 0 : 240,
-          }}
-          title="Player status"
-        >
-          <div
-            style={{
-              width: isMobile ? 28 : 34,
-              height: isMobile ? 28 : 34,
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 900,
-              color: "white",
-              fontSize: isMobile ? "0.85rem" : "0.95rem",
-              background: "linear-gradient(135deg, #ec4899, #a855f7)",
-              boxShadow: "0 0 12px rgba(236,72,153,0.35)",
-              flexShrink: 0,
-            }}
-          >
-            {(characterName?.charAt(0) || "?").toUpperCase()}
-          </div>
-
-          {!isMobile && (
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontWeight: 900,
-                  fontSize: "0.85rem",
-                  lineHeight: 1.15,
-                  color: "#fff",
-                  maxWidth: 180,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {characterName || "Player"}
-              </div>
-              <div
-                style={{
-                  fontSize: "0.65rem",
-                  color: "rgba(167,139,250,0.7)",
-                  letterSpacing: "0.04em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                🏆 {stats.totalPlays} · ⏱ {formatPlaytime(stats.totalPlayTime)}
-              </div>
-            </div>
-          )}
-
-          {isMobile && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                color: "rgba(255,255,255,0.85)",
-                fontSize: "0.72rem",
-                fontWeight: 800,
-                whiteSpace: "nowrap",
-              }}
-            >
-              <span>🏆 {stats.totalPlays}</span>
-              <span>⏱ {formatPlaytime(stats.totalPlayTime)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Admin Navigation */}
-        {isAdminMode && (
+        {/* Admin Navigation - Only visible for admin users */}
+        {isAdmin && isAdminMode && (
           <>
             <Divider compact={isMobile} />
             <ToolbarBtn
@@ -365,19 +277,21 @@ export default function GameToolbar({
 
         <Divider compact={isMobile} />
 
-        {/* Admin Mode Toggle */}
-        <ToolbarBtn
-          onClick={() => onToggleAdminMode?.()}
-          accent={isAdminMode ? "#f97316" : "#6b7280"}
-          icon="⚡"
-          label="Admin"
-          tooltip="Toggle Admin Mode [Ctrl+Shift+A]"
-          active={isAdminMode}
-          compact={isMobile}
-        />
+        {/* Admin Mode Toggle - Only visible for admin users */}
+        {isAdmin && (
+          <ToolbarBtn
+            onClick={() => onToggleAdminMode?.()}
+            accent={isAdminMode ? "#f97316" : "#6b7280"}
+            icon=""
+            label="Admin"
+            tooltip="Toggle Admin Mode [Ctrl+Shift+A]"
+            active={isAdminMode}
+            compact={isMobile}
+          />
+        )}
 
         {/* Admin Act Selector */}
-        {isAdminMode && (
+        {isAdmin && isAdminMode && (
           <>
             <Divider compact={isMobile} />
             <ToolbarBtn
@@ -432,7 +346,7 @@ export default function GameToolbar({
         </div>
 
         {/* Admin Mode - Scene ID Display */}
-        {isAdminMode && currentSceneId && (
+        {isAdmin && isAdminMode && currentSceneId && (
           <div style={{
             padding: isMobile ? "2px 6px" : "3px 10px",
             borderRadius: 6,

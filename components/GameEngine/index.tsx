@@ -53,14 +53,18 @@ interface GameEngineProps {
   actNumber: number;
   startSceneId?: string;
   characterName?: string;
+  email?: string;
   onBackToMenu: () => void;
   onActComplete?: (actNumber: number) => void;
 }
+
+const ADMIN_EMAIL = "faricandra5@gmail.com";
 
 export default function GameEngine({
   actNumber,
   startSceneId,
   characterName = "",
+  email = "",
   onBackToMenu,
   onActComplete,
 }: GameEngineProps) {
@@ -753,10 +757,18 @@ export default function GameEngine({
         onSettings={() => setShowSettingsModal(true)}
         onInventory={() => setShowInventoryModal(true)}
         isAdminMode={isAdminMode}
-        onToggleAdminMode={() => setIsAdminMode(!isAdminMode)}
+        onToggleAdminMode={() => {
+          // Only allow admin mode toggle for admin email
+          if (email === ADMIN_EMAIL) {
+            setIsAdminMode(!isAdminMode);
+          } else {
+            console.warn("Admin mode is only available for admin users");
+          }
+        }}
         onAdminNavigate={handleAdminNavigate}
         onActChange={handleActChange}
         currentSceneId={currentSceneId}
+        isAdmin={email === ADMIN_EMAIL}
       />
 
       {showSaveModal && (

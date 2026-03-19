@@ -16,7 +16,6 @@ b.transition(2200, "");
 
 b.bg(null);
 b.cg("/Image/scenes/Act_1/scene_1.jpeg", "");
-
 b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.30)" });
 
 b.M("...");
@@ -24,38 +23,52 @@ b.M("......");
 b.M(".........");
 
 b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.20)" });
-b.M("Dingin.\n\nSeperti tidur di atas batu.");
+b.M("Putih.");
+b.M("Kasur dingin.");
+b.M("Bau alkohol... steril... mati.");
 
-b.M("Ada bau yang tidak asing tapi tidak menyenangkan.\n\nSteril. Tajam. Seperti sesuatu yang sengaja membunuh semua aroma lain.");
+b.M("Langit-langit yang asing.");
+b.M("Aku menatapnya sampai aku sadar —");
+b.M("— ini bukan langit-langit rumah.");
 
-b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.15)" });
-b.M("Langit-langit putih.\n\nDatar. Tak ada noda. Tak ada retakan.\n\nTerlalu sempurna untuk ditatap.");
+b.M("Kepala berat.");
+b.M("Sakit.");
+b.M("Lebih seperti ada bagian yang belum sepenuhnya kembali ke tempatnya.");
 
-b.M("Kepala berat.\n\nBukan sakit — lebih seperti ada sesuatu yang baru saja dicabut dari dalam sana dan meninggalkan ruang kosong di tempatnya.");
-
-b.M("Aku mencoba mengingat.\n\nNama sendiri? — Ada.\nTanggal lahir? — Ada.\nYang terakhir terjadi?\n\n...\n\n...");
+b.M("Aku mencoba mengingat.");
+b.M("Nama sendiri? — Ada.\nTanggal lahir? — Ada.\nYang terakhir terjadi?");
+b.M("Tapi sisanya...");
+b.M("...terbakar habis.");
 
 b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.25)" });
-b.M("Tidak ada.\n\nBukan kosong seperti lupa. Kosong seperti halaman yang memang tidak pernah ditulis.");
+b.M("Tapi tunggu —");
+b.M("Ada seseorang.");
+b.M("Bukan perawat.");
+b.M("Perempuan. Di kursi, di sebelah kasur pasien.");
 
-b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.10)" });
-b.M("Tapi tunggu—\n\nAda seorang.\n\nDilihat bukan seperti perawat.");
+b.M("Dia tak sadar aku sudah bangun.");
+b.M("Tangannya menggenggam sesuatu, matanya ke arah kosong —");
+b.M("— seperti orang yang sudah menunggu terlalu lama.");
 
-b.M("Perempuan...\n\nDi kursi. Di sudut kasur pasien.\n\nAku tidak kenal.");
+b.bg({ image: "/Image/scenes/Act_1/scene_1.jpeg", overlay: "rgba(0,0,0,0.30)" });
+b.M("Aku tidak kenal dia.");
+b.M("Atau —");
+b.M("— aku tidak ingat kenal dia.");
+b.M("Itu dua hal yang berbeda.");
+b.M("Tapi sekarang terasa sama.");
 
-b.M("Dia tidak tahu aku sudah bangun.\n\nDia sedang gelisah — tangannya menggenggam sesuatu, matanya terus ke arah kosong memikirkan sesuatu.\n\nSeperti orang yang sudah menunggu terlalu lama tapi tidak mau pergi.");
-
-b.M("Aku tidak mungkin di jengguk perempuan kan?\n\nApalagi tidak kenal.");
-
-b.M("Tapi kalo iya...\n\nSiapa dia...");
-
+// Transisi: Rin menoleh
 b.bg(null);
 b.cg("/Image/scenes/Act_1/scene_1-2.jpeg", "", { effect: "screenShake" });
-
 b.bg({ image: "/Image/scenes/Act_1/scene_1-2.jpeg", overlay: "rgba(0,0,0,0.10)" });
-b.M("Eh—");
-b.M("Tunggu.\n\nDia menatap balik.");
-b.M("...\n\nDia berdiri.\n\nDia ke arah sini.");
+
+b.M("Ehh —");
+b.M("Dia menoleh.");
+b.M("Dan langsung ke arah sini.");
+b.M("Mata merah yang indah, rambut putih panjang dengan pita.");
+b.M("Cantik.");
+b.M("Mata kami ketemu.");
+b.M("Kelihatan senang.");
 
 // ── [ PERTEMUAN PERTAMA ] ─────────────────────────────────────────────────────
 
@@ -68,192 +81,214 @@ b.chars([{
   animation: "fade-in"
 }]);
 
-// Hint: Rin muncul terlalu cepat, terlalu tepat di posisi yang nyaman.
-b.D("-?????-", "rin_unknown", "Kamu udah siuman?");
+b.D("-?????-", "rin_unknown", "...Kamu sudah sadar?");
+b.D("{playerName}", "mc", "...Ya. Baru saja.");
 
 b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Leganya...\n\nAku nungguin kamu dari tadi. Khawatir banget.");
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
-b.M("Perempuan yang dari tadi gelisah itu...\n\nternyata menjengguk aku.");
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/confident-Photoroom.png", position: "right", size: "large", dim: true }]);
-b.M("Cantik.\n\nBukan cantik yang mencolok — cantik yang semacam... sudah dari dulu ada di sana tanpa aku sadari.\n\nFamiliar. Anehnya familiar.");
+b.D("-?????-", "rin_unknown", "Syukurlah...");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
-b.M("Kenapa aku ada di sini?\n\nKenapa dia ada di sini?\n\nDan kenapa rasanya seperti — dua pertanyaan itu harusnya punya jawaban yang sama?");
+b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
+b.M("Bukan cara orang yang baru kenal bilang lega.");
+b.M("Itu cara orang yang sudah takut sekali —");
+b.M("— dan baru sekarang boleh berhenti takut.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/cemberut.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Hei.\n\nAku tanya loh.\n\nKenapa malah bengong?");
+b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Maaf... aku tak ingat apa-apa.\nKamu... siapa?");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
+b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large", dim: true }]);
+b.M("Dia tidak langsung menjawab.");
+b.M("Matanya ke aku — lama.");
+b.M("Seperti menimbang sesuatu.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
+b.D("-?????-", "rin_unknown", "...Jadi begitu.\nKamu tak ingat sama sekali.");
+b.D("{playerName}", "mc", "Tidak semua. Kamu iya.");
+
+// Rin memperkenalkan diri
+b.audio({ voice: "" });
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/sombong.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Aku—\nRin. Rin Fuyutsuki-hime.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/sombong.png", position: "right", size: "large", dim: true }]);
+b.M("Dia bilang nama itu pelan.");
+b.M("Terlihat tersipu.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/pointing.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Pacar kamu.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.30)" });
+b.chars(null);
+b.M("...");
+b.M("Kosong.");
+b.M("Aku tidak pernah mengingat punya pacar.");
+b.M("Aneh.");
+b.M("Tidak mengerti.");
+b.M("Tapi aku percaya.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/pointing.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Ha?", { effect: "screenShake" });
+
+// ── [ PILIHAN 1 ] ────────────────────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" });
-b.choice("Kamu menjawab...", [
+b.choice("Bagaimana kamu merespons?", [
   {
     id: "c1_opt1",
-    text: "Maaf — aku nggak bengong. Aku lagi kagum aja. Ada perempuan cantik yang nungguin aku, itu hal yang cukup buat bikin orang speechless.",
-    next: "act1_s25a",
+    text: "Beneran?! Wah — aku beruntung.",
+    next: "act1_c1a",
     affection: { character: "rin", amount: 15 }
   },
   {
     id: "c1_opt2",
-    text: "Maaf. Aku lagi nyoba inget sesuatu.",
-    next: "act1_s25b",
-    affection: { character: "rin", amount: -5 }
+    text: "Kamu... tidak sedang bercanda kan?",
+    next: "act1_c1b",
+    affection: { character: "rin", amount: 5 }
   },
   {
     id: "c1_opt3",
-    text: "...Kamu yang bawa aku ke sini ya?",
-    next: "act1_s25c",
-    affection: { character: "rin", amount: 0 }
+    text: "Sekali lagi. Maaf aku tidak ingat kamu sama sekali.",
+    next: "act1_c1c",
+    affection: { character: "rin", amount: -5 }
   }
 ]);
 
 // ── Branch A ─────────────────────────────────────────────────────────────────
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/cemberut-nengok.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Hmph.\n\nGombal.", { id: "act1_s25a", next: "act1_s25a_2" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "...Tapi makasih.", { id: "act1_s25a_2", next: "act1_s26" });
-
-// ── Branch B ─────────────────────────────────────────────────────────────────
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/kecewa.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Inget sesuatu...", { id: "act1_s25b", next: "act1_s25b_2" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "...Berhasil?", { id: "act1_s25b_2", next: "act1_s26" });
-
-// ── Branch C ─────────────────────────────────────────────────────────────────
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/kaget-santay.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Hah?!\n\nBawa kamu—?", { id: "act1_s25c", next: "act1_s25c_2" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/cemberut.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Bukan.\n\nAku yang nungguin kamu di sini. Beda.", { id: "act1_s25c_2", next: "act1_s26" });
-
-// ── Lanjutan setelah semua branch ────────────────────────────────────────────
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("{playerName}", "mc", "Kondisi terbaik, kok. Nggak ada yang sakit.\n\nApalagi ada seorang yang menjengguk aku di sini — jadi lebih baik lagi.", { id: "act1_s26", next: "act1_s27" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/memohon.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "Syukurlah...", { id: "act1_s27", next: "act1_s28" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/memohon.png", position: "right", size: "large", dim: true }]);
-b.M("Ada sesuatu di cara dia bilang 'syukurlah' itu.\n\nBukan cara orang yang baru kenal bilang lega.\n\nItu cara orang yang sudah takut sekali — dan baru sekarang boleh berhenti takut.");
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("{playerName}", "mc", "Maaf ya — aku nggak inget apa-apa.\n\nTapi aku yakin kamu orang yang baik. Kalau nggak, kamu nggak bakal ada di sini.", { id: "act1_s28", next: "act1_s29" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/kaget-santay.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "...", { id: "act1_s29", next: "act1_s30" });
-
-b.chars([{ id: "rin_unknown", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
-b.D("-?????-", "rin_unknown", "......", { id: "act1_s30", next: "act1_s31" });
-
-b.D("-?????-", "rin_unknown", "Hmmm...akuu-", { id: "act1_s31", next: "act1_s32" });
-
-b.audio({ voice: "" });
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/sombong.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Rin.\n\nRin Fuyutsuki-hime.", { id: "act1_s32", next: "act1_s33" });
-
-b.chars([{ id: "rin", sprite: "/Image/Rinn/pointing.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Pacar kamu.", { id: "act1_s33", next: "act1_s34" });
-
-b.D("{playerName}", "mc", "HAHHHHH?!", { id: "act1_s34", effect: "screenShake", next: "act1_s35" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/pointing.png", position: "right", size: "large", dim: true }]);
-b.M("Pacar.\n\nAku punya pacar.\n\nDan pacarnya, ternyata adalah perempuan yang baru saja membuat aku speechless dalam dua menit pertama bangun tidur.");
-
-b.D("{playerName}", "mc", "Serius?!", { id: "act1_s35", next: "act1_s36" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" });
-b.choice("Bagaimana kamu merespons?", [
-  {
-    id: "c2_opt1",
-    text: "Beneran?! Wah — kalau itu benar, aku beruntung banget.",
-    next: "act1_s37a",
-    affection: { character: "rin", amount: 15 }
-  },
-  {
-    id: "c2_opt2",
-    text: "Kamu... tidak sedang bercanda kan?",
-    next: "act1_s37b",
-    affection: { character: "rin", amount: 5 }
-  },
-  {
-    id: "c2_opt3",
-    text: "Aku tidak ingat kamu sama sekali. Maaf.",
-    next: "act1_s37c",
-    affection: { character: "rin", amount: -5 }
-  }
-], { id: "act1_s36" });
-
-// ── Branch A ─────────────────────────────────────────────────────────────────
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
 b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Iyaa, serius.\n\nKamu pasti nggak inget ya — kasian~", { id: "act1_s37a", next: "act1_s38" });
+b.D("Rin Fuyutsuki-hime", "rin", "Iyaa, serius. Kamu nggak inget ya — kasian~", { id: "act1_c1a" });
+b.D("{playerName}", "mc", "Kalau begitu aku serius juga jadi pacar kamu.");
+b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut-nengok.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Gombal deh.", { next: "act1_c1_merge" });
 
 // ── Branch B ─────────────────────────────────────────────────────────────────
-b.D("Rin Fuyutsuki-hime", "rin", "Bercanda gimana.\n\nKamu aja yang lupa.", { id: "act1_s37b", next: "act1_s38" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Bercanda gimana. Kamu aja yang lupa.", { id: "act1_c1b" });
+b.D("{playerName}", "mc", "Aku cuman syok sedikit.");
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "hehehe, aku engga becanda ya..", { next: "act1_c1_merge" });
 
 // ── Branch C ─────────────────────────────────────────────────────────────────
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
 b.chars([{ id: "rin", sprite: "/Image/Rinn/kecewa.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Aku tau.\n\nMakanya aku di sini.", { id: "act1_s37c", next: "act1_s38" });
+b.D("Rin Fuyutsuki-hime", "rin", "Iya gapapa. Makanya aku di sini.", { id: "act1_c1c" });
+b.D("{playerName}", "mc", "...\n\nMakasih, kamu baik banget.");
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Iya sama sama, emang harusnya begini kok.", { next: "act1_c1_merge" });
 
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
-b.D("{playerName}", "mc", "Rin Fuyutsuki-hime...\n\nNama yang indah.", { id: "act1_s38", next: "act1_s39" });
+// ── Lanjutan setelah branch ──────────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.30)" });
 b.chars(null);
-b.M("Aku mencoba mengingat.\n\nBukan nama — nama sudah ada sekarang. Tapi wajahnya. Suaranya. Detailnya.\n\n...\n\nBlank.", { id: "act1_s39", next: "act1_s40" });
+b.M("Rin Fuyutsuki-hime...", { id: "act1_c1_merge" });
+b.M("Aku coba ingat —");
+b.M("Bukan namanya.");
+b.M("Tapi sesuatu di baliknya.");
+b.M("Wajah. Suara. Momen.");
+b.M("...");
+b.M("Tidak ada yang kembali.");
+b.M("Tapi anehnya —");
+b.M("— tak ada yang terasa salah.");
+b.M("Seperti nama itu sudah pernah ada di sini...");
+b.M("Lagu yang pernah kudengar, tapi liriknya hilang.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
 b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("{playerName}", "mc", "Kamu terasa familiar.\n\nAku nggak bisa jelasin kenapa — tapi terasa familiar.", { id: "act1_s40", next: "act1_s41" });
-
-b.D("Rin Fuyutsuki-hime", "rin", "Iya lah.\n\nKita udah lama bareng.", { id: "act1_s41", next: "act1_s42" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large", dim: true }]);
-b.M("Seperti ada sesuatu di dalam diri ini yang tidak ikut terhapus.\n\nBukan memori — lebih dalam dari itu.\n\nSeperti otot yang masih ingat gerakannya bahkan setelah lupa namanya.", { id: "act1_s42", next: "act1_s43" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("{playerName}", "mc", "Aku nggak ngerti kenapa — tapi ada bagian dari aku yang ngerasa... kamu ada di sini memang sudah seharusnya.", { id: "act1_s43", next: "act1_s44" });
+b.D("{playerName}", "mc", "Nama yang indah.");
 
 b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Semoga ingatan kamu cepat pulih ya.", { id: "act1_s44", next: "act1_s45" });
+b.D("Rin Fuyutsuki-hime", "rin", "Bagus kan?! Artinya putri musim dingin.");
+b.D("{playerName}", "mc", "Iya bagus.\n\nKamu putri, aku pangeran.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut-nengok.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Pangeran apa yang lupa sama putrinya sendiri.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut-nengok.png", position: "right", size: "large", dim: true }]);
+b.M("(senyum, tapi ada yang retak di baliknya)");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Justru itu yang bikin menarik.\n\nKenalan lagi dari awal.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
+b.M("Dia diam sebentar.");
+b.M("Lalu ketawa kecil —");
+b.M("— di balik ketawa itu ada sesuatu yang menyakitkan.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "...Kamu tau ga, itu agak menyakitkan sebenernya.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
+b.M("Dia bilang itu sambil senyum.");
+b.M("Persis — sambil senyum.");
+b.M("Seperti sudah terlalu terbiasa membungkus sesuatu yang berat");
+b.M("dengan kalimat yang terdengar ringan.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Maaf.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Eh, bukan salah kamu juga.\nJangan minta maaf untuk hal yang kamu ga pilih.");
+b.D("{playerName}", "mc", "Harusnya aku sedih. Tapi anehnya —\ntidak ada yang terasa hilang.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "...Mungkin karena memang tidak ada yang perlu kamu rasa kehilangan.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large", dim: true }]);
+b.M("Dia bilang itu pelan.");
+b.M("Seperti bukan untuk aku —");
+b.M("— seperti untuk dirinya sendiri juga.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Maksudnya?");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Tidak tahu itu... kadang bagus.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large", dim: true }]);
+b.M("Dia menoleh ke jendela.");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Kamu bangun hari ini.\nKamu lihat langit-langit asing.\nTidak bawa beban dari kemarin —");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/mikir.png", position: "right", size: "large", dim: true }]);
+b.M("...");
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Rin — aku rasa hadirnya kamu di sini,\nsudah cukup beralasan bahwa hari kemarin itu penting.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "...");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
 b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large", dim: true }]);
-b.M("Kalimat yang sederhana.\n\nTapi ada sesuatu di intonasi itu — sesuatu yang tidak sempat kutangkap sebelum dia melanjutkan.", { id: "act1_s44b", next: "act1_s45" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("{playerName}", "mc", "Kalau bisa — secepatnya.", { id: "act1_s45", next: "act1_s46" });
-
-b.chars([{ id: "rin", sprite: "/Image/Rinn/menguap.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Hmm.\n\nOh iya — tadi aku hampir ketiduran nungguin kamu.", { id: "act1_s46", next: "act1_s47" });
-
-b.D("{playerName}", "mc", "Hahaha. Maaf ya.\n\nDan makasih — serius.", { id: "act1_s47", next: "act1_s48" });
+b.M("(senyum tipis lega)");
 
 // ── [ DOKTER MASUK ] ──────────────────────────────────────────────────────────
 
-b.bg({ color: "#0a0a0a" });
 b.audio({ sfx: "/audio/sfx/knocking-door.mp3" });
-b.transition(4000, "— Tok.  Tok.  Tok.", { id: "act1_s48", next: "act1_s49" });
+b.transition(4000, "— Tok.  Tok.  Tok.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
 b.chars([
+  { id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" },
   {
     id: "doctor",
     sprite: "/Image/NPC/doctor/doctor.png",
@@ -265,20 +300,23 @@ b.chars([
   }
 ]);
 
-// Hint: Dokter tidak menoleh ke Rin, bahkan saat melewatinya.
-b.D("Dokter", "doctor", "Permisi. Maaf mengganggu.", { id: "act1_s49", next: "act1_s50" });
-b.D("Dokter", "doctor", "Saya dokter yang menangani kamu.\n\nAda beberapa hal yang perlu kamu tahu tentang kondisimu.", { id: "act1_s50", next: "act1_s51" });
+// Hint: Dokter masuk tanpa menoleh ke arah Rin sama sekali.
+b.D("Dokter", "doctor", "Permisi.");
+b.D("Dokter", "doctor", "Saya dokter yang menangani kamu.\nAda beberapa hal yang perlu kamu tahu.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
-b.D("Dokter", "doctor", "Berdasarkan hasil pemeriksaan...\n\nKamu mengalami amnesia. Bukan jenis yang ringan.", { id: "act1_s51", next: "act1_s52" });
-
-b.D("Dokter", "doctor", "Bukan akibat cedera fisik.\n\nIni akibat trauma psikologis — tekanan yang terakumulasi dalam jangka waktu cukup panjang hingga titik tertentu yang tidak bisa lagi ditoleransi otak.", { id: "act1_s52", next: "act1_s53" });
-
-b.D("Dokter", "doctor", "Secara sederhana — pikiran kamu secara tidak sadar 'menutup' akses ke memori tertentu.\n\nBukan karena rusak. Tapi karena memori itu terlalu berat untuk diproses.", { id: "act1_s53", next: "act1_s54" });
+b.D("Dokter", "doctor", "Berdasarkan hasil pemeriksaan — kamu mengalami amnesia.\nBukan jenis yang ringan.");
+b.D("Dokter", "doctor", "Bukan akibat cedera fisik.\nIni akibat trauma psikologis — tekanan yang terakumulasi hingga titik yang tidak bisa lagi ditoleransi otak.");
+b.D("Dokter", "doctor", "Pikiran kamu secara tidak sadar 'menutup' akses ke memori tertentu.\nBukan karena rusak — tapi karena memori itu terlalu berat untuk diproses.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.35)" });
 b.chars(null);
-b.M("Terlalu berat untuk diproses.\n\nAku mengulangi kalimat itu dalam kepala.\n\nApa yang seberat itu?\n\nApa yang cukup berat sampai otak memilih untuk tidak mengingat sama sekali?", { id: "act1_s54", next: "act1_s55" });
+b.M("Terlalu berat untuk diproses.");
+b.M("Aku mengulangi kalimat itu dalam kepala.");
+b.M("Apa yang seberat itu?");
+b.M("Apa yang cukup berat sampai otak memilih untuk tidak mengingat sama sekali?");
+
+// ── [ PILIHAN DOKTER — TANYA JAWAB ] ─────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
 b.chars([{
@@ -289,97 +327,175 @@ b.chars([{
   offsetY: -60,
   offsetX: -20
 }]);
-b.D("Dokter", "doctor", "Yang bisa kamu lakukan sekarang: istirahat, tidak memaksakan diri untuk mengingat, dan konsumsi obat yang saya resepkan secara teratur.", { id: "act1_s55", next: "act1_s56" });
 
-b.bg(null);
-b.cg("/Image/scenes/Act_1/scene-doctor.jpeg", "", { id: "act1_s56", next: "act1_s57" });
+b.choice("Kamu ingin bertanya...", [
+  {
+    id: "dq_opt1",
+    text: "Ingatan saya — bisa kembali?",
+    next: "act1_dq1",
+    affection: { character: "rin", amount: 0 }
+  },
+  {
+    id: "dq_opt2",
+    text: "Trauma psikologis... maksudnya apa yang terjadi pada saya?",
+    next: "act1_dq2",
+    affection: { character: "rin", amount: 0 }
+  },
+  {
+    id: "dq_opt3",
+    text: "Tidak ada pertanyaan.",
+    next: "act1_dq3",
+    affection: { character: "rin", amount: 0 }
+  }
+]);
+
+// ── Branch DQ1 ────────────────────────────────────────────────────────────────
+b.D("Dokter", "doctor", "Bisa.", { id: "act1_dq1" });
+b.D("Dokter", "doctor", "Tapi prosesnya bertahap. Dan tidak bisa dipaksa.\nOtak perlu waktunya sendiri untuk membuka apa yang dia tutup.", { next: "act1_dq_merge" });
+
+// ── Branch DQ2 ────────────────────────────────────────────────────────────────
+b.D("Dokter", "doctor", "Itu yang belum bisa saya jawab secara spesifik.", { id: "act1_dq2" });
+b.D("Dokter", "doctor", "Yang saya tahu — sesuatu yang cukup berat terjadi.\nSeberapa berat, justru memori kamu sendiri yang akan memberitahu, perlahan.", { next: "act1_dq_merge" });
+
+// ── Branch DQ3 ────────────────────────────────────────────────────────────────
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
+b.chars([{
+  id: "doctor",
+  sprite: "/Image/NPC/doctor/doctor.png",
+  position: "left",
+  size: "large",
+  offsetY: -60,
+  offsetX: -20,
+  dim: true
+}]);
+b.M("Dokter itu mengangguk sekali.", { id: "act1_dq3" });
+b.M("Seperti sudah menduga jawabannya.", { next: "act1_dq_merge" });
+
+// ── Lanjutan setelah tanya jawab ─────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.D("Dokter", "doctor", "Ini obatnya.\n\nSatu tablet per hari — jangan sampai terlewat, dan jangan dihentikan sendiri tanpa konsultasi.\n\nIni akan membantu proses pemulihan ingatan berjalan secara bertahap.", { id: "act1_s57", next: "act1_s58" });
+b.chars([{
+  id: "doctor",
+  sprite: "/Image/NPC/doctor/doctor.png",
+  position: "left",
+  size: "large",
+  offsetY: -60,
+  offsetX: -20
+}]);
+b.D("Dokter", "doctor", "Yang bisa kamu lakukan sekarang: istirahat, tidak memaksakan diri mengingat, dan konsumsi obat yang saya resepkan secara teratur.", { id: "act1_dq_merge" });
 
-b.D("Dokter", "doctor", "Kalau ada yang ingin ditanyakan, hubungi perawat di luar. Saya permisi.", { id: "act1_s58", next: "act1_s59" });
+b.bg(null);
+b.cg("/Image/scenes/Act_1/scene-doctor.jpeg", "");
 
-// Hint: Dokter pergi tanpa menoleh ke arah Rin. Tatapannya seolah menembus tempat dia berdiri.
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.25)" });
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
+b.chars([{
+  id: "doctor",
+  sprite: "/Image/NPC/doctor/doctor.png",
+  position: "left",
+  size: "large",
+  offsetY: -60,
+  offsetX: -20
+}]);
+b.D("Dokter", "doctor", "Ini obatnya.\n\nSatu tablet per hari — jangan sampai terlewat, dan jangan dihentikan sendiri tanpa konsultasi.");
+b.D("Dokter", "doctor", "Kalau perlu apa-apa, hubungi perawat di luar. Saya permisi.");
+
+// Hint: Dokter pergi tanpa sekali pun menatap ke arah Rin.
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.30)" });
 b.chars(null);
-b.M("Dokter itu berjalan keluar.\n\nDia sama sekali tidak melihat ke arah Rin.\n\nTidak sekali pun.\n\n...\n\nMungkin dokter memang begitu. Sibuk. Fokus.", { id: "act1_s59", next: "act1_s60" });
+b.M("Dokter itu berjalan keluar.");
+b.M("Pintu tertutup.");
+b.M("...");
+b.M("Dia tidak sekali pun melihat ke arah Rin.");
+
+// ── [ SETELAH DOKTER PERGI ] ─────────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
 b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Kamu dikasih obat.\n\nMinum ya — jangan coba-coba di-skip.", { id: "act1_s60", next: "act1_s61" });
+b.D("Rin Fuyutsuki-hime", "rin", "{playerName} gapapa kok, jangan sedih!\nKamu bisa sembuh kan? Walau perlahan.");
 
-b.D("{playerName}", "mc", "Iya, iya.", { id: "act1_s61", next: "act1_s62" });
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.30)" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large", dim: true }]);
+b.M("Aku mendengarnya.");
+b.M("Tapi ada sesuatu yang tidak langsung menjawab 'iya'.");
+b.M("...");
+b.M("Apa kesembuhan memang yang aku inginkan?");
 
-b.D("{playerName}", "mc", "Eh Rin — kamu nggak pulang? Kayaknya udah sore.", { id: "act1_s62", next: "act1_s63" });
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.35)" });
+b.chars(null);
+b.M("Jika semuanya begini karena aku tau sesuatu.");
+b.M("...");
+b.M("Demi dia?");
+b.M("Ya.");
+b.M("Itu saja cukup.");
 
-b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Iya...\n\nAku harus pulang.\n\nTapi aku bakal balik besok.", { id: "act1_s63", next: "act1_s64" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" });
-b.choice("Kamu menjawab...", [
-  {
-    id: "c3_opt1",
-    text: "Oke. Hati-hati ya.",
-    next: "act1_s65a",
-    affection: { character: "rin", amount: 10 }
-  },
-  {
-    id: "c3_opt2",
-    text: "Nggak usah repot-repot balik...",
-    next: "act1_s65b",
-    affection: { character: "rin", amount: -10 }
-  },
-  {
-    id: "c3_opt3",
-    text: "Aku tunggu.",
-    next: "act1_s65c",
-    affection: { character: "rin", amount: 20 }
-  }
-], { id: "act1_s64" });
-
-// ── Branch A ─────────────────────────────────────────────────────────────────
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.15)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/hai.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Iya~\n\nIstirahat yang bener. Jangan macem-macem.", { id: "act1_s65a", next: "act1_s66" });
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Iya makasih. Aku pengen cepet sembuh.\n\nBiar inget semua tentang kita berdua.");
 
-// ── Branch B ─────────────────────────────────────────────────────────────────
-b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "...Kamu ngomong apa.", { id: "act1_s65b", next: "act1_s65b_2" });
-
-b.chars([{ id: "rin", sprite: "/Image/Rinn/hai.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Aku tetap balik besok.\n\nItu bukan pertanyaan.", { id: "act1_s65b_2", next: "act1_s66" });
-
-// ── Branch C ─────────────────────────────────────────────────────────────────
 b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "...", { id: "act1_s65c", next: "act1_s65c_2" });
+b.D("Rin Fuyutsuki-hime", "rin", "Yay, senang dengarnya.");
+
+// Rin nguap — trigger MC nanya
+b.chars([{ id: "rin", sprite: "/Image/Rinn/menguap.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "*hoamm*");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Kamu ngantuk?");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/eye-close-smile.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Iya nih... sepertinya cukup sampai di sini untuk hari ini.");
+b.D("{playerName}", "mc", "Oh, sudah mau balik ya?");
+b.D("Rin Fuyutsuki-hime", "rin", "Iya. Besok aku ke sini lagi ya.\nTenang aja.");
+b.D("{playerName}", "mc", "Oke.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/cemberut.png", position: "right", size: "large" }]);
+b.D("Rin Fuyutsuki-hime", "rin", "Jangan lupa minum obatnya ya, jangan coba-coba di-skip.");
+
+b.chars([{ id: "rin", sprite: "/Image/Rinn/defal-smile-Photoroom.png", position: "right", size: "large" }]);
+b.D("{playerName}", "mc", "Iya, iya.");
 
 b.chars([{ id: "rin", sprite: "/Image/Rinn/hai.png", position: "right", size: "large" }]);
-b.D("Rin Fuyutsuki-hime", "rin", "Iya.\n\nAku pasti datang.", { id: "act1_s65c_2", next: "act1_s66" });
+b.D("Rin Fuyutsuki-hime", "rin", "bye-bye.");
+b.D("Rin Fuyutsuki-hime", "rin", "ich liebe dich...");
+b.D("{playerName}", "mc", "see ya.");
+
+// Hint: "ich liebe dich" — terasa seperti echo dari sesuatu yang jauh
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.35)" });
+b.chars(null);
+b.M("ich liebe dich?");
+b.M("...");
+b.M("Seperti echo dari mimpi yang tak kuingat.");
+b.M("Tapi kenapa terasa...");
+b.M("...palsu?");
+b.M("...");
 
 // ── [ PERPISAHAN PERTAMA ] ────────────────────────────────────────────────────
 
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.20)" });
-b.chars([{ id: "rin", sprite: "/Image/Rinn/hai.png", position: "right", size: "large", dim: true }]);
-b.M("Dia melambai.\n\nSenyum kecil — bukan senyum yang lebar, tapi jenis senyum yang seperti sudah berlatih lama untuk terlihat baik-baik saja.", { id: "act1_s66", next: "act1_s67" });
 
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.40)" });
-b.chars(null);
-b.M("Pintu menutup.\n\nDan aku sendirian lagi.", { id: "act1_s67", next: "act1_s67_2" });
+b.bg(null);
+b.cg("/Image/scenes/Act_1/dadah.jpg", "");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" });
-b.M("Hening.\n\nTapi bukan hening yang kosong — seperti ada sesuatu yang tertinggal di udara.\n\nAroma? Suara? Atau hanya perasaan?", { id: "act1_s67_2", next: "act1_s67_3" });
+b.M("Dia melambai.");
+b.M("Senyum kecil.");
+b.M("Lucunya.");
 
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.50)" });
-b.M("Botol obat itu ada di nakas.\n\nDokter bilang satu tablet sehari.\n\nTapi...", { id: "act1_s67_3", next: "act1_s67_4" });
+
+b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.45)" });
+b.chars(null);
+b.M("Pintu menutup.");
+b.M("Hening...");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.55)" });
-b.M("Aku pegang botolnya.\n\nRingan. Terlalu ringan untuk ukuran obat yang katanya penting.\n\nAtau mungkin ini baru saja diisi? Entah.", { id: "act1_s67_4", next: "act1_s67_5" });
+b.M("Botol obat ada di nakas.");
+b.M("Dokter bilang satu tablet sehari.");
+b.M("Aku pegang botolnya.");
 
-b.bg({ color: "#0a0a0a" });
-b.transition(1500, "", { id: "act1_s67_5", next: "act1_s67_6" });
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.65)" });
-b.examine("/Image/scenes/Obat-pill.png", "", { id: "act1_s67_6", next: "act1_medicine_choice" });
+b.examine("/Image/scenes/Obat-pill.png", "");
+
+// ── [ PILIHAN OBAT ] ─────────────────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.60)" });
 b.choice("Apa yang kamu lakukan?", [
@@ -391,44 +507,53 @@ b.choice("Apa yang kamu lakukan?", [
   },
   {
     id: "medicine_save",
-    text: "Simpan dulu. Mungkin nanti sebelum tidur.",
+    text: "Simpan dulu. Mungkin nanti.",
     next: "act1_medicine_saved",
     affection: { character: "rin", amount: 0 }
   }
-], { id: "act1_medicine_choice", next: "act1_medicine_taken" });
+]);
 
 // Branch: Minum sekarang
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.65)" });
-b.M("Aku membuka tutup botol.\n\nSatu tablet putih jatuh ke telapak tangan.\n\nTidak ada bau. Tidak ada rasa.\n\nAku menelannya dengan seteguk air.", { id: "act1_medicine_taken", next: "act1_s68" });
+b.M("Satu tablet putih jatuh ke telapak tangan.", { id: "act1_medicine_taken" });
+b.M("Bau dan rasa khas obat.");
+b.M("Aku menelannya dengan seteguk air.", { next: "act1_monolog" });
 
 // Branch: Simpan dulu
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.65)" });
-b.M("Aku meletakkan botol itu kembali.\n\nNanti saja. Malam masih panjang.\n\nTapi ada sesuatu yang mengganggu—\n\nseperti suara bisikan di sudut kamar.\n\n...\n\nApa itu tadi?", { id: "act1_medicine_saved", next: "act1_s68" });
+b.M("Aku meletakkan botol itu kembali.", { id: "act1_medicine_saved" });
+b.M("Nanti saja.", { next: "act1_monolog" });
 
-// ── [ MONOLOG AKHIR (dimodifikasi sedikit) ] ───────────────────────────────────
+// ── [ MONOLOG AKHIR ] ─────────────────────────────────────────────────────────
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.70)" });
-b.M("Langit-langit yang sama.\n\nBau yang sama.\n\nTapi sekarang — ada hal yang berbeda.\n\nAda nama sekarang. Ada wajah. Ada suara.", { id: "act1_s68", next: "act1_s69" });
+b.M("Langit-langit yang sama.", { id: "act1_monolog" });
+b.M("Bau yang sama.");
+b.M("Tapi sekarang ada yang berbeda —");
+b.M("Ada nama.");
+b.M("Ada wajah.");
+b.M("Ada suara.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.75)" });
-b.M("Rin Fuyutsuki-hime.\n\nKenapa nama itu terasa berat di lidah, tapi sekaligus seperti sudah ada di sana sebelum aku lahir?", { id: "act1_s69", next: "act1_s70" });
+b.M("Rin Fuyutsuki-hime.");
+b.M("...");
 
-// Tambahan foreshadowing: bisikan
-b.audio({ sfx: "/audio/sfx/whisper.mp3" });
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.80)" });
-b.M("...", { id: "act1_s70_whisper", next: "act1_s70" });
+b.M("Tapi — ada sesuatu yang harusnya aku ingat.");
+b.M("Bukan tentang di mana aku kemarin.");
+b.M("Sesuatu yang lebih dalam.");
+b.M("Yang tersimpan di tempat yang sepertinya...");
+b.M("...sengaja dikunci.");
 
 b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.85)" });
-b.M("Tunggu.\n\nAku dengar sesuatu.\n\n...\n\nSeperti suara perempuan memanggil namaku?\n\nAtau hanya angin?", { id: "act1_s70", next: "act1_s71" });
+b.M("Menghela napas kecil.");
+b.M("Seperti aku lelah.");
 
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.90)" });
-b.M("Tidak ada siapa pun.\n\nPasti karena lelah.", { id: "act1_s71", next: "act1_s72" });
-
-b.bg({ image: "/Image/GameBG/Bg-1.jpg", overlay: "rgba(0,0,0,0.95)" });
-b.M("Tapi...\n\nAda sesuatu yang harusnya aku ingat.\n\nBukan tentang di mana aku kemarin — lebih dari itu.\n\nSesuatu yang tersimpan di tempat yang lebih dalam dari memori biasa.\n\nDi tempat yang sepertinya... sengaja dikunci.", { id: "act1_s72", next: "act1_ending" });
+// Fade ke hitam
+b.bg({ color: "#06020f" });
+b.transition(2000, "");
 
 // ── [ ENDING ACT 1 ] ─────────────────────────────────────────────────────────
-
 b.bg({ color: "#06020f" });
 b.end("目覚め — Awakening", "act", {
   id: "act1_ending",

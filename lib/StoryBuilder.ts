@@ -92,11 +92,14 @@ export class StoryBuilder {
     // Merge in the specific overrides (text, speaker, effect, next, etc)
     Object.assign(base, overrides);
 
-    // Link previous scene "next" pointer to this scene
+    // Link previous scene "next" pointer to this scene.
+    // MUST use base.id AFTER overrides are merged — if caller passed an
+    // explicit { id: "act1_s25a" } override, the auto-generated `id`
+    // variable no longer matches base.id, breaking the navigation chain.
     if (this.scenes.length > 0) {
       const prev = this.scenes[this.scenes.length - 1];
       if (!prev.next && prev.type !== "choice" && prev.type !== "ending") {
-        prev.next = id;
+        prev.next = base.id;
       }
     }
 
